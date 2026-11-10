@@ -22,36 +22,29 @@ button{border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:poin
 <div class="note">These are the <span>Top supporters</span> so far!<br>Keep it up everyone! 💗</div>
 <p class="foot">Standings are shown highest to lowest.</p>
 </section>
-<details class="panel editor"><summary>✏️ Edit leaderboard (organizer view)</summary>
-<p class="foot">Edit names and amounts, then save. Changes are saved in this browser. A public shared leaderboard needs a hosted page and a shared data source for updates to sync across devices.</p>
-<div id="editRows"></div><div class="actions"><button id="add" class="pink">+ Add person</button><button id="save">Save changes</button><button id="reset" class="ghost">Reset original list</button><button id="export" class="ghost">Download updated data</button></div>
-</details>
-<p class="foot">For a shareable public link, this file must be hosted as a website.</p>
-</main><script>
-const original=[
-{name:"Danielus2597",amount:70.95},{name:"ThatsLori2",amount:53.81},
-{name:"Spinstates",amount:7.97},{name:"corey000",amount:6.41},
-{name:"darwinjesscrew",amount:3.57},{name:"dxredgar",amount:1.74},
-{name:"Quina123",amount:1.25},{name:"WildKit287",amount:1.25},
-{name:"Dadbod27",amount:1.19},{name:"SirEdgarHova",amount:1.15},
-{name:"Elsunday",amount:1.10},{name:"Dannydoo",amount:0.80},
-{name:"KronicLizardJE",amount:0.67},{name:"coinedgar85",amount:0.51},
-{name:"sweetKandee",amount:0.36},{name:"dave2005",amount:0.36},
-{name:"Lys2002",amount:0.35},{name:"MommaStreamzJes",amount:0.28},
-{name:"yukijyuki",amount:0.28},{name:"Supratenn96",amount:0.16}
-];
-let data=JSON.parse(localStorage.getItem("streamLeaderboardAll")||"null")||original.map(x=>({...x}));
-const money=n=>"$"+Number(n||0).toFixed(2);
+<section class="panel editor"><p class="foot" id="connection">Connecting to the live leaderboard…</p><p class="foot">Scores are shared with everyone viewing this page. Organizer editing will be added separately with a private sign-in.</p></section>
+
+</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://xbogfbyysrjttyfvzluh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_rU0twvbtzrYlKqqbuNPD6g_B38iNXt5";
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const money = n => "$" + Number(n || 0).toFixed(2);
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function sorted(){return [...data].filter(x=>x.name.trim()).sort((a,b)=>Number(b.amount)-Number(a.amount))}
-function render(){document.getElementById("rows").innerHTML=sorted().map((x,i)=>`<div class="entry"><div class="rank">${i+1}</div><div class="name">${esc(x.name)}</div><div class="amount">${money(x.amount)}</div></div>`).join("")||"<p>No entries yet.</p>";}
-function edit(){document.getElementById("editRows").innerHTML=data.map((x,i)=>`<div class="editrow"><input aria-label="Name" data-i="${i}" data-k="name" value="${esc(x.name)}" placeholder="Username"><input aria-label="Amount" data-i="${i}" data-k="amount" type="number" min="0" step=".01" value="${Number(x.amount)}"><button class="pink" data-del="${i}">Remove</button></div>`).join("");}
-function save(){document.querySelectorAll("#editRows input").forEach(el=>{let x=data[+el.dataset.i];x[el.dataset.k]=el.dataset.k==="amount"?Math.max(0,Number(el.value)||0):el.value});data=data.filter(x=>x.name.trim());localStorage.setItem("streamLeaderboardAll",JSON.stringify(data));render();edit();document.getElementById("updated").textContent=data.length+" viewers • Updated "+new Date().toLocaleString();}
-document.getElementById("editRows").addEventListener("click",e=>{if(e.target.dataset.del!==undefined){data.splice(+e.target.dataset.del,1);edit()}});
-document.getElementById("add").onclick=()=>{data.push({name:"New viewer",amount:0});edit()};
-document.getElementById("save").onclick=save;
-document.getElementById("reset").onclick=()=>{data=original.map(x=>({...x}));localStorage.removeItem("streamLeaderboardAll");render();edit();};
-document.getElementById("export").onclick=()=>{save();let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="leaderboard-data.json";a.click();URL.revokeObjectURL(a.href)};
-document.getElementById("share").onclick=async()=>{let url=location.href;if(navigator.share){try{await navigator.share({title:"Top Supporters So Far!",url})}catch(e){}}else if(navigator.clipboard){await navigator.clipboard.writeText(url);alert("Page link copied. Viewers can open it once this file is hosted publicly.")}else{prompt("Copy this page link:",url)}};
-render();edit();
+function render(entries){
+ const sorted=[...entries].sort((a,b)=>Number(b.amount)-Number(a.amount)||String(a.username).localeCompare(String(b.username)));
+ document.getElementById("rows").innerHTML=sorted.map((x,i)=>'<div class="entry"><div class="rank">'+(i+1)+'</div><div class="name">'+esc(x.username)+'</div><div class="amount">'+money(x.amount)+'</div></div>').join("")||"<p>No entries yet.</p>";
+ document.getElementById("updated").textContent=sorted.length+" viewers • Live standings, highest to lowest";
+}
+async function loadLeaderboard(){
+ const {data,error}=await client.from("leaderboard_entries").select("username,amount").order("amount",{ascending:false});
+ if(error){document.getElementById("connection").textContent="Could not load leaderboard: "+error.message;return;}
+ render(data||[]);
+ document.getElementById("connection").textContent="💗💙 LIVE — connected to the shared leaderboard";
+}
+loadLeaderboard();
+client.channel("leaderboard-live")
+ .on("postgres_changes",{event:"*",schema:"public",table:"leaderboard_entries"},loadLeaderboard)
+ .subscribe(status=>{if(status==="SUBSCRIBED")document.getElementById("connection").textContent="💗💙 LIVE — connected to the shared leaderboard";});
+document.getElementById("share").onclick=async()=>{const url=location.href;if(navigator.share){try{await navigator.share({title:"Top Supporters So Far!",url});}catch(e){}}else if(navigator.clipboard){await navigator.clipboard.writeText(url);alert("Page link copied.");}else{prompt("Copy this page link:",url);}};
 </script></body></html>
