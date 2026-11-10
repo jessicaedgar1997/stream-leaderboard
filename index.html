@@ -22,7 +22,27 @@ button{border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:poin
 <div class="note">These are the <span>Top supporters</span> so far!<br>Keep it up everyone! 💗</div>
 <p class="foot">Standings are shown highest to lowest.</p>
 </section>
-<section class="panel editor"><p class="foot" id="connection">Connecting to the live leaderboard…</p><p class="foot">Scores are shared with everyone viewing this page. Organizer editing will be added separately with a private sign-in.</p></section>
+<section class="panel editor">
+<h2 style="margin:4px 0 12px;color:var(--blue)">Organizer controls</h2>
+<div id="loginBox">
+<p class="foot">Only the authorized organizer email can edit scores. Sign in with a secure email link.</p>
+<form id="loginForm" class="actions">
+<input id="loginEmail" type="email" required autocomplete="email" placeholder="Your organizer email" style="flex:1;min-width:220px;background:#0d1328;border:1px solid #43577f;color:white;border-radius:10px;padding:11px">
+<button type="submit">Email me a sign-in link</button>
+</form>
+</div>
+<div id="adminBox" hidden>
+<p id="adminStatus" class="foot">Organizer signed in.</p>
+<div id="editRows"></div>
+<form id="addForm" class="editrow">
+<input id="newName" required maxlength="60" placeholder="New supporter name">
+<input id="newAmount" required type="number" min="0" step="0.01" placeholder="Amount">
+<button type="submit" class="pink">Add supporter</button>
+</form>
+<div class="actions"><button type="button" class="ghost" id="logout">Sign out</button></div>
+</div>
+<p class="foot" id="editorMessage" aria-live="polite">Viewers can see the leaderboard but cannot change it.</p>
+</section>
 
 </main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -30,21 +50,69 @@ const SUPABASE_URL = "https://xbogfbyysrjttyfvzluh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_rU0twvbtzrYlKqqbuNPD6g_B38iNXt5";
 const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const money = n => "$" + Number(n || 0).toFixed(2);
+let entriesCache = [];
+let currentSession = null;
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function sortedEntries(entries){return [...entries].sort((a,b)=>Number(b.amount)-Number(a.amount)||String(a.username).localeCompare(String(b.username)));}
 function render(entries){
- const sorted=[...entries].sort((a,b)=>Number(b.amount)-Number(a.amount)||String(a.username).localeCompare(String(b.username)));
+ const sorted=sortedEntries(entries);
  document.getElementById("rows").innerHTML=sorted.map((x,i)=>'<div class="entry"><div class="rank">'+(i+1)+'</div><div class="name">'+esc(x.username)+'</div><div class="amount">'+money(x.amount)+'</div></div>').join("")||"<p>No entries yet.</p>";
  document.getElementById("updated").textContent=sorted.length+" viewers • Live standings, highest to lowest";
+ renderEditor();
+}
+function renderEditor(){
+ const loginBox=document.getElementById("loginBox"), adminBox=document.getElementById("adminBox");
+ loginBox.hidden=!!currentSession; adminBox.hidden=!currentSession;
+ if(!currentSession)return;
+ document.getElementById("adminStatus").textContent="Signed in as organizer. Edit amounts or remove supporters below.";
+ document.getElementById("editRows").innerHTML=sortedEntries(entriesCache).map(x=>'<div class="editrow" data-user="'+esc(x.username)+'"><input class="editName" aria-label="Supporter name" value="'+esc(x.username)+'" disabled><input class="editAmount" aria-label="Amount for '+esc(x.username)+'" type="number" min="0" step="0.01" value="'+Number(x.amount).toFixed(2)+'"><button type="button" class="saveRow">Save</button><button type="button" class="ghost deleteRow">Remove</button></div>').join("");
 }
 async function loadLeaderboard(){
  const {data,error}=await client.from("leaderboard_entries").select("username,amount").order("amount",{ascending:false});
  if(error){document.getElementById("connection").textContent="Could not load leaderboard: "+error.message;return;}
- render(data||[]);
+ entriesCache=data||[]; render(entriesCache);
  document.getElementById("connection").textContent="💗💙 LIVE — connected to the shared leaderboard";
 }
+document.getElementById("loginForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const email=document.getElementById("loginEmail").value.trim();
+ const msg=document.getElementById("editorMessage");
+ const {error}=await client.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
+ msg.textContent=error?"Could not send sign-in email: "+error.message:"Sign-in link sent. Check your email and click the link on this device.";
+});
+document.getElementById("editRows").addEventListener("click",async e=>{
+ const row=e.target.closest(".editrow"); if(!row)return;
+ const username=row.dataset.user, msg=document.getElementById("editorMessage");
+ if(e.target.classList.contains("saveRow")){
+  const amount=Number(row.querySelector(".editAmount").value);
+  if(!Number.isFinite(amount)||amount<0){msg.textContent="Enter a valid amount of zero or more.";return;}
+  const {error}=await client.from("leaderboard_entries").update({amount}).eq("username",username);
+  msg.textContent=error?"Save failed: "+error.message:"Saved "+username+". Everyone's leaderboard will update.";
+  if(!error)await loadLeaderboard();
+ }
+ if(e.target.classList.contains("deleteRow")){
+  if(!confirm("Remove "+username+" from the leaderboard?"))return;
+  const {error}=await client.from("leaderboard_entries").delete().eq("username",username);
+  msg.textContent=error?"Remove failed: "+error.message:"Removed "+username+".";
+  if(!error)await loadLeaderboard();
+ }
+});
+document.getElementById("addForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const username=document.getElementById("newName").value.trim();
+ const amount=Number(document.getElementById("newAmount").value);
+ const msg=document.getElementById("editorMessage");
+ if(!username||!Number.isFinite(amount)||amount<0){msg.textContent="Enter a name and a valid non-negative amount.";return;}
+ const {error}=await client.from("leaderboard_entries").insert({username,amount});
+ msg.textContent=error?"Could not add supporter: "+error.message:"Added "+username+".";
+ if(!error){e.target.reset();await loadLeaderboard();}
+});
+document.getElementById("logout").onclick=async()=>{await client.auth.signOut();document.getElementById("editorMessage").textContent="You are signed out. Viewers can still see the leaderboard.";};
+client.auth.onAuthStateChange((_event,session)=>{currentSession=session;renderEditor();});
+client.auth.getSession().then(({data})=>{currentSession=data.session;renderEditor();});
 loadLeaderboard();
-client.channel("leaderboard-live")
- .on("postgres_changes",{event:"*",schema:"public",table:"leaderboard_entries"},loadLeaderboard)
- .subscribe(status=>{if(status==="SUBSCRIBED")document.getElementById("connection").textContent="💗💙 LIVE — connected to the shared leaderboard";});
+client.channel("leaderboard-live").on("postgres_changes",{event:"*",schema:"public",table:"leaderboard_entries"},loadLeaderboard).subscribe(status=>{
+ if(status==="SUBSCRIBED")document.getElementById("connection").textContent="💗💙 LIVE — connected to the shared leaderboard";
+});
 document.getElementById("share").onclick=async()=>{const url=location.href;if(navigator.share){try{await navigator.share({title:"Top Supporters So Far!",url});}catch(e){}}else if(navigator.clipboard){await navigator.clipboard.writeText(url);alert("Page link copied.");}else{prompt("Copy this page link:",url);}};
 </script></body></html>
