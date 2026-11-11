@@ -86,7 +86,7 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 <p class="status" id="setupStatus" role="status"></p>
 </section>
 <section class="panel hidden" id="tournament">
-<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="print">Print bracket</button><button class="pink" id="newTournament">New tournament</button></div></div>
+<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="print">Print bracket</button><button class="dark" id="saveBracket">Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament">New tournament</button></div></div>
 <div class="bracket" id="bracket"></div>
 <div id="champion" class="champion hidden"></div>
 <p class="hint">To advance a player, click their name in the match. You can change a winner any time; later rounds will update.</p>
@@ -111,6 +111,7 @@ async function refreshLivePlayers(){
   const snapshot=await response.json();
   if(snapshot.error)throw new Error(snapshot.error);
   livePlayers=snapshot.players||[];liveCalls=snapshot.calls||[];liveState=snapshot.state;
+  if(snapshot.bracket&&snapshot.bracket.rounds?.length&&!hasLoadedSavedBracket){restoreSavedBracket(snapshot.bracket);hasLoadedSavedBracket=true;}
  }catch(error){$("liveStatus").textContent="CONNECTION ISSUE";$("entrantList").innerHTML='<span class="hint">Could not load the live player list. Refresh in a moment.</span>';return;}
  $("liveCount").textContent=livePlayers.length+" / "+liveState.max_players;
  $("liveStatus").textContent=liveState.is_open?"ENTRIES OPEN":"ENTRIES CLOSED";
@@ -167,6 +168,29 @@ refreshLivePlayers();
 sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"slot_calls"},refreshLivePlayers).subscribe();
 let rounds = [];
 let playerTotal = 4;
+let hasLoadedSavedBracket = false;
+let bracketSaveTimer = null;
+async function saveBracketOnline(){
+ const key=$("adminKey").value.trim();
+ if(!key){$("setupStatus").textContent="Bracket is ready. Paste your organizer key in Organizer controls to save it online.";return;}
+ if(!rounds.length)return;
+ const payload={name:$("eventName").value.trim()||"Tournament",count:playerTotal,rounds};
+ const u=new URL(CONTROL_URL);u.searchParams.set("action","bracket-save");u.searchParams.set("key",key);u.searchParams.set("data",JSON.stringify(payload));
+ try{const res=await fetch(u.toString());const msg=await res.text();$("setupStatus").textContent=msg;}
+ catch(e){$("setupStatus").textContent="Bracket is on this screen, but the online save failed. Please try Save bracket again.";}
+}
+function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
+function restoreSavedBracket(data){
+ if(!data||!Array.isArray(data.rounds)||!data.rounds.length)return;
+ rounds=data.rounds;playerTotal=Number(data.count)||4;
+ $("eventName").value=data.name||"Chaos Queen Tournament";
+ $("playerCount").value=String(playerTotal);
+ $("bracketTitle").textContent=data.name||"Tournament Bracket";
+ $("bracketInfo").textContent=playerTotal+" players • Saved tournament • Click a name to advance them.";
+ $("tournament").classList.remove("hidden");
+ renderBracket();
+ $("setupStatus").textContent="Your saved tournament bracket has been restored. 💗💙";
+}
 const saved = localStorage.getItem("chaosQueenTournamentDraft");
 if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
 function namesFromInput(){return $("players").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);}
@@ -200,7 +224,7 @@ function chooseWinner(r,i,side){
  if(!chosen)return;
  match.winner=chosen;
  for(let later=r+1;later<rounds.length;later++)rounds[later].forEach(m=>m.winner=null);
- propagate(r);renderBracket();
+ propagate(r);renderBracket();queueBracketSave();
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function roundName(r){if(r===rounds.length-1)return "Final";if(r===rounds.length-2)return "Semi-finals";if(r===0)return "Round 1";return "Round "+(r+1);}
@@ -221,10 +245,11 @@ $("build").onclick=()=>{
  if(list.length!==required){$("setupStatus").textContent="You need exactly "+required+" names. Right now you have "+list.length+".";return;}
  if(new Set(list.map(n=>n.toLowerCase())).size!==list.length){$("setupStatus").textContent="Each player needs a unique name. Check for duplicates.";return;}
  if(list.some(n=>n.length>40)){$("setupStatus").textContent="Please keep each player name to 40 characters or less.";return;}
- buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+ buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
 };
 $("newTournament").onclick=()=>{$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";window.scrollTo({top:0,behavior:"smooth"});};
 $("print").onclick=()=>window.print();
+$("saveBracket").onclick=saveBracketOnline;
 updateHint();
 </script>
 </body></html>
