@@ -164,7 +164,7 @@ $("closeEntries").onclick=()=>adminAction("close");
 $("openEntries").onclick=()=>adminAction("open");
 $("clearEntries").onclick=()=>{if(confirm("Clear everyone from the live registration list and reopen entries?"))adminAction("clear");};
 refreshLivePlayers();
-sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},refreshLivePlayers).subscribe();
+sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"slot_calls"},refreshLivePlayers).subscribe();
 let rounds = [];
 let playerTotal = 4;
 const saved = localStorage.getItem("chaosQueenTournamentDraft");
