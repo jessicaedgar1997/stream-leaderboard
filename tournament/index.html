@@ -59,7 +59,7 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 <div><div class="hint">Queue status</div><div class="live-status">LIVE QUEUE</div></div>
 </div>
 <div class="entrant-list" id="slotQueue"><span class="hint">Loading slot calls…</span></div>
-<p class="hint">Tell chat: <strong>!call + your game</strong> — one active request per viewer. The queue updates live.</p>
+<p class="hint">Tell chat: <strong>!slot + your game</strong> — one active request per viewer. The queue updates live.</p>
 <div class="actions">
 <button id="nextSlotCall">▶ Call next game</button>
 <button class="pink" id="clearSlotCalls">Clear slot queue</button>
@@ -68,10 +68,10 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 <p class="status" id="slotAdminMessage" role="status"></p>
 <details style="margin-top:12px">
 <summary style="cursor:pointer;color:var(--pink);font-weight:900;padding:8px 0">🤖 BotRix command setup</summary>
-<p class="hint">Create a custom command named <strong>!call</strong>. Set its response to:</p>
-<pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:12px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=call&amp;key=440ab8b1efc07d8593d22762120fc732f4fb64575e311c6be1d77e74d6bfb669&amp;user=$(sender)&amp;game=$(urlencode $(variable))]</pre>
-<p class="hint">Optional second command: <strong>!calls</strong> — response:</p>
-<pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:12px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=calls&amp;key=440ab8b1efc07d8593d22762120fc732f4fb64575e311c6be1d77e74d6bfb669]</pre>
+<p class="hint">Create a custom command named <strong>!slot</strong>. Set its response to:</p>
+<pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:12px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=call&amp;key=9daf185c69a68c34f30098eaac6f09ca3fbea8533cafb02b82870bb6f7449b4c&amp;user=$(sender)&amp;game=$(urlencode $(variable))]</pre>
+<p class="hint">Optional second command: <strong>!slots</strong> — response:</p>
+<pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:12px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=calls&amp;key=9daf185c69a68c34f30098eaac6f09ca3fbea8533cafb02b82870bb6f7449b4c]</pre>
 </details>
 </section>
 <section class="panel setup" id="setup">
@@ -119,7 +119,7 @@ async function refreshLivePlayers(){
  $("livePlayerCount").value=String(liveState.max_players);
  $("liveEventName").value=liveState.tournament_name;
  $("slotCallCount").textContent=String(liveCalls.length);
- $("slotQueue").innerHTML=liveCalls.length?liveCalls.map((x,i)=>'<span class="entrant">'+(i+1)+'. <strong>'+safeText(x.game)+'</strong> — '+safeText(x.username)+' <button class="dark remove-slot" data-id="'+x.id+'" style="padding:3px 8px;margin-left:5px">×</button></span>').join(""):'<span class="hint">No game requests yet. Chat can type !call + their game!</span>';
+ $("slotQueue").innerHTML=liveCalls.length?liveCalls.map((x,i)=>'<span class="entrant">'+(i+1)+'. <strong>'+safeText(x.game)+'</strong> — '+safeText(x.username)+' <button class="dark remove-slot" data-id="'+x.id+'" style="padding:3px 8px;margin-left:5px">×</button></span>').join(""):'<span class="hint">No game requests yet. Chat can type !slot + their game!</span>';
  $("slotQueue").querySelectorAll(".remove-slot").forEach(btn=>btn.addEventListener("click",()=>adminSlotAction("remove-call",{id:btn.dataset.id})));
 }
 async function adminAction(action,extra={}){
