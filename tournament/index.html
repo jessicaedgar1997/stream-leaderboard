@@ -50,6 +50,11 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 <button class="dark" id="clearEntries">Clear players / new tournament</button>
 </div>
 <p class="status" id="liveAdminMessage" role="status"></p>
+<div class="actions">
+<button id="connectKick" class="pink" type="button">🔗 Connect Kick chat</button>
+<button id="testKick" class="dark" type="button" disabled>💬 Send test message</button>
+</div>
+<p class="status" id="kickStatus" role="status">Kick chat is not connected yet.</p>
 </details>
 </section>
 <section class="panel" id="slotCallPanel">
@@ -177,6 +182,37 @@ $("saveLiveSettings").onclick=async()=>{
 $("closeEntries").onclick=()=>adminAction("close");
 $("openEntries").onclick=()=>adminAction("open");
 $("clearEntries").onclick=()=>{if(confirm("Clear everyone from the live registration list and reopen entries?"))adminAction("clear");};
+async function refreshKickStatus(){
+ try{
+  const r=await fetch(SUPABASE_URL+"/functions/v1/kick-connect?action=status",{cache:"no-store"});
+  const s=await r.json();
+  $("kickStatus").textContent=s.connected?"✅ Kick is connected. You can send a test message.":"Kick chat is not connected yet.";
+  $("testKick").disabled=!s.connected;
+ }catch(e){$("kickStatus").textContent="Couldn't check Kick connection status.";}
+}
+$("connectKick").onclick=async()=>{
+ const key=$("adminKey").value.trim();
+ if(!key){$("kickStatus").textContent="Open Organizer controls and enter your private organizer key first.";return;}
+ $("kickStatus").textContent="Opening Kick authorization…";
+ try{
+  const u=new URL(SUPABASE_URL+"/functions/v1/kick-connect");
+  u.searchParams.set("action","start");u.searchParams.set("key",key);
+  const r=await fetch(u.toString());const data=await r.json();
+  if(!r.ok||!data.authorize_url)throw new Error(data.error||"Couldn't start the Kick connection.");
+  location.href=data.authorize_url;
+ }catch(e){$("kickStatus").textContent=e.message||"Couldn't start the Kick connection.";}
+};
+$("testKick").onclick=async()=>{
+ const key=$("adminKey").value.trim();
+ if(!key){$("kickStatus").textContent="Enter your organizer key first.";return;}
+ $("kickStatus").textContent="Sending a test message to Kick…";
+ try{
+  const r=await fetch(SUPABASE_URL+"/functions/v1/kick-connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"send-test",key})});
+  const data=await r.json();
+  $("kickStatus").textContent=r.ok?data.message:(data.error||"Test message failed.");
+ }catch(e){$("kickStatus").textContent="Couldn't send the test message. Please try again.";}
+};
+refreshKickStatus();
 refreshLivePlayers();
 sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"slot_calls"},refreshLivePlayers).subscribe();
 let rounds = [];
