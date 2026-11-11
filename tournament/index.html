@@ -73,6 +73,19 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 <p class="hint">Optional second command: <strong>!slots</strong> — response:</p>
 <pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:12px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=calls&amp;key=YOUR_PRIVATE_BOT_KEY]</pre>
 </details>
+<details style="margin-top:12px">
+<summary style="cursor:pointer;color:var(--pink);font-weight:900;padding:8px 0">🏆 Tournament chat commands</summary>
+<p class="hint">Add these as BotRix custom commands. Set each command response to the matching line:</p>
+<p class="hint"><strong>!bracket</strong></p>
+<pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:10px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=bracket-status]</pre>
+<p class="hint"><strong>!nextmatch</strong></p>
+<pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:10px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=bracket-next]</pre>
+<p class="hint"><strong>!winners</strong></p>
+<pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:10px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=bracket-winners]</pre>
+<p class="hint"><strong>!champion</strong></p>
+<pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:10px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=bracket-champion]</pre>
+<p class="hint">These commands let chat ask BotRix for the latest bracket results. They update as soon as the bracket is saved.</p>
+</details>
 </section>
 <section class="panel setup" id="setup">
 <h2>🎮 Set up your tournament</h2>
