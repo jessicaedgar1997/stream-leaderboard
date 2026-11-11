@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tournament OBS Overlay</title>
+<style>
+:root{--blue:#35d5ff;--pink:#ff39b9;--white:#f8f9ff}
+*{box-sizing:border-box}html,body{margin:0;width:100%;min-height:100%;background:transparent;color:var(--white);font-family:Arial,Helvetica,sans-serif}
+body{padding:18px}.shell{width:100%;padding:18px;border:2px solid #35d5ff99;border-radius:18px;background:linear-gradient(135deg,#080d20ed,#20102beF);box-shadow:0 0 22px #35d5ff55,0 0 26px #ff39b944}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.brand{font-weight:1000;letter-spacing:.12em;color:var(--blue);font-size:clamp(14px,2vw,22px)}.event{font-size:clamp(20px,3vw,34px);font-weight:1000;text-shadow:0 0 12px #35d5ff88}.state{color:#c8d5f1;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.12em}
+.rounds{display:flex;gap:12px;align-items:stretch;overflow:hidden}.round{flex:1;min-width:0}.round h3{margin:0 0 8px;color:var(--pink);font-size:clamp(10px,1.2vw,15px);text-transform:uppercase;letter-spacing:.1em}.match{padding:8px;margin:0 0 9px;background:#0c142beF;border:1px solid #42557c;border-radius:10px}.player{padding:6px 8px;margin:3px 0;border-radius:6px;background:#1b2948;color:#eaf2ff;font-weight:800;font-size:clamp(11px,1.2vw,15px);overflow-wrap:anywhere}.player.winner{background:linear-gradient(90deg,#123b54,#4a1c4a);border:1px solid var(--pink)}.player.empty{color:#8290b2}.champ{margin-top:12px;text-align:center;padding:10px;border-radius:12px;background:linear-gradient(90deg,#123b54,#4a1c4a);border:1px solid var(--pink);font-weight:1000;font-size:clamp(16px,2vw,24px)}.champ small{display:block;color:var(--blue);font-size:10px;letter-spacing:.2em;margin-bottom:4px}.empty-state{text-align:center;padding:28px 12px;color:#c5d1ed;font-weight:800}
+</style>
+</head>
+<body>
+<div class="shell">
+ <div class="top"><div><div class="brand">👑 CHAOS QUEEN TOURNAMENT</div><div class="event" id="event">Waiting for tournament…</div></div><div class="state" id="status">Connecting</div></div>
+ <div class="rounds" id="rounds"></div>
+ <div id="champion"></div>
+ <div class="empty-state" id="empty">Build a tournament bracket on your main tournament page to show it here.</div>
+</div>
+<script>
+const ENDPOINT="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=snapshot";
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function roundTitle(r,total){if(r===total-1)return"Final";if(r===total-2)return"Semi-finals";return r===0?"Round 1":"Round "+(r+1);}
+function draw(data){
+ const bracket=data?.bracket;
+ if(!bracket?.rounds?.length){document.getElementById("event").textContent="Waiting for tournament…";document.getElementById("rounds").innerHTML="";document.getElementById("champion").innerHTML="";document.getElementById("empty").style.display="block";return;}
+ document.getElementById("empty").style.display="none";
+ document.getElementById("event").textContent=bracket.name||"Tournament Bracket";
+ document.getElementById("status").textContent="LIVE • "+(bracket.count||"")+" PLAYERS";
+ const rs=bracket.rounds;
+ document.getElementById("rounds").innerHTML=rs.map((matches,r)=>'<section class="round"><h3>'+roundTitle(r,rs.length)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="player '+(m.winner&&m.winner===m.a?"winner":"")+'">'+(m.a?esc(m.a):"— BYE —")+'</div><div class="player '+(m.winner&&m.winner===m.b?"winner":"")+'">'+(m.b?esc(m.b):"— BYE —")+'</div></div>').join("")+'</section>').join("");
+ const champ=rs[rs.length-1]?.[0]?.winner;
+ document.getElementById("champion").innerHTML=champ?'<div class="champ"><small>🏆 TOURNAMENT CHAMPION 🏆</small>'+esc(champ)+'</div>':"";
+}
+async function refresh(){try{const r=await fetch(ENDPOINT,{cache:"no-store"});if(!r.ok)throw new Error();const data=await r.json();draw(data);document.getElementById("status").textContent="LIVE • UPDATED";}catch(e){document.getElementById("status").textContent="RECONNECTING";}}
+refresh();setInterval(refresh,4000);
+</script>
+</body>
+</html>
