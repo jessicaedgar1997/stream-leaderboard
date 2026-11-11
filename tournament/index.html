@@ -17,6 +17,9 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}.hint,.status{color:#bac8e8;font-size:.88rem}.status{min-height:1.3em;margin:10px 0 0}
 .bracket-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.bracket{display:flex;gap:14px;overflow-x:auto;padding:12px 2px 18px;align-items:stretch}.round{flex:0 0 220px;display:flex;flex-direction:column;gap:12px}.round h3{font-size:.9rem;color:var(--pink);text-transform:uppercase;letter-spacing:.1em;margin:0 0 3px}.match{background:#0d142b;border:1px solid #3b4d76;border-radius:14px;padding:10px;box-shadow:inset 0 0 14px #35d5ff0c}.match-label{font-size:.7rem;color:#9eaccd;font-weight:800;margin-bottom:7px;text-transform:uppercase;letter-spacing:.08em}.player{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;margin:4px 0;padding:9px 10px;background:#202b4b;color:#eaf2ff;border:1px solid #465a85;border-radius:9px;font-size:.87rem}.player.winner{background:linear-gradient(100deg,#123b54,#4a1c4a);border-color:var(--pink);color:white;box-shadow:0 0 12px #ff39b933}.player.empty{color:#7785a8;background:#151d35;cursor:default}.player small{color:var(--blue);font-size:.68rem}.champion{margin-top:12px;text-align:center;padding:16px;border:1px solid var(--pink);border-radius:16px;background:linear-gradient(100deg,#142744,#401b43);font-size:1.25rem;font-weight:950;box-shadow:0 0 20px #ff39b933}.champion strong{color:var(--pink);display:block;font-size:.75rem;letter-spacing:.16em;margin-bottom:5px}
 .hidden{display:none!important}
+.live-count{font-size:clamp(1.5rem,5vw,2.4rem);font-weight:950;color:var(--pink);text-shadow:0 0 12px #ff39b966}
+.entrant-list{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.entrant{background:#0d142b;border:1px solid #405477;border-radius:999px;padding:7px 11px;font-weight:800;font-size:.85rem}.live-status{font-weight:900;color:var(--blue)}.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.admin-grid .wide{grid-column:1/-1}
+@media(max-width:600px){.admin-grid{grid-template-columns:1fr}.admin-grid .wide{grid-column:auto}}
 @media(max-width:600px){body{padding:10px}.setup-grid{grid-template-columns:1fr}.round{flex-basis:205px}.bracket{gap:10px}}
 @media print{body{background:white;color:#111}.panel{box-shadow:none;background:white;color:#111}.bracket{overflow:visible}.match{background:white;color:#111;break-inside:avoid}.player{background:#eee;color:#111}.round h3,h2{color:#222}.setup,.no-print{display:none!important}}
 </style>
@@ -24,6 +27,31 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 <body>
 <main class="wrap">
 <header class="hero"><div class="eyebrow">👑 THE CHAOS QUEEN PRESENTS 👑</div><h1>TOURNAMENT <span>TIME!</span></h1><p>Pick your players. Spin the bracket. Let the chaos begin. 💗💙</p></header>
+<section class="panel" id="chatRegistration">
+<h2>💬 LIVE KICK CHAT REGISTRATION</h2>
+<div class="setup-grid">
+<div><div class="hint">Players entered</div><div class="live-count" id="liveCount">0 / 4</div></div>
+<div><div class="hint">Registration</div><div class="live-status" id="liveStatus">CONNECTING…</div></div>
+</div>
+<div class="entrant-list" id="entrantList"><span class="hint">Loading player list…</span></div>
+<p class="hint">Tell chat to type <strong>!join</strong> to enter. They can use <strong>!leave</strong> before entries close.</p>
+<div class="actions"><button id="loadChatPlayers">⬇ Load chat players into bracket</button><button class="dark" id="refreshPlayers">Refresh list</button></div>
+<details class="editor-admin" style="margin-top:16px">
+<summary style="cursor:pointer;color:var(--pink);font-weight:900;padding:8px 0">👑 Organizer controls</summary>
+<div class="admin-grid">
+<div class="wide"><label for="adminKey">Organizer access key</label><input id="adminKey" type="password" autocomplete="off" placeholder="Paste your private organizer key"></div>
+<div><label for="livePlayerCount">Player limit</label><select id="livePlayerCount"><option value="4">4 Players</option><option value="6">6 Players</option><option value="8">8 Players</option><option value="16">16 Players</option></select></div>
+<div><label for="liveEventName">Tournament name</label><input id="liveEventName" maxlength="60" value="Chaos Queen Tournament"></div>
+</div>
+<div class="actions">
+<button id="saveLiveSettings">Save tournament settings</button>
+<button class="pink" id="closeEntries">Close entries</button>
+<button class="dark" id="openEntries">Open entries</button>
+<button class="dark" id="clearEntries">Clear players / new tournament</button>
+</div>
+<p class="status" id="liveAdminMessage" role="status"></p>
+</details>
+</section>
 <section class="panel setup" id="setup">
 <h2>🎮 Set up your tournament</h2>
 <div class="setup-grid">
@@ -43,7 +71,60 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 </section>
 <footer class="hero"><p>💗 Sky blue • Hot pink • Big tournament energy 💙</p></footer>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL = "https://xbogfbyysrjttyfvzluh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_rU0twvbtzrYlKqqbuNPD6g_B38iNXt5";
+const CONTROL_URL = SUPABASE_URL + "/functions/v1/tournament-join";
+const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let livePlayers = [];
+let liveState = null;
+function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+async function refreshLivePlayers(){
+ const [p,s] = await Promise.all([
+  sbClient.from("tournament_players").select("username,created_at").order("created_at",{ascending:true}),
+  sbClient.from("tournament_state").select("tournament_name,max_players,is_open").eq("id",1).single()
+ ]);
+ if(p.error || s.error){$("liveStatus").textContent="CONNECTION ISSUE";$("entrantList").innerHTML='<span class="hint">Could not load the live player list. Refresh in a moment.</span>';return;}
+ livePlayers=p.data||[];liveState=s.data;
+ $("liveCount").textContent=livePlayers.length+" / "+liveState.max_players;
+ $("liveStatus").textContent=liveState.is_open?"ENTRIES OPEN":"ENTRIES CLOSED";
+ $("liveStatus").style.color=liveState.is_open?"var(--blue)":"var(--pink)";
+ $("entrantList").innerHTML=livePlayers.length?livePlayers.map((x,i)=>'<span class="entrant">'+(i+1)+'. '+safeText(x.username)+'</span>').join(""):'<span class="hint">No one has entered yet. Be the first with !join!</span>';
+ $("livePlayerCount").value=String(liveState.max_players);
+ $("liveEventName").value=liveState.tournament_name;
+}
+async function adminAction(action,extra={}){
+ const key=$("adminKey").value.trim();
+ if(!key){$("liveAdminMessage").textContent="Paste your organizer access key first.";return;}
+ const u=new URL(CONTROL_URL);u.searchParams.set("action",action);u.searchParams.set("key",key);
+ Object.entries(extra).forEach(([k,v])=>u.searchParams.set(k,String(v)));
+ $("liveAdminMessage").textContent="Working…";
+ try{const res=await fetch(u.toString());const msg=await res.text();$("liveAdminMessage").textContent=msg;if(res.ok)await refreshLivePlayers();}
+ catch(e){$("liveAdminMessage").textContent="Couldn't reach the tournament controls. Try again.";}
+}
+$("loadChatPlayers").onclick=async()=>{
+ await refreshLivePlayers();
+ if(!livePlayers.length){$("setupStatus").textContent="Nobody has joined from chat yet. Ask viewers to type !join.";return;}
+ $("players").value=livePlayers.map(x=>x.username).join("\n");
+ $("playerCount").value=String(liveState.max_players);
+ $("eventName").value=liveState.tournament_name;
+ updateHint();
+ $("setupStatus").textContent="Loaded "+livePlayers.length+" chat entrants. Build the bracket when the player count is complete.";
+ $("setup").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("refreshPlayers").onclick=refreshLivePlayers;
+$("saveLiveSettings").onclick=async()=>{
+ const size=$("livePlayerCount").value,name=$("liveEventName").value.trim();
+ await adminAction("size",{value:size});
+ if(!$("liveAdminMessage").textContent.startsWith("Tournament size set"))return;
+ await adminAction("name",{value:name});
+};
+$("closeEntries").onclick=()=>adminAction("close");
+$("openEntries").onclick=()=>adminAction("open");
+$("clearEntries").onclick=()=>{if(confirm("Clear everyone from the live registration list and reopen entries?"))adminAction("clear");};
+refreshLivePlayers();
+sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},refreshLivePlayers).subscribe();
 const $ = id => document.getElementById(id);
 let rounds = [];
 let playerTotal = 4;
