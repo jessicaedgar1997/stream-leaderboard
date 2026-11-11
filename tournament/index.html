@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chaos Queen Tournament Bracket</title>
+<style>
+:root{--blue:#35d5ff;--pink:#ff39b9;--bg:#090d1d;--panel:#171e38;--line:#3b4b73;--white:#f8f9ff}
+*{box-sizing:border-box}body{margin:0;padding:18px;background:radial-gradient(circle at 12% 5%,#173f70 0,transparent 34%),radial-gradient(circle at 90% 15%,#64205b 0,transparent 32%),var(--bg);color:var(--white);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1180px;margin:auto}.hero{text-align:center;padding:18px 8px 22px}.eyebrow{color:var(--blue);font-weight:900;letter-spacing:.2em;text-transform:uppercase;font-size:.78rem}.hero h1{font-size:clamp(2rem,6vw,4.3rem);line-height:1;margin:10px 0;text-shadow:0 0 14px #35d5ff88,0 0 26px #ff39b966}.hero h1 span{color:var(--pink)}.hero p{color:#cbd5f5;margin:8px 0}
+.panel{background:linear-gradient(145deg,#1b2544,#14182d);border:1px solid var(--line);border-radius:20px;padding:clamp(14px,3vw,24px);box-shadow:0 0 25px #26cfff1c,0 0 25px #ff39b91c;margin-bottom:16px}
+h2{margin:0 0 12px;color:var(--blue);font-size:1.2rem}label{display:block;font-weight:800;font-size:.88rem;color:#dce6ff;margin:0 0 6px}
+input,select,textarea{width:100%;background:#0c1329;border:1px solid #45577f;border-radius:11px;color:white;padding:11px;font:inherit}
+textarea{min-height:230px;resize:vertical;line-height:1.65}
+.setup-grid{display:grid;grid-template-columns:1fr 180px;gap:12px}.field{margin-bottom:13px}
+button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:pointer;color:#07101e;background:linear-gradient(100deg,var(--blue),#8deaff)}button.pink{background:linear-gradient(100deg,var(--pink),#ff91d9)}button.dark{background:#2a3456;color:white;border:1px solid #53658e}button:disabled{opacity:.35;cursor:not-allowed}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}.hint,.status{color:#bac8e8;font-size:.88rem}.status{min-height:1.3em;margin:10px 0 0}
+.bracket-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.bracket{display:flex;gap:14px;overflow-x:auto;padding:12px 2px 18px;align-items:stretch}.round{flex:0 0 220px;display:flex;flex-direction:column;gap:12px}.round h3{font-size:.9rem;color:var(--pink);text-transform:uppercase;letter-spacing:.1em;margin:0 0 3px}.match{background:#0d142b;border:1px solid #3b4d76;border-radius:14px;padding:10px;box-shadow:inset 0 0 14px #35d5ff0c}.match-label{font-size:.7rem;color:#9eaccd;font-weight:800;margin-bottom:7px;text-transform:uppercase;letter-spacing:.08em}.player{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;margin:4px 0;padding:9px 10px;background:#202b4b;color:#eaf2ff;border:1px solid #465a85;border-radius:9px;font-size:.87rem}.player.winner{background:linear-gradient(100deg,#123b54,#4a1c4a);border-color:var(--pink);color:white;box-shadow:0 0 12px #ff39b933}.player.empty{color:#7785a8;background:#151d35;cursor:default}.player small{color:var(--blue);font-size:.68rem}.champion{margin-top:12px;text-align:center;padding:16px;border:1px solid var(--pink);border-radius:16px;background:linear-gradient(100deg,#142744,#401b43);font-size:1.25rem;font-weight:950;box-shadow:0 0 20px #ff39b933}.champion strong{color:var(--pink);display:block;font-size:.75rem;letter-spacing:.16em;margin-bottom:5px}
+.hidden{display:none!important}
+@media(max-width:600px){body{padding:10px}.setup-grid{grid-template-columns:1fr}.round{flex-basis:205px}.bracket{gap:10px}}
+@media print{body{background:white;color:#111}.panel{box-shadow:none;background:white;color:#111}.bracket{overflow:visible}.match{background:white;color:#111;break-inside:avoid}.player{background:#eee;color:#111}.round h3,h2{color:#222}.setup,.no-print{display:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header class="hero"><div class="eyebrow">👑 THE CHAOS QUEEN PRESENTS 👑</div><h1>TOURNAMENT <span>TIME!</span></h1><p>Pick your players. Spin the bracket. Let the chaos begin. 💗💙</p></header>
+<section class="panel setup" id="setup">
+<h2>🎮 Set up your tournament</h2>
+<div class="setup-grid">
+<div class="field"><label for="eventName">Tournament name</label><input id="eventName" maxlength="60" value="Chaos Queen Tournament" placeholder="Name your tournament"></div>
+<div class="field"><label for="playerCount">Number of players</label><select id="playerCount"><option value="4">4 Players</option><option value="6">6 Players</option><option value="8">8 Players</option><option value="16">16 Players</option></select></div>
+</div>
+<div class="field"><label for="players">Player names — one name per line</label><textarea id="players" spellcheck="false" placeholder="Enter player names, one per line"></textarea></div>
+<p class="hint" id="countHint">Enter exactly 4 player names to build the bracket.</p>
+<div class="actions"><button id="build">🎲 Randomize & Build Bracket</button><button class="dark" id="fillDemo" type="button">Add sample names</button><button class="dark" id="clearNames" type="button">Clear names</button></div>
+<p class="status" id="setupStatus" role="status"></p>
+</section>
+<section class="panel hidden" id="tournament">
+<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="print">Print bracket</button><button class="pink" id="newTournament">New tournament</button></div></div>
+<div class="bracket" id="bracket"></div>
+<div id="champion" class="champion hidden"></div>
+<p class="hint">To advance a player, click their name in the match. You can change a winner any time; later rounds will update.</p>
+</section>
+<footer class="hero"><p>💗 Sky blue • Hot pink • Big tournament energy 💙</p></footer>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let rounds = [];
+let playerTotal = 4;
+const saved = localStorage.getItem("chaosQueenTournamentDraft");
+if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
+function namesFromInput(){return $("players").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);}
+function updateHint(){const count=Number($("playerCount").value),got=namesFromInput().length;$("countHint").textContent="Enter exactly "+count+" player names ("+got+" entered).";localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count,players:$("players").value}));}
+$("playerCount").addEventListener("change",updateHint);$("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
+$("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
+$("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
+function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function buildBracket(list){
+ playerTotal=list.length;const size=playerTotal===6?8:playerTotal;const roundCount=Math.log2(size);
+ rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null})));
+ const shuffled=shuffle(list);
+ if(playerTotal===6){
+  const byeMatches=shuffle([0,1,2,3]).slice(0,2);
+  let cursor=0;
+  rounds[0].forEach((m,i)=>{if(byeMatches.includes(i)){m.a=shuffled[cursor++];m.b=null;m.winner=m.a;}else{m.a=shuffled[cursor++];m.b=shuffled[cursor++];}});
+ }else{
+  const slots=shuffle(shuffled);
+  rounds[0].forEach((m,i)=>{m.a=slots[i*2]||null;m.b=slots[i*2+1]||null;});
+ }
+ propagate(0);renderBracket();
+}
+function propagate(fromRound){
+ for(let r=Math.max(1,fromRound+1);r<rounds.length;r++){
+  const prev=rounds[r-1];
+  rounds[r].forEach((m,i)=>{m.a=prev[i*2]?.winner||null;m.b=prev[i*2+1]?.winner||null;m.winner=null;if(m.a&&!m.b)m.winner=m.a;else if(m.b&&!m.a)m.winner=m.b;});
+ }
+}
+function chooseWinner(r,i,side){
+ const match=rounds[r][i],chosen=match[side];
+ if(!chosen)return;
+ match.winner=chosen;
+ for(let later=r+1;later<rounds.length;later++)rounds[later].forEach(m=>m.winner=null);
+ propagate(r);renderBracket();
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function roundName(r){if(r===rounds.length-1)return "Final";if(r===rounds.length-2)return "Semi-finals";if(r===0)return "Round 1";return "Round "+(r+1);}
+function playerButton(name,r,i,side,winner){
+ if(!name)return '<div class="player empty">— BYE —</div>';
+ const isWinner=winner===name;
+ return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+escapeHtml(name)+(isWinner?' <small>✓ ADVANCES</small>':'')+'</button>';
+}
+function renderBracket(){
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+'</div>'+playerButton(m.a,r,i,"a",m.winner)+playerButton(m.b,r,i,"b",m.winner)+'</div>').join("")+'</div>').join("");
+ $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
+ const champ=rounds[rounds.length-1][0]?.winner;
+ $("champion").classList.toggle("hidden",!champ);
+ $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champ):"";
+}
+$("build").onclick=()=>{
+ const list=namesFromInput(),required=Number($("playerCount").value);
+ if(list.length!==required){$("setupStatus").textContent="You need exactly "+required+" names. Right now you have "+list.length+".";return;}
+ if(new Set(list.map(n=>n.toLowerCase())).size!==list.length){$("setupStatus").textContent="Each player needs a unique name. Check for duplicates.";return;}
+ if(list.some(n=>n.length>40)){$("setupStatus").textContent="Please keep each player name to 40 characters or less.";return;}
+ buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("newTournament").onclick=()=>{$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";window.scrollTo({top:0,behavior:"smooth"});};
+$("print").onclick=()=>window.print();
+updateHint();
+</script>
+</body></html>
