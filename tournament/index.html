@@ -82,12 +82,13 @@ let livePlayers = [];
 let liveState = null;
 function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 async function refreshLivePlayers(){
- const [p,s] = await Promise.all([
-  sbClient.from("tournament_players").select("username,created_at").order("created_at",{ascending:true}),
-  sbClient.from("tournament_state").select("tournament_name,max_players,is_open").eq("id",1).single()
- ]);
- if(p.error || s.error){$("liveStatus").textContent="CONNECTION ISSUE";$("entrantList").innerHTML='<span class="hint">Could not load the live player list. Refresh in a moment.</span>';return;}
- livePlayers=p.data||[];liveState=s.data;
+ try{
+  const response=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});
+  if(!response.ok)throw new Error("Snapshot unavailable");
+  const snapshot=await response.json();
+  if(snapshot.error)throw new Error(snapshot.error);
+  livePlayers=snapshot.players||[];liveState=snapshot.state;
+ }catch(error){$("liveStatus").textContent="CONNECTION ISSUE";$("entrantList").innerHTML='<span class="hint">Could not load the live player list. Refresh in a moment.</span>';return;}
  $("liveCount").textContent=livePlayers.length+" / "+liveState.max_players;
  $("liveStatus").textContent=liveState.is_open?"ENTRIES OPEN":"ENTRIES CLOSED";
  $("liveStatus").style.color=liveState.is_open?"var(--blue)":"var(--pink)";
