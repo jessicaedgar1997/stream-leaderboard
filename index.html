@@ -65,10 +65,29 @@ const SUPABASE_URL = "https://xbogfbyysrjttyfvzluh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_rU0twvbtzrYlKqqbuNPD6g_B38iNXt5";
 const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const money = n => "$" + Number(n || 0).toFixed(2);
-const countdownStart = new Date(2026, 10, 9, 0, 0, 0).getTime();
-const countdownEnd = new Date(2026, 10, 24, 0, 0, 0).getTime();
+// Each leaderboard event runs for 15 calendar days (Nov 9–23, then Nov 24–Dec 8, etc.).
+// The cycle advances automatically at local midnight, so the countdown never needs manual date edits.
+const firstCountdownStart = new Date(2026, 10, 9, 0, 0, 0);
+const eventLengthDays = 15;
+function getCurrentEvent(){
+ const now = new Date();
+ const dayNumber = d => Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+ const daysSinceFirst = dayNumber(now) - dayNumber(firstCountdownStart);
+ const cycle = Math.max(0, Math.floor(daysSinceFirst / eventLengthDays));
+ const start = new Date(firstCountdownStart.getFullYear(), firstCountdownStart.getMonth(), firstCountdownStart.getDate() + cycle * eventLengthDays, 0, 0, 0);
+ const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + eventLengthDays, 0, 0, 0);
+ return {start, end};
+}
 function updateCountdown(){
  const now=Date.now();
+ const event = getCurrentEvent();
+ const countdownStart = event.start.getTime();
+ const countdownEnd = event.end.getTime();
+ const dateOptions = {month:"long", day:"numeric"};
+ const startLabel = event.start.toLocaleDateString("en-US", dateOptions);
+ const lastDay = new Date(event.end.getFullYear(), event.end.getMonth(), event.end.getDate() - 1);
+ const endLabel = lastDay.toLocaleDateString("en-US", dateOptions);
+ document.querySelector(".date-range").textContent = startLabel.toUpperCase() + " – " + endLabel.toUpperCase() + ", " + event.start.getFullYear();
  const remaining=Math.max(0,countdownEnd-now);
  const days=Math.floor(remaining/86400000);
  const hours=Math.floor((remaining%86400000)/3600000);
@@ -82,13 +101,9 @@ function updateCountdown(){
  document.getElementById("countdownProgressFill").style.width=progress+"%";
  document.getElementById("countdownProgress").setAttribute("aria-valuenow",String(Math.round(progress)));
  document.getElementById("countdownProgressText").textContent="Event progress: "+Math.floor(progress)+"%";
- if(now>=countdownEnd){
-  document.getElementById("countdownTimer").hidden=true;
-  document.getElementById("countdownEnded").hidden=false;
- }else{
-  document.getElementById("countdownTimer").hidden=false;
-  document.getElementById("countdownEnded").hidden=true;
- }
+ // The next cycle begins automatically at this event's end, so the timer stays active.
+ document.getElementById("countdownTimer").hidden=false;
+ document.getElementById("countdownEnded").hidden=true;
 }
 updateCountdown();
 setInterval(updateCountdown,1000);
