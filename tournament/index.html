@@ -52,6 +52,28 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 <p class="status" id="liveAdminMessage" role="status"></p>
 </details>
 </section>
+<section class="panel" id="slotCallPanel">
+<h2>🎰 LIVE SLOT-CALL QUEUE</h2>
+<div class="setup-grid">
+<div><div class="hint">Games waiting</div><div class="live-count" id="slotCallCount">0</div></div>
+<div><div class="hint">Queue status</div><div class="live-status">LIVE QUEUE</div></div>
+</div>
+<div class="entrant-list" id="slotQueue"><span class="hint">Loading slot calls…</span></div>
+<p class="hint">Tell chat: <strong>!call + your game</strong> — one active request per viewer. The queue updates live.</p>
+<div class="actions">
+<button id="nextSlotCall">▶ Call next game</button>
+<button class="pink" id="clearSlotCalls">Clear slot queue</button>
+<button class="dark" id="refreshSlotCalls">Refresh queue</button>
+</div>
+<p class="status" id="slotAdminMessage" role="status"></p>
+<details style="margin-top:12px">
+<summary style="cursor:pointer;color:var(--pink);font-weight:900;padding:8px 0">🤖 BotRix command setup</summary>
+<p class="hint">Create a custom command named <strong>!call</strong>. Set its response to:</p>
+<pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:12px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=call&amp;key=440ab8b1efc07d8593d22762120fc732f4fb64575e311c6be1d77e74d6bfb669&amp;user=$(sender)&amp;game=$(urlencode $(variable))]</pre>
+<p class="hint">Optional second command: <strong>!calls</strong> — response:</p>
+<pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:12px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=calls&amp;key=440ab8b1efc07d8593d22762120fc732f4fb64575e311c6be1d77e74d6bfb669]</pre>
+</details>
+</section>
 <section class="panel setup" id="setup">
 <h2>🎮 Set up your tournament</h2>
 <div class="setup-grid">
@@ -79,6 +101,7 @@ const SUPABASE_KEY = "sb_publishable_rU0twvbtzrYlKqqbuNPD6g_B38iNXt5";
 const CONTROL_URL = SUPABASE_URL + "/functions/v1/tournament-join";
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let livePlayers = [];
+let liveCalls = [];
 let liveState = null;
 function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 async function refreshLivePlayers(){
@@ -87,7 +110,7 @@ async function refreshLivePlayers(){
   if(!response.ok)throw new Error("Snapshot unavailable");
   const snapshot=await response.json();
   if(snapshot.error)throw new Error(snapshot.error);
-  livePlayers=snapshot.players||[];liveState=snapshot.state;
+  livePlayers=snapshot.players||[];liveCalls=snapshot.calls||[];liveState=snapshot.state;
  }catch(error){$("liveStatus").textContent="CONNECTION ISSUE";$("entrantList").innerHTML='<span class="hint">Could not load the live player list. Refresh in a moment.</span>';return;}
  $("liveCount").textContent=livePlayers.length+" / "+liveState.max_players;
  $("liveStatus").textContent=liveState.is_open?"ENTRIES OPEN":"ENTRIES CLOSED";
@@ -95,6 +118,9 @@ async function refreshLivePlayers(){
  $("entrantList").innerHTML=livePlayers.length?livePlayers.map((x,i)=>'<span class="entrant">'+(i+1)+'. '+safeText(x.username)+'</span>').join(""):'<span class="hint">No one has entered yet. Be the first with !join!</span>';
  $("livePlayerCount").value=String(liveState.max_players);
  $("liveEventName").value=liveState.tournament_name;
+ $("slotCallCount").textContent=String(liveCalls.length);
+ $("slotQueue").innerHTML=liveCalls.length?liveCalls.map((x,i)=>'<span class="entrant">'+(i+1)+'. <strong>'+safeText(x.game)+'</strong> — '+safeText(x.username)+' <button class="dark remove-slot" data-id="'+x.id+'" style="padding:3px 8px;margin-left:5px">×</button></span>').join(""):'<span class="hint">No game requests yet. Chat can type !call + their game!</span>';
+ $("slotQueue").querySelectorAll(".remove-slot").forEach(btn=>btn.addEventListener("click",()=>adminSlotAction("remove-call",{id:btn.dataset.id})));
 }
 async function adminAction(action,extra={}){
  const key=$("adminKey").value.trim();
@@ -116,6 +142,18 @@ $("loadChatPlayers").onclick=async()=>{
  $("setup").scrollIntoView({behavior:"smooth",block:"start"});
 };
 $("refreshPlayers").onclick=refreshLivePlayers;
+async function adminSlotAction(action,extra={}){
+ const key=$("adminKey").value.trim();
+ if(!key){$("slotAdminMessage").textContent="Open Organizer controls and paste your access key first.";return;}
+ const u=new URL(CONTROL_URL);u.searchParams.set("action",action);u.searchParams.set("key",key);
+ Object.entries(extra).forEach(([k,v])=>u.searchParams.set(k,String(v)));
+ $("slotAdminMessage").textContent="Working…";
+ try{const res=await fetch(u.toString());const msg=await res.text();$("slotAdminMessage").textContent=msg;if(res.ok)await refreshLivePlayers();}
+ catch(e){$("slotAdminMessage").textContent="Couldn't reach the slot queue. Try again.";}
+}
+$("nextSlotCall").onclick=()=>adminSlotAction("next");
+$("clearSlotCalls").onclick=()=>{if(confirm("Clear the entire slot-call queue?"))adminSlotAction("clear-calls");};
+$("refreshSlotCalls").onclick=refreshLivePlayers;
 $("saveLiveSettings").onclick=async()=>{
  const size=$("livePlayerCount").value,name=$("liveEventName").value.trim();
  await adminAction("size",{value:size});
