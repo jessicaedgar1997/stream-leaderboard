@@ -44,9 +44,9 @@ h1{color:#35d5ff}p{line-height:1.6;color:#d5def6}.btn{display:inline-block;margi
     });
     const result = await response.json();
     if (!response.ok || !result.ok) throw new Error(result.error || "Kick sign-in could not be completed.");
-    sessionStorage.setItem("slotbuddy_kick_access_token", result.access_token);
-    sessionStorage.setItem("slotbuddy_kick_user_id", result.user.id);
-    sessionStorage.setItem("slotbuddy_kick_username", result.user.username);
+    if (!result.session_key) throw new Error("SlotBuddy could not save your sign-in. Please try again.");
+    localStorage.setItem("slotbuddy_kick_session", result.session_key);
+    localStorage.setItem("slotbuddy_kick_username", result.user.username);
     message.textContent = "You're signed in as @" + result.user.username + "! Taking you back to SlotBuddy…";
     back.hidden = false;
     setTimeout(() => location.replace("./"), 1600);
