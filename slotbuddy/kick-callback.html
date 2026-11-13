@@ -51,7 +51,7 @@ h1{color:#35d5ff}p{line-height:1.6;color:#d5def6}.btn{display:inline-block;margi
     back.hidden = false;
     setTimeout(() => location.replace("./"), 1600);
   } catch (error) {
-    message.textContent = error.message || "Something went wrong. Please return to SlotBuddy and try again.";
+    message.textContent = "We couldn't finish connecting your Kick account. Please try again, or return to SlotBuddy.";
     back.hidden = false;
   }
 })();
