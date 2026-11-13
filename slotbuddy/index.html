@@ -85,26 +85,67 @@ setInterval(refreshQueue, 10000);
 const LOGIN_URL = "https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login";
 const button = document.getElementById("kickLogin");
 const message = document.getElementById("loginMessage");
-const savedName = sessionStorage.getItem("slotbuddy_kick_username");
-if (savedName) {
-  message.textContent = "You're signed in as @" + savedName + ".";
+const SESSION_KEY = "slotbuddy_kick_session";
+let signedIn = false;
+function showSignedIn(user) {
+  signedIn = true;
+  message.textContent = "You're signed in as @" + user.username + ". You'll stay signed in on this browser until you choose to sign out.";
   message.className = "msg signed";
-  button.textContent = "Sign in with another Kick account";
+  button.textContent = "Sign out";
+  button.disabled = false;
+}
+async function resumeSavedLogin() {
+  const sessionKey = localStorage.getItem(SESSION_KEY);
+  if (!sessionKey) return;
+  button.disabled = true;
+  message.textContent = "Restoring your Kick sign-in…";
+  try {
+    const response = await fetch(LOGIN_URL, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "resume", session_key: sessionKey })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.ok || !data.user) throw new Error(data.error || "Please sign in again.");
+    showSignedIn(data.user);
+  } catch (error) {
+    localStorage.removeItem(SESSION_KEY);
+    signedIn = false;
+    message.textContent = "Your saved sign-in needs to be renewed. Please sign in with Kick again.";
+    message.className = "msg";
+    button.textContent = "Sign in with Kick";
+    button.disabled = false;
+  }
 }
 button.addEventListener("click", async () => {
   button.disabled = true;
-  message.className = "msg";
-  message.textContent = "Opening Kick securely…";
   try {
+    if (signedIn) {
+      message.textContent = "Signing you out…";
+      const sessionKey = localStorage.getItem(SESSION_KEY);
+      await fetch(LOGIN_URL, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "logout", session_key: sessionKey })
+      });
+      localStorage.removeItem(SESSION_KEY);
+      signedIn = false;
+      message.textContent = "You've signed out. Sign in with Kick whenever you're ready.";
+      message.className = "msg";
+      button.textContent = "Sign in with Kick";
+      button.disabled = false;
+      return;
+    }
+    message.className = "msg";
+    message.textContent = "Opening Kick securely…";
     const response = await fetch(LOGIN_URL + "?action=start");
     const data = await response.json();
     if (!response.ok || !data.authorize_url) throw new Error(data.error || "Kick sign-in is not ready yet.");
     location.href = data.authorize_url;
   } catch (error) {
-    message.textContent = error.message || "Could not start Kick sign-in. Please try again.";
+    message.textContent = error.message || "Could not complete that action. Please try again.";
     button.disabled = false;
   }
 });
+resumeSavedLogin();
 </script>
 </body>
 </html>
