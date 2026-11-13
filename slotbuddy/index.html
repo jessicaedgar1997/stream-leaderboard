@@ -11,6 +11,7 @@
 .wrap{max-width:1050px;margin:auto}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:10px 2px 20px}.brand{font-weight:1000;font-size:1.2rem;letter-spacing:.04em}.brand span{color:var(--blue)}.tag{border:1px solid #4b5c87;border-radius:99px;padding:7px 12px;color:var(--muted);font-size:.78rem;font-weight:800}
 .hero{text-align:center;padding:30px 16px 24px}.eyebrow{color:var(--blue);font-weight:900;letter-spacing:.22em;text-transform:uppercase;font-size:.75rem}.hero h1{font-size:clamp(2.3rem,7vw,4.4rem);line-height:1;margin:12px 0;background:linear-gradient(90deg,var(--blue),#fff,var(--pink));background-clip:text;color:transparent}.hero p{color:var(--muted);max-width:650px;margin:0 auto;line-height:1.6}
 .login{max-width:650px;margin:0 auto 22px;padding:22px;text-align:center;border:1px solid #52628c;border-radius:20px;background:linear-gradient(145deg,#1b2545f2,#121a33f2);box-shadow:0 0 32px #35d5ff18}.login h2{margin:0 0 7px}.login p{color:var(--muted);margin:0 0 15px;line-height:1.5}.btn{border:0;border-radius:999px;padding:13px 23px;font-size:1rem;font-weight:900;cursor:pointer;color:#090d1d;background:linear-gradient(90deg,var(--blue),#fff,var(--pink));box-shadow:0 0 22px #35d5ff33}.btn:disabled{opacity:.6;cursor:wait}.smallbtn{margin-left:8px;padding:8px 14px;font-size:.85rem}.msg{min-height:22px;margin-top:12px!important;font-size:.9rem}.signed{color:#a7f3d0!important;font-weight:800}
+.queue{max-width:850px;margin:0 auto 22px;padding:22px;border:1px solid #52628c;border-radius:20px;background:linear-gradient(145deg,#1b2545f2,#121a33f2);box-shadow:0 0 32px #ff39b918}.queue-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.queue h2{margin:0 0 6px}.queue-sub{color:var(--muted);margin:0;line-height:1.5}.queue-count{font-size:1.6rem;font-weight:950;color:var(--pink)}.queue-list{display:grid;gap:8px;margin:16px 0}.queue-item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 13px;border:1px solid #34466f;border-radius:12px;background:#0e1530}.queue-item strong{color:var(--blue)}.queue-empty{padding:16px;text-align:center;color:var(--muted);border:1px dashed #52628c;border-radius:12px}.queue-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.queue-note{color:var(--muted);font-size:.86rem;line-height:1.55}.queue details{margin-top:14px}.queue summary{cursor:pointer;color:var(--pink);font-weight:850}.queue pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:12px;border-radius:10px;color:#dce6ff;font-size:.82rem}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:18px 0}.card{background:linear-gradient(145deg,rgba(27,37,69,.96),rgba(16,23,46,.96));border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 12px 35px #0004}.card h2{margin:8px 0;font-size:1.25rem}.card p{color:var(--muted);line-height:1.55;margin:0}.icon{font-size:1.8rem}.status{display:inline-flex;margin-top:16px;border:1px solid #56668d;border-radius:99px;padding:6px 10px;font-size:.72rem;font-weight:900;letter-spacing:.04em;color:var(--gold)}.wide{grid-column:1/-1}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.step{background:#0e1530;border:1px solid #2c3b61;border-radius:14px;padding:15px}.step b{display:block;color:var(--blue);margin-bottom:5px}.step small{color:var(--muted);line-height:1.45}.footer{text-align:center;color:#8492b7;font-size:.8rem;padding:20px 0 10px}
 @media(max-width:650px){body{padding:12px}.grid{grid-template-columns:1fr}.wide{grid-column:auto}.steps{grid-template-columns:1fr}.hero{padding:24px 8px}.smallbtn{margin:12px 0 0}}
 </style>
@@ -23,7 +24,23 @@
 <h2>💗 Sign in with Kick 💙</h2>
 <p>Use your Kick account to identify yourself in SlotBuddy. Your Kick password stays on Kick.</p>
 <button class="btn" id="kickLogin" type="button">Sign in with Kick</button>
-<p class="msg" id="loginMessage" role="status" aria-live="polite">Kick sign-in setup is being finished. The button will work once the new Kick app is registered.</p>
+<p class="msg" id="loginMessage" role="status" aria-live="polite">Sign in with Kick to identify yourself. You can view the public slot queue without signing in.</p>
+</section>
+
+<section class="queue" aria-label="Live slot call queue">
+  <div class="queue-head">
+    <div><h2>🎰 LIVE SLOT-CALL QUEUE</h2><p class="queue-sub">Chat types <strong>!slot + your game</strong> to join the line.</p></div>
+    <div class="queue-count"><span id="queueCount">0</span> waiting</div>
+  </div>
+  <div class="queue-list" id="queueList"><div class="queue-empty">Loading the live queue…</div></div>
+  <div class="queue-actions"><button class="btn smallbtn" id="refreshQueue" type="button">Refresh queue</button><span class="queue-note" id="queueUpdated" role="status">Updating automatically.</span></div>
+  <p class="queue-note">One active request per viewer. Use <strong>!find</strong> in chat to check your place in line.</p>
+  <details>
+    <summary>🤖 BotRix setup for the !find command</summary>
+    <p class="queue-note">Create a custom command named <strong>!find</strong> and use this as its response:</p>
+    <pre>fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-queue?action=find&amp;user=$(sender)]</pre>
+    <p class="queue-note">Your existing <strong>!slot</strong> command continues to add requests to the same queue. This new command only checks a viewer's position.</p>
+  </details>
 </section>
 <section class="grid" aria-label="SlotBuddy features">
 <article class="card"><div class="icon">🎰</div><h2>Slot Calls</h2><p>View the live request queue, see who's up next and keep track of games that have already been called.</p><div class="status">COMING NEXT</div></article>
@@ -35,6 +52,35 @@
 <footer class="footer">SlotBuddy is separate from your Rainbet leaderboard. Existing tournament and bot connections are left untouched.</footer>
 </main>
 <script>
+
+const QUEUE_URL = "https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-queue";
+const queueList = document.getElementById("queueList");
+const queueCount = document.getElementById("queueCount");
+const queueUpdated = document.getElementById("queueUpdated");
+function queueSafeText(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+async function refreshQueue() {
+  queueUpdated.textContent = "Checking the queue…";
+  try {
+    const response = await fetch(QUEUE_URL + "?action=snapshot", { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok || data.error) throw new Error(data.error || "Queue unavailable");
+    const calls = data.calls || [];
+    queueCount.textContent = String(calls.length);
+    queueList.innerHTML = calls.length
+      ? calls.map((call, index) => '<div class="queue-item"><span><strong>#' + (index + 1) + ' · ' + queueSafeText(call.game) + '</strong></span><span>@' + queueSafeText(call.username) + '</span></div>').join("")
+      : '<div class="queue-empty">The queue is empty. Be the first to call a game in chat!</div>';
+    queueUpdated.textContent = "Last checked " + new Date().toLocaleTimeString() + " · refreshes automatically";
+  } catch (error) {
+    queueUpdated.textContent = "Couldn't load the queue. Tap Refresh to try again.";
+    queueList.innerHTML = '<div class="queue-empty">The live queue is temporarily unavailable.</div>';
+  }
+}
+document.getElementById("refreshQueue").addEventListener("click", refreshQueue);
+refreshQueue();
+setInterval(refreshQueue, 10000);
+
 const LOGIN_URL = "https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login";
 const button = document.getElementById("kickLogin");
 const message = document.getElementById("loginMessage");
