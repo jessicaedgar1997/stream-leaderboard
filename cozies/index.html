@@ -33,7 +33,7 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-i
 <button class="btn full" id="saveBonus" type="submit">ADD BONUS TO COZIES</button>
 </form>
 </section>
-<section class="panel"><h2>💗 Cozies</h2><div id="leaderboard" class="list"><div class="empty">Loading Cozies standings…</div></div><h3 style="margin:25px 0 8px">🎁 Saved Bonuses</h3><div id="savedBonuses" class="list"><div class="empty">Loading saved bonuses…</div></div></section>
+<section class="panel"><h2>💗 Cozies</h2><div id="leaderboard" class="list"><div class="empty">Loading Cozies standings…</div></div><div id="savedBonuses" class="list"></div></section>
 <footer class="footer">JessicaEdgar1997 · Cozy vibes and bonus wins 💗💙</footer>
 </main>
 <script>
@@ -55,7 +55,7 @@ async function loadBonuses(){
   const totals={};items.forEach(x=>{const name=String(x.caller_name||"Unknown").trim()||"Unknown";const k=name.toLowerCase();if(!totals[k])totals[k]={name,total:0,bet:0,count:0};totals[k].total+=Number(x.payout_amount||0);totals[k].bet+=Number(x.spin_amount||0);totals[k].count++;});
   const standings=Object.values(totals).sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name));
   $("leaderboard").innerHTML=standings.length?standings.map((x,i)=>'<div class="rank"><div class="place">'+ordinal(i+1)+'</div><div><div class="rankname">'+safe(x.name)+'</div><small>'+x.count+' bonus'+(x.count===1?"":"es")+' · Total bets: '+money(x.bet)+'</small></div><div class="amount">'+money(x.total)+'</div></div>').join(""):'<div class="empty">Cozies is waiting for the first bonus! 💗</div>';
-  $("savedBonuses").innerHTML=items.length?items.map(x=>'<div class="entry"><div><strong>'+safe(x.bonus_name||"Bonus")+'</strong><small>@'+safe(x.caller_name||"Unknown")+' · Bet: '+money(x.spin_amount)+' · Payout: '+money(x.payout_amount)+' · '+new Date(x.created_at).toLocaleString()+'</small></div><button class="btn" onclick="deleteCoziesBonus('+Number(x.id)+')">DELETE</button></div>').join(""):'<div class="empty">No saved bonuses yet.</div>';
+  $("savedBonuses").innerHTML=items.length?items.map(x=>'<div class="entry"><div><strong>'+safe(x.bonus_name||"Bonus")+'</strong><small>@'+safe(x.caller_name||"Unknown")+' · Bet: '+money(x.spin_amount)+' · Payout: '+money(x.payout_amount)+' <button class="btn" style="padding:5px 11px;font-size:.72rem;margin-left:6px" onclick="deleteCoziesBonus('+Number(x.id)+')">DELETE</button> · '+new Date(x.created_at).toLocaleString()+'</small></div></div>').join(""):'';
   }catch(e){$("leaderboard").innerHTML='<div class="empty">Could not load Cozies standings. Refresh the page to try again.</div>';}
 }
 async function checkOrganizer(){
