@@ -237,8 +237,7 @@ async function saveBracketOnline(){
  if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return;}
  if(!rounds.length)return;
  const payload={name:$("eventName").value.trim()||"Tournament",count:playerTotal,rounds};
- const u=new URL(CONTROL_URL);u.searchParams.set("action","bracket-save");if(key)u.searchParams.set("key",key);if(session_key)u.searchParams.set("session_key",session_key);u.searchParams.set("data",JSON.stringify(payload));
- try{const res=await fetch(u.toString());const msg=await res.text();$("setupStatus").textContent=msg;}
+ try{const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});const msg=await res.text();$("setupStatus").textContent=msg;}
  catch(e){$("setupStatus").textContent="Bracket is on this screen, but the online save failed. Please try Save bracket again.";}
 }
 function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
