@@ -44,6 +44,7 @@ const SESSION_KEY="slotbuddy_kick_session";
 let organizerSession="";
 const $=id=>document.getElementById(id);
 const money=value=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(value)||0);
+function ordinal(n){const mod100=n%100;if(mod100>=11&&mod100<=13)return n+"th";return n+({1:"st",2:"nd",3:"rd"}[n%10]||"th");}
 function safe(value){return String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 async function loadBonuses(){
  try{
@@ -54,8 +55,8 @@ async function loadBonuses(){
   $("payoutTotal").textContent=money(items.reduce((sum,x)=>sum+Number(x.payout_amount||0),0));
   const totals={};items.forEach(x=>{const name=String(x.caller_name||"Unknown").trim()||"Unknown";const k=name.toLowerCase();if(!totals[k])totals[k]={name,total:0,count:0};totals[k].total+=Number(x.payout_amount||0);totals[k].count++;});
   const standings=Object.values(totals).sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name));
-  $("leaderboard").innerHTML=standings.length?standings.map((x,i)=>'<div class="rank"><div class="place">#'+(i+1)+'</div><div><div class="rankname">'+safe(x.name)+'</div><small>'+x.count+' bonus'+(x.count===1?"":"es")+'</small></div><div class="amount">'+money(x.total)+'</div></div>').join(""):'<div class="empty">The leaderboard is waiting for the first bonus! 💗</div>';
-  $("bonusList").innerHTML=items.length?items.map(x=>'<div class="entry"><div><strong>'+safe(x.bonus_name)+'</strong><small>Called by @'+safe(x.caller_name||"Unknown")+' · Spin: '+money(x.spin_amount)+'<br>'+new Date(x.created_at).toLocaleString()+'</small></div><div class="amount">'+money(x.payout_amount)+'</div></div>').join(""):'<div class="empty">No Cozies bonuses have been added yet. The first one is waiting! 💗</div>';
+  $("leaderboard").innerHTML=standings.length?standings.map((x,i)=>'<div class="rank"><div class="place">'+ordinal(i+1)+'</div><div><div class="rankname">'+safe(x.name)+'</div><small>'+x.count+' bonus'+(x.count===1?"":"es")+'</small></div><div class="amount">'+money(x.total)+'</div></div>').join(""):'<div class="empty">The leaderboard is waiting for the first bonus! 💗</div>';
+  $("bonusList").innerHTML=items.length?items.map(x=>'<div class="entry"><div><strong>'+safe(x.bonus_name)+'</strong><small>Called by @'+safe(x.caller_name||"Unknown")+' · Spin: '+money(x.spin_amount)+'<br>'+new Date(x.created_at).toLocaleString()+'</small></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end"><span class="amount">'+money(x.payout_amount)+'</span>'+(organizerSession?'<button class="btn" onclick="deleteCoziesBonus('+Number(x.id)+')">DELETE</button>':'')+'</div></div>').join(""):'<div class="empty">No Cozies bonuses have been added yet. The first one is waiting! 💗</div>';
  }catch(e){$("bonusList").innerHTML='<div class="empty">Could not load bonus history. Refresh the page to try again.</div>';$("leaderboard").innerHTML='<div class="empty">Could not load the leaderboard.</div>';}
 }
 async function checkOrganizer(){
@@ -65,7 +66,7 @@ async function checkOrganizer(){
   const r=await fetch(LOGIN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:key})});
   const d=await r.json();if(!r.ok||!d.ok||!d.user)throw new Error("Please sign in again.");
   if(String(d.user.username).toLowerCase()!=="jessicaedgar1997"){$("loginStatus").textContent="You're signed in as @"+d.user.username+", but only the organizer account can add Cozies bonuses.";$("signInPrompt").classList.remove("hidden");return;}
-  organizerSession=key;$("loginStatus").textContent="Signed in as @"+d.user.username+" — you can manage Cozies!";$("bonusForm").classList.remove("hidden");$("coziesQueueControls").classList.remove("hidden");
+  organizerSession=key;$("loginStatus").textContent="Signed in as @"+d.user.username+" — you can manage Cozies!";$("bonusForm").classList.remove("hidden");$("coziesQueueControls").classList.remove("hidden");await loadBonuses();
  }catch(e){localStorage.removeItem(SESSION_KEY);$("loginStatus").textContent="Your Kick sign-in needs to be renewed.";$("signInPrompt").classList.remove("hidden");}
 }
 $("bonusForm").addEventListener("submit",async e=>{
@@ -79,6 +80,7 @@ $("bonusForm").addEventListener("submit",async e=>{
 });
 async function coziesQueueAction(action,extra={}){if(!organizerSession){$("coziesQueueStatus").textContent="Sign in with the organizer Kick account first.";return;}try{const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,session_key:organizerSession,...extra})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Queue update failed.");$("coziesQueueStatus").textContent=d.message||"Queue updated.";await loadBonuses();}catch(e){$("coziesQueueStatus").textContent=e.message;}}
 window.prepareCoziesBonus=id=>{const item=(window.coziesQueueData||[]).find(x=>Number(x.id)===Number(id));if(!item)return;$("callerName").value=item.username||"";$("bonusName").value=item.game_name||"";$("bonusForm").scrollIntoView({behavior:"smooth",block:"center"});$("spinAmount").focus({preventScroll:true});$("loginStatus").textContent="Ready to add the bonus for @"+(item.username||"")+" — enter the spin amount and payout, then save! 💗";};
+window.deleteCoziesBonus=async id=>{if(!organizerSession||!confirm("Permanently delete this bonus from Cozies history and recalculate the leaderboard?"))return;try{const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"bonus-delete",session_key:organizerSession,id})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Couldn't delete that bonus.");$("loginStatus").textContent="Bonus deleted. Leaderboard updated!";await loadBonuses();}catch(e){$("loginStatus").textContent=e.message;}};
 window.deleteCoziesQueue=id=>coziesQueueAction("queue-delete",{id});
 $("coziesOn").onclick=()=>coziesQueueAction("queue-mode",{mode:"cozies"});
 $("coziesOff").onclick=()=>coziesQueueAction("queue-mode",{mode:"off"});
