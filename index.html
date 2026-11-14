@@ -1,190 +1,47 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Top Supporters So Far! — Stream Leaderboard</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#100d24">
+<title>JessicaEdgar1997 | Stream Hub</title>
 <style>
-:root{--blue:#35d5ff;--pink:#ff39b9;--ink:#101326;--panel:#1a203b;--white:#f8f9ff}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 5%,#173f70 0,transparent 34%),radial-gradient(circle at 90% 20%,#64205b 0,transparent 32%),#090d1d;color:var(--white);font-family:system-ui,-apple-system,Segoe UI,sans-serif;padding:22px}
-.wrap{max-width:850px;margin:auto}.hero{text-align:center;padding:25px 12px 18px}.eyebrow{letter-spacing:.22em;text-transform:uppercase;color:var(--blue);font-weight:800;font-size:.8rem}.hero h1{font-size:clamp(2.5rem,8vw,5rem);line-height:.98;margin:10px 0;color:white;text-shadow:0 0 12px var(--blue),0 0 28px var(--pink)}.hero h1 span{color:var(--pink)}.sub{color:#cbd5f5;margin:12px 0 0}
-.panel{background:linear-gradient(145deg,#1b2544,#14182d);border:1px solid #35466c;border-radius:22px;padding:clamp(14px,3vw,26px);box-shadow:0 0 28px #26cfff22,0 0 32px #ff39b922}
-.toolbar{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:15px}.toolbar p{margin:0;color:#c6d3ee;font-size:.9rem}
-button{border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;color:#08101f;background:linear-gradient(100deg,var(--blue),#8deaff)}button.pink{background:linear-gradient(100deg,var(--pink),#ff91d9)}button.ghost{background:#2a3456;color:white;border:1px solid #53658e}
-.rows{display:grid;gap:10px}.entry{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:12px;background:#10162b;border:1px solid #34456b;border-radius:16px;padding:13px 16px;box-shadow:inset 0 0 14px #2acfff0d}.rank{height:38px;width:38px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#07101e;background:linear-gradient(135deg,var(--blue),var(--pink));box-shadow:0 0 14px #ff39b966}.name{font-size:1.05rem;font-weight:800;overflow-wrap:anywhere}.amount{font-size:1.15rem;font-weight:900;color:var(--blue);text-shadow:0 0 12px #35d5ff66;white-space:nowrap}.entry:nth-child(even) .amount{color:var(--pink);text-shadow:0 0 12px #ff39b966}
-.note{text-align:center;font-weight:900;font-size:clamp(1.2rem,4vw,1.9rem);margin:23px 5px 4px;text-shadow:0 0 14px #ff39b966}.note span{color:var(--pink)}.foot{text-align:center;color:#9eaccd;font-size:.82rem;margin:12px}
-.countdown{text-align:center;margin:0 0 18px}.countdown h2{margin:0 0 6px;color:var(--blue);font-size:clamp(1.15rem,4vw,1.65rem);text-shadow:0 0 12px #35d5ff55}.countdown .date-range{color:#cbd5f5;margin:0 0 16px;font-weight:700}.timer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;max-width:560px;margin:0 auto 16px}.timer-unit{background:#0d1328;border:1px solid #43577f;border-radius:14px;padding:13px 5px;box-shadow:0 0 14px #35d5ff18}.timer-number{display:block;font-size:clamp(1.45rem,5vw,2.25rem);font-weight:950;line-height:1.1;color:var(--pink);text-shadow:0 0 12px #ff39b966;font-variant-numeric:tabular-nums}.timer-label{display:block;margin-top:5px;color:#cbd5f5;font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.progress-track{height:13px;background:#0b1022;border:1px solid #43577f;border-radius:999px;overflow:hidden;max-width:620px;margin:0 auto 8px}.progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--pink));border-radius:999px;box-shadow:0 0 14px #ff39b966;transition:width .5s ease}.progress-caption{color:#cbd5f5;font-size:.82rem;margin:0}.countdown-ended{color:var(--pink);font-weight:900;font-size:1.25rem;margin:0 0 12px}
-
-.editor{margin-top:18px}.editor summary{cursor:pointer;font-weight:800;color:var(--blue);padding:7px}.editrow{display:grid;grid-template-columns:1fr 130px auto;gap:8px;margin:9px 0}.editrow input{min-width:0;background:#0d1328;border:1px solid #43577f;color:white;border-radius:10px;padding:11px}.editrow button{padding:8px 12px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-@media(max-width:480px){body{padding:12px}.entry{grid-template-columns:38px 1fr auto;padding:11px 10px;gap:8px}.rank{width:34px;height:34px}.amount{font-size:1rem}.editrow{grid-template-columns:1fr 100px}.editrow button{grid-column:1/-1}}
-</style></head><body><main class="wrap">
-<header class="hero"><div class="eyebrow">👑 Stream leaderboard 👑</div><h1>TOP SUPPORTERS <span>SO FAR!</span></h1><p class="sub">Sky blue • Hot pink • Big leaderboard energy</p></header>
-<section class="panel countdown" aria-label="Event countdown">
-<h2>⏳ LEADERBOARD COUNTDOWN ⏳</h2>
-<p class="date-range">NOVEMBER 9 – NOVEMBER 23, 2026</p>
-<div id="countdownTimer" class="timer-grid" aria-live="off">
-<div class="timer-unit"><span class="timer-number" id="timerDays">00</span><span class="timer-label">Days</span></div>
-<div class="timer-unit"><span class="timer-number" id="timerHours">00</span><span class="timer-label">Hours</span></div>
-<div class="timer-unit"><span class="timer-number" id="timerMinutes">00</span><span class="timer-label">Minutes</span></div>
-<div class="timer-unit"><span class="timer-number" id="timerSeconds">00</span><span class="timer-label">Seconds</span></div>
-</div>
-<p id="countdownEnded" class="countdown-ended" hidden>🎉 EVENT COMPLETE! 🎉</p>
-<div class="progress-track" role="progressbar" aria-label="Event progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="countdownProgress"><div class="progress-fill" id="countdownProgressFill"></div></div>
-<p class="progress-caption" id="countdownProgressText">Event progress: 0%</p>
+:root{--bg:#0b0a19;--panel:#19152f;--line:#49345f;--pink:#ff4fc8;--blue:#65dfff;--purple:#9c78ff;--white:#fffaff;--muted:#c5bad9}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(circle at 12% 0%,#183b68 0,transparent 32%),radial-gradient(circle at 92% 8%,#642052 0,transparent 32%),radial-gradient(circle at 50% 90%,#29184c 0,transparent 38%),var(--bg);color:var(--white);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+a{color:inherit;text-decoration:none}.wrap{max-width:1180px;margin:auto;padding:18px}
+.topbar{position:sticky;top:0;z-index:10;background:#0b0a19eF;backdrop-filter:blur(14px);border-bottom:1px solid #49345f}.nav{max-width:1180px;margin:auto;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.brand{font-size:1.15rem;font-weight:1000;letter-spacing:.035em}.brand .pink{color:var(--pink)}.brand .blue{color:var(--blue)}.links{display:flex;gap:7px;flex-wrap:wrap}.links a{padding:8px 11px;border:1px solid transparent;border-radius:999px;color:#e8ddf7;font-size:.84rem;font-weight:800}.links a:hover,.links a:focus{border-color:#73538f;background:#261b3b;color:white}
+.hero{text-align:center;padding:64px 12px 34px}.eyebrow{color:var(--blue);font-size:.76rem;font-weight:950;letter-spacing:.23em;text-transform:uppercase}.hero h1{font-size:clamp(2.6rem,8vw,5.7rem);line-height:.98;margin:13px 0;background:linear-gradient(95deg,var(--blue),#fff,var(--pink),var(--purple));background-clip:text;color:transparent;filter:drop-shadow(0 0 18px #b54aff35)}.hero p{max-width:680px;margin:14px auto 0;color:var(--muted);font-size:1.05rem;line-height:1.65}.hero-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:24px}.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:999px;font-weight:950;color:#130d22;background:linear-gradient(100deg,var(--blue),#fff,var(--pink));box-shadow:0 0 22px #ff4fc833}.btn.alt{background:#241a3a;color:#fff;border:1px solid #73538f;box-shadow:none}
+.section-title{text-align:center;margin:24px 0 18px}.section-title h2{margin:0;color:var(--blue);font-size:clamp(1.3rem,4vw,1.8rem)}.section-title p{margin:7px 0 0;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.card{position:relative;overflow:hidden;min-height:205px;padding:22px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,#211a3bF2,#131126F5);box-shadow:0 14px 35px #0005;transition:transform .18s,border-color .18s}.card:hover{transform:translateY(-3px);border-color:var(--pink)}.card:before{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-75px;top:-85px;background:var(--glow,var(--pink));filter:blur(55px);opacity:.2}.icon{font-size:2rem}.card h3{position:relative;margin:12px 0 7px;font-size:1.25rem}.card p{position:relative;margin:0;color:var(--muted);line-height:1.55;font-size:.93rem}.card .open{position:relative;display:inline-block;margin-top:18px;color:var(--blue);font-size:.82rem;font-weight:950;letter-spacing:.06em}.card.pink{--glow:var(--pink)}.card.blue{--glow:var(--blue)}.card.purple{--glow:var(--purple)}.card.soon{opacity:.86}.soon-label{display:inline-block;margin-top:15px;border:1px solid #73538f;border-radius:999px;padding:5px 9px;color:#e0caff;font-size:.7rem;font-weight:900;letter-spacing:.07em}
+.banner{margin:24px 0 8px;padding:22px;border:1px solid #654a84;border-radius:22px;background:linear-gradient(110deg,#251a43,#152b47,#351638);text-align:center}.banner h2{margin:0 0 7px;color:var(--pink)}.banner p{margin:0;color:#e4d9f2;line-height:1.6}.footer{text-align:center;color:#9589ac;font-size:.8rem;padding:28px 0 16px}
+@media(max-width:850px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:560px){.wrap{padding:12px}.nav{padding:11px 12px}.links{width:100%;gap:3px}.links a{padding:7px 8px;font-size:.76rem}.hero{padding:45px 6px 25px}.cards{grid-template-columns:1fr}.card{min-height:175px}}
+</style>
+</head>
+<body>
+<header class="topbar"><nav class="nav" aria-label="Main navigation">
+<a class="brand" href="./">👑 <span class="pink">JESSICA</span><span class="blue">EDGAR1997</span></a>
+<div class="links">
+<a href="./">Home</a><a href="./leaderboard/">Leaderboard</a><a href="./slotbuddy/bonus-hunt.html">Bonus Hunt</a><a href="./tournament/">Tournament</a><a href="#cozies">Cozies</a><a href="./slotbuddy/">Slot Calls</a>
+</div></nav></header>
+<main class="wrap">
+<section class="hero">
+<div class="eyebrow">💗 YOUR STREAM · YOUR COMMUNITY · YOUR RULES 💙</div>
+<h1>THE CHAOS QUEEN'S<br>STREAM HUB</h1>
+<p>Welcome to JessicaEdgar1997 — your one-stop spot for the leaderboard, bonus hunts, tournaments, cozy nights and live slot calls. Everything together, easy to find.</p>
+<div class="hero-actions"><a class="btn" href="https://kick.com/jessicaedgar1997" target="_blank" rel="noopener">WATCH THE LIVE STREAM</a><a class="btn alt" href="./slotbuddy/">OPEN SLOT CALLS</a></div>
 </section>
-
-<section class="panel">
-<div class="toolbar"><p id="updated">20 viewers • Current standings, highest to lowest</p><button class="ghost" id="share">Share / Copy link</button></div>
-<div class="rows" id="rows"></div>
-<div class="note">These are the <span>Top supporters</span> so far!<br>Keep it up everyone! 💗</div>
-<p class="foot">Standings are shown highest to lowest.</p>
-</section>
-<section class="panel editor">
-<h2 style="margin:4px 0 12px;color:var(--blue)">Organizer controls</h2>
-<div id="loginBox">
-<p class="foot">Only the authorized organizer email can edit scores. Sign in with a secure email link.</p>
-<form id="loginForm" class="actions">
-<input id="loginEmail" type="email" required autocomplete="email" placeholder="Your organizer email" style="flex:1;min-width:220px;background:#0d1328;border:1px solid #43577f;color:white;border-radius:10px;padding:11px">
-<button type="submit">Email me a sign-in link</button>
-</form>
+<section aria-label="Website features">
+<div class="section-title"><h2>YOUR STREAM TOOLS</h2><p>Pick where the fun is happening today. 👑</p></div>
+<div class="cards">
+<a class="card pink" href="./leaderboard/"><div class="icon">🏆</div><h3>Leaderboard</h3><p>Check the latest standings, see who's climbing and find the prize breakdown.</p><span class="open">VIEW LEADERBOARD →</span></a>
+<a class="card blue" href="./slotbuddy/bonus-hunt.html"><div class="icon">🎰</div><h3>Bonus Hunt</h3><p>Track your starting balance, saved bonuses, payouts and hunt progress.</p><span class="open">OPEN BONUS HUNT →</span></a>
+<a class="card purple" href="./tournament/"><div class="icon">🥇</div><h3>Tournament</h3><p>Manage player entries, tournament brackets and the road to the crown.</p><span class="open">OPEN TOURNAMENT →</span></a>
+<a class="card blue" href="./slotbuddy/"><div class="icon">🎮</div><h3>Slot Calls · SlotBuddy</h3><p>See the live viewer queue. Chat can call a game with !slot + your game.</p><span class="open">VIEW SLOT QUEUE →</span></a>
+<a class="card pink soon" id="cozies" href="#cozies"><div class="icon">🧸</div><h3>Cozies</h3><p>A home for cozy stream events, community games and all the good vibes.</p><span class="soon-label">COMING SOON</span></a>
+<a class="card purple" href="https://kick.com/jessicaedgar1997" target="_blank" rel="noopener"><div class="icon">💜</div><h3>Catch the Stream</h3><p>Come hang out live with the Chaos Queen. Good vibes are free!</p><span class="open">VISIT KICK →</span></a>
 </div>
-<div id="adminBox" hidden>
-<p id="adminStatus" class="foot">Organizer signed in.</p>
-<div id="editRows"></div>
-<form id="addForm" class="editrow">
-<input id="newName" required maxlength="60" placeholder="New supporter name">
-<input id="newAmount" required type="number" min="0" step="0.01" placeholder="Amount">
-<button type="submit" class="pink">Add supporter</button>
-</form>
-<div class="actions"><button type="button" class="ghost" id="logout">Sign out</button></div>
-</div>
-<p class="foot" id="editorMessage" aria-live="polite">Viewers can see the leaderboard but cannot change it.</p>
 </section>
-
-<section class="panel payout-panel" aria-label="Weekly prize breakdown" style="margin:18px 0">
-<h2 style="text-align:center;color:var(--blue);margin:4px 0 6px;text-shadow:0 0 12px #35d5ff55">💰 $100 WEEKLY PRIZE BREAKDOWN 💰</h2>
-<p style="text-align:center;color:#cbd5f5;margin:0 0 16px">Self-funded weekly prizes — finish in the top 6!</p>
-<div class="rows">
-<div class="entry"><div class="rank">🥇</div><div class="name">1st Place — $35</div></div>
-<div class="entry"><div class="rank">🥈</div><div class="name">2nd Place — $25</div></div>
-<div class="entry"><div class="rank">🥉</div><div class="name">3rd Place — $18</div></div>
-<div class="entry"><div class="rank">🏅</div><div class="name">4th Place — $10</div></div>
-<div class="entry"><div class="rank">🏅</div><div class="name">5th Place — $7</div></div>
-<div class="entry"><div class="rank">🏅</div><div class="name">6th Place — $5</div></div>
-</div>
-<p class="foot">Total prize pool: $100 💗💙</p>
-</section>
-</main><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const SUPABASE_URL = "https://xbogfbyysrjttyfvzluh.supabase.co";
-const SUPABASE_KEY = "sb_publishable_rU0twvbtzrYlKqqbuNPD6g_B38iNXt5";
-const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const money = n => "$" + Number(n || 0).toFixed(2);
-// Each leaderboard event runs for 15 calendar days (Nov 9–23, then Nov 24–Dec 8, etc.).
-// The cycle advances automatically at local midnight, so the countdown never needs manual date edits.
-const firstCountdownStart = new Date(2026, 10, 9, 0, 0, 0);
-const eventLengthDays = 15;
-function getCurrentEvent(){
- const now = new Date();
- const dayNumber = d => Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
- const daysSinceFirst = dayNumber(now) - dayNumber(firstCountdownStart);
- const cycle = Math.max(0, Math.floor(daysSinceFirst / eventLengthDays));
- const start = new Date(firstCountdownStart.getFullYear(), firstCountdownStart.getMonth(), firstCountdownStart.getDate() + cycle * eventLengthDays, 0, 0, 0);
- const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + eventLengthDays, 0, 0, 0);
- return {start, end};
-}
-function updateCountdown(){
- const now=Date.now();
- const event = getCurrentEvent();
- const countdownStart = event.start.getTime();
- const countdownEnd = event.end.getTime();
- const dateOptions = {month:"long", day:"numeric"};
- const startLabel = event.start.toLocaleDateString("en-US", dateOptions);
- const lastDay = new Date(event.end.getFullYear(), event.end.getMonth(), event.end.getDate() - 1);
- const endLabel = lastDay.toLocaleDateString("en-US", dateOptions);
- document.querySelector(".date-range").textContent = startLabel.toUpperCase() + " – " + endLabel.toUpperCase() + ", " + event.start.getFullYear();
- const remaining=Math.max(0,countdownEnd-now);
- const days=Math.floor(remaining/86400000);
- const hours=Math.floor((remaining%86400000)/3600000);
- const minutes=Math.floor((remaining%3600000)/60000);
- const seconds=Math.floor((remaining%60000)/1000);
- document.getElementById("timerDays").textContent=String(days).padStart(2,"0");
- document.getElementById("timerHours").textContent=String(hours).padStart(2,"0");
- document.getElementById("timerMinutes").textContent=String(minutes).padStart(2,"0");
- document.getElementById("timerSeconds").textContent=String(seconds).padStart(2,"0");
- const progress=Math.min(100,Math.max(0,((now-countdownStart)/(countdownEnd-countdownStart))*100));
- document.getElementById("countdownProgressFill").style.width=progress+"%";
- document.getElementById("countdownProgress").setAttribute("aria-valuenow",String(Math.round(progress)));
- document.getElementById("countdownProgressText").textContent="Event progress: "+Math.floor(progress)+"%";
- // The next cycle begins automatically at this event's end, so the timer stays active.
- document.getElementById("countdownTimer").hidden=false;
- document.getElementById("countdownEnded").hidden=true;
-}
-updateCountdown();
-setInterval(updateCountdown,1000);
-
-let entriesCache = [];
-let currentSession = null;
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function sortedEntries(entries){return [...entries].sort((a,b)=>Number(b.amount)-Number(a.amount)||String(a.username).localeCompare(String(b.username)));}
-function render(entries){
- const sorted=sortedEntries(entries);
- document.getElementById("rows").innerHTML=sorted.map((x,i)=>'<div class="entry"><div class="rank">'+(i+1)+'</div><div class="name">'+esc(x.username)+'</div><div class="amount">'+money(x.amount)+'</div></div>').join("")||"<p>No entries yet.</p>";
- document.getElementById("updated").textContent=sorted.length+" viewers • Live standings, highest to lowest";
- renderEditor();
-}
-function renderEditor(){
- const loginBox=document.getElementById("loginBox"), adminBox=document.getElementById("adminBox");
- loginBox.hidden=!!currentSession; adminBox.hidden=!currentSession;
- if(!currentSession)return;
- document.getElementById("adminStatus").textContent="Signed in as organizer. Edit amounts or remove supporters below.";
- document.getElementById("editRows").innerHTML=sortedEntries(entriesCache).map(x=>'<div class="editrow" data-user="'+esc(x.username)+'"><input class="editName" aria-label="Supporter name" value="'+esc(x.username)+'" disabled><input class="editAmount" aria-label="Amount for '+esc(x.username)+'" type="number" min="0" step="0.01" value="'+Number(x.amount).toFixed(2)+'"><button type="button" class="saveRow">Save</button><button type="button" class="ghost deleteRow">Remove</button></div>').join("");
-}
-async function loadLeaderboard(){
- const {data,error}=await client.from("leaderboard_entries").select("username,amount").order("amount",{ascending:false});
- if(error){document.getElementById("connection").textContent="Could not load leaderboard: "+error.message;return;}
- entriesCache=data||[]; render(entriesCache);
- document.getElementById("connection").textContent="💗💙 LIVE — connected to the shared leaderboard";
-}
-document.getElementById("loginForm").addEventListener("submit",async e=>{
- e.preventDefault();
- const email=document.getElementById("loginEmail").value.trim();
- const msg=document.getElementById("editorMessage");
- const {error}=await client.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
- msg.textContent=error?"Could not send sign-in email: "+error.message:"Sign-in link sent. Check your email and click the link on this device.";
-});
-document.getElementById("editRows").addEventListener("click",async e=>{
- const row=e.target.closest(".editrow"); if(!row)return;
- const username=row.dataset.user, msg=document.getElementById("editorMessage");
- if(e.target.classList.contains("saveRow")){
-  const amount=Number(row.querySelector(".editAmount").value);
-  if(!Number.isFinite(amount)||amount<0){msg.textContent="Enter a valid amount of zero or more.";return;}
-  const {error}=await client.from("leaderboard_entries").update({amount}).eq("username",username);
-  msg.textContent=error?"Save failed: "+error.message:"Saved "+username+". Everyone's leaderboard will update.";
-  if(!error)await loadLeaderboard();
- }
- if(e.target.classList.contains("deleteRow")){
-  if(!confirm("Remove "+username+" from the leaderboard?"))return;
-  const {error}=await client.from("leaderboard_entries").delete().eq("username",username);
-  msg.textContent=error?"Remove failed: "+error.message:"Removed "+username+".";
-  if(!error)await loadLeaderboard();
- }
-});
-document.getElementById("addForm").addEventListener("submit",async e=>{
- e.preventDefault();
- const username=document.getElementById("newName").value.trim();
- const amount=Number(document.getElementById("newAmount").value);
- const msg=document.getElementById("editorMessage");
- if(!username||!Number.isFinite(amount)||amount<0){msg.textContent="Enter a name and a valid non-negative amount.";return;}
- const {error}=await client.from("leaderboard_entries").insert({username,amount});
- msg.textContent=error?"Could not add supporter: "+error.message:"Added "+username+".";
- if(!error){e.target.reset();await loadLeaderboard();}
-});
-document.getElementById("logout").onclick=async()=>{await client.auth.signOut();document.getElementById("editorMessage").textContent="You are signed out. Viewers can still see the leaderboard.";};
-client.auth.onAuthStateChange((_event,session)=>{currentSession=session;renderEditor();});
-client.auth.getSession().then(({data})=>{currentSession=data.session;renderEditor();});
-loadLeaderboard();
-client.channel("leaderboard-live").on("postgres_changes",{event:"*",schema:"public",table:"leaderboard_entries"},loadLeaderboard).subscribe(status=>{
- if(status==="SUBSCRIBED")document.getElementById("connection").textContent="💗💙 LIVE — connected to the shared leaderboard";
-});
-document.getElementById("share").onclick=async()=>{const url=location.href;if(navigator.share){try{await navigator.share({title:"Top Supporters So Far!",url});}catch(e){}}else if(navigator.clipboard){await navigator.clipboard.writeText(url);alert("Page link copied.");}else{prompt("Copy this page link:",url);}};
-</script></body></html>
+<section class="banner"><h2>THE CHAOS QUEEN IS HOME 👑</h2><p>Hot pink energy. Sky-blue glow. A little purple magic.<br>Built for the community, with Jessica's own twist.</p></section>
+<footer class="footer">© JessicaEdgar1997 · Made for the stream and its community 💗💙</footer>
+</main>
+</body></html>
