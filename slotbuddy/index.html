@@ -27,6 +27,7 @@ p{color:#b7c2df;line-height:1.55;margin:0 0 20px}
 <button class="btn" id="kickLogin" type="button">Sign in with Kick</button>
 <p class="msg" id="loginMessage" role="status" aria-live="polite">You are not signed in.</p>
 </main>
+<script>
 const LOGIN_URL = "https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login";
 const button = document.getElementById("kickLogin");
 const message = document.getElementById("loginMessage");
@@ -91,5 +92,6 @@ button.addEventListener("click", async () => {
   }
 });
 resumeSavedLogin();
+</script>
 </body>
 </html>
