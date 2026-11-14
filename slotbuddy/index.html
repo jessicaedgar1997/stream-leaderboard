@@ -29,7 +29,7 @@
 
 <section class="queue" aria-label="Live slot call queue">
   <div class="queue-head">
-    <div><h2>🎰 LIVE SLOT-CALL QUEUE</h2><p class="queue-sub">Chat types <strong>!slot + your game</strong> to join the line.</p></div>
+    <div><h2>🎰 LIVE SLOT-CALL QUEUE</h2><p class="queue-sub">Only viewers signed in with Kick can call: <strong>!slot + your game</strong>.</p></div>
     <div class="queue-count"><span id="queueCount">0</span> waiting</div>
   </div>
   <div class="queue-list" id="queueList"><div class="queue-empty">Loading the live queue…</div></div>
@@ -70,7 +70,7 @@ async function refreshQueue() {
     const calls = data.calls || [];
     queueCount.textContent = String(calls.length);
     queueList.innerHTML = calls.length
-      ? calls.map((call, index) => '<div class="queue-item"><span><strong>#' + (index + 1) + ' · ' + queueSafeText(call.game) + '</strong></span><span>@' + queueSafeText(call.username) + '</span></div>').join("")
+          ? calls.map((call, index) => '<div class="queue-item"><strong>#' + (index + 1) + ' · ' + queueSafeText(call.game) + ' · @' + queueSafeText(call.username) + '</strong></div>').join("")
       : '<div class="queue-empty">The queue is empty. Be the first to call a game in chat!</div>';
     queueUpdated.textContent = "Last checked " + new Date().toLocaleTimeString() + " · refreshes automatically";
   } catch (error) {
