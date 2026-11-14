@@ -18,6 +18,7 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-i
 <body>
 <header class="topbar"><nav><a class="brand" href="../">👑 JESSICA<span>EDGAR1997</span></a><div class="links"><a href="../">Home</a><a href="../leaderboard/">Leaderboard</a><a href="../slotbuddy/bonus-hunt.html">Bonus Hunt</a><a href="../tournament/">Tournament</a><a href="./">Cozies</a></div></nav></header>
 <main class="wrap">
+<section class="panel" id="coziesQueuePanel"><h2>🎮 Cozies Slot Queue</h2><p class="msg" id="coziesQueueStatus">Loading queue…</p><div id="coziesQueueControls" class="actions hidden"><button class="btn" id="coziesOn">TURN COZIES CALLS ON</button><button class="btn" id="coziesOff">TURN CALLS OFF</button><button class="btn" id="coziesClear">CLEAR QUEUE</button><button class="btn" id="coziesRefresh">REFRESH QUEUE</button></div><div id="coziesQueueList" class="list"><div class="empty">Loading queue…</div></div></section>
 <section class="hero"><div class="eyebrow">💗 COZY NIGHTS · BONUS MOMENTS · BIG WINS 💙</div><h1>COZIES</h1><p>Add every bonus to the list and track who is leading by total payouts. Highest payout total takes 1st place!</p></section>
 <section class="panel stats"><div class="stat"><small>BONUSES RECORDED</small><strong id="bonusCount">0</strong></div><div class="stat"><small>TOTAL PAYOUTS</small><strong id="payoutTotal">$0.00</strong></div></section>
 <section class="panel" id="organizerPanel">
@@ -34,7 +35,6 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-i
 </section>
 <section class="panel"><h2>🏆 Cozies Leaderboard</h2><p class="msg">Ranked by each person's combined bonus payouts. Highest total is 1st place.</p><div id="leaderboard" class="list"><div class="empty">Loading standings…</div></div></section>
 <section class="panel"><h2>💰 Cozies Bonus History</h2><div id="bonusList" class="list"><div class="empty">Loading bonus history…</div></div></section>
-<section class="panel" id="coziesQueuePanel"><h2>🎮 Cozies Slot Queue</h2><p class="msg" id="coziesQueueStatus">Loading queue…</p><div id="coziesQueueControls" class="actions hidden"><button class="btn" id="coziesOn">TURN COZIES CALLS ON</button><button class="btn" id="coziesOff">TURN CALLS OFF</button><button class="btn" id="coziesClear">CLEAR QUEUE</button><button class="btn" id="coziesRefresh">REFRESH QUEUE</button></div><div id="coziesQueueList" class="list"><div class="empty">Loading queue…</div></div></section>
 <footer class="footer">JessicaEdgar1997 · Cozy vibes and bonus wins 💗💙</footer>
 </main>
 <script>
