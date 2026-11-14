@@ -40,7 +40,7 @@ button,.btn{display:inline-flex;justify-content:center;align-items:center;border
   <p id="adminMessage" class="message" aria-live="polite"></p>
  </div>
 </section>
-<section id="resultsPanel" class="panel hidden"><h2>🏆 Results</h2><p id="resultSummary" class="status"></p><div id="guessResults"></div></section>
+<section id="resultsPanel" class="panel hidden"><h2 id="resultsHeading">👥 Community guesses</h2><p id="resultSummary" class="status"></p><div id="guessResults"></div></section>
 <footer class="foot">JessicaEdgar1997 · SlotBuddy Community Games 💗💙</footer>
 </main>
 <script>
@@ -78,8 +78,8 @@ async function load(){
   else if(round?.is_open&&sessionKey){$("guessMessage").textContent="You're signed in. You get one guess, and it locks as soon as you submit.";}
   else if(round&&!round.is_open&&round.actual_balance===null){$("guessMessage").textContent="Entries are paused for now. Your saved guess will stay in this round if it reopens.";}
   else if(!round?.is_open){$("guessMessage").textContent="This round is finished. Watch for the next one!";}
-  const showResults=!!round&&!round.is_open;$("resultsPanel").classList.toggle("hidden",!showResults);
-  if(showResults){const winners=d.winners||[];if(round.actual_balance===null){$("resultSummary").textContent="Entries are paused. These guesses are saved and will remain if the round is reopened.";}else{$("resultSummary").innerHTML="Final Bonus Hunt balance: <strong>"+("$"+Number(round.actual_balance).toFixed(2))+"</strong>"+(winners.length?" · Closest guess"+(winners.length>1?"es":"")+": <strong class=\"winner\">"+winners.map(esc).join(", ")+"</strong>":" · No guesses were submitted.");}$("guessResults").innerHTML=(d.entries||[]).map(x=>'<div class="entry"><span>'+esc(x.username)+'</span><strong>'+("$"+Number(x.guess).toFixed(2))+'</strong></div>').join("")||'<p class="status">No entries were submitted.</p>';}
+  const showResults=!!round&&(Number(d.entry_count||0)>0||round.actual_balance!==null);$("resultsPanel").classList.toggle("hidden",!showResults);
+  if(showResults){const winners=d.winners||[];const isRevealed=round.actual_balance!==null;$("resultsHeading").textContent=isRevealed?"🏆 Final results":"👥 Community guesses";if(!isRevealed){$("resultSummary").textContent=round.is_open?"Everyone's guesses so far! This list refreshes automatically.":"Entries are paused. These guesses are saved and will remain if the round is reopened.";}else{$("resultSummary").innerHTML="Final Bonus Hunt balance: <strong>"+("$"+Number(round.actual_balance).toFixed(2))+"</strong>"+(winners.length?" · Closest guess"+(winners.length>1?"es":"")+": <strong class=\"winner\">"+winners.map(esc).join(", ")+"</strong>":" · No guesses were submitted.");}$("guessResults").innerHTML=(d.entries||[]).map(x=>'<div class="entry"><span>'+esc(x.username)+'</span><strong>'+("$"+Number(x.guess).toFixed(2))+'</strong></div>').join("")||'<p class="status">No entries were submitted.</p>';}
  }catch(e){$("roundDescription").textContent=e.message||"Could not load this round.";}
 }
 $("guessForm").addEventListener("submit",async e=>{e.preventDefault();if(!sessionKey||hasSubmitted||!round?.is_open)return;const button=$("submitGuess");button.disabled=true;button.textContent="LOCKING…";$("guessMessage").textContent="Submitting your one allowed guess…";try{const d=await request("POST",{action:"submit",session_key:sessionKey,guess:$("guessInput").value});$("guessMessage").textContent=d.message||"Your guess is locked!";hasSubmitted=true;$("guessInput").value="";await load();}catch(err){$("guessMessage").textContent=err.message;}finally{button.disabled=false;button.textContent="LOCK IN MY GUESS";}});
