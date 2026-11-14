@@ -38,7 +38,7 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 <div class="entrant-list" id="entrantList"><span class="hint">Loading player list…</span></div>
 <p class="hint">Tell chat to type <strong>!join</strong> to enter. They can use <strong>!leave</strong> before entries close.</p>
 <div class="actions"><button id="loadChatPlayers">⬇ Load chat players into bracket</button><button class="dark" id="refreshPlayers">Refresh list</button></div>
-<details class="editor-admin" style="margin-top:16px">
+<details class="editor-admin" id="ownerControls" style="margin-top:16px">
 <summary style="cursor:pointer;color:var(--pink);font-weight:900;padding:8px 0">👑 Organizer controls</summary>
 <div class="admin-grid">
 <div class="wide"><label for="adminKey">Organizer access key</label><input id="adminKey" type="password" autocomplete="off" placeholder="Paste your private organizer key"></div>
@@ -124,6 +124,11 @@ const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let livePlayers = [];
 let liveCalls = [];
 let liveState = null;
+async function applyStaffView(){
+ const session=localStorage.getItem("slotbuddy_kick_session");if(!session)return;
+ try{const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});const d=await r.json();if(d.ok&&d.user?.role==="moderator")$("ownerControls").hidden=true;}catch{}
+}
+
 function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 async function refreshLivePlayers(){
  try{
@@ -226,7 +231,7 @@ $("testKick").onclick=async()=>{
  }catch(e){$("kickStatus").textContent="Couldn't send the test message. Please try again.";}
 };
 refreshKickStatus();
-refreshLivePlayers();
+applyStaffView();refreshLivePlayers();
 sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"slot_calls"},refreshLivePlayers).subscribe();
 let rounds = [];
 let playerTotal = 4;
