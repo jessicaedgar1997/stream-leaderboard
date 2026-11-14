@@ -50,7 +50,7 @@ async function loadBonuses(){
   const r=await fetch(API,{cache:"no-store"});const d=await r.json();if(!r.ok||d.error)throw new Error(d.error||"Couldn't load bonuses.");
   const items=d.bonuses||[];const queue=d.queue||[];window.coziesQueueData=queue;window.coziesActiveQueue=d.active_queue||null;$("bonusCount").textContent=String(items.length);
   $("coziesQueueStatus").textContent=d.active_queue==="cozies"?"Cozies calls are ON. Bonus Hunt calls are OFF.":d.active_queue==="bonus_hunt"?"Cozies calls are OFF. Bonus Hunt is accepting !slot requests.":"Both queues are OFF. !slot requests are paused.";
-  $("coziesQueueList").innerHTML=queue.length?queue.map((x,i)=>'<div class="entry"><div><strong>#'+(i+1)+' @'+safe(x.username)+'</strong><small>'+safe(x.game_name)+' · '+new Date(x.created_at).toLocaleString()+'</small></div><button class="btn" onclick="deleteCoziesQueue('+Number(x.id)+')">DELETE</button></div>').join(""):'<div class="empty">The Cozies queue is empty.</div>';
+  $("coziesQueueList").innerHTML=queue.length?queue.map((x,i)=>'<div class="entry"><div><strong>#'+(i+1)+' @'+safe(x.username)+'</strong><small>'+safe(x.game_name)+' · '+new Date(x.created_at).toLocaleString()+'</small></div><div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><button class="btn" onclick="prepareCoziesBonus('+Number(x.id)+')">ADD BONUS</button><button class="btn" onclick="deleteCoziesQueue('+Number(x.id)+')">DELETE</button></div></div>').join(""):'<div class="empty">The Cozies queue is empty.</div>';
   $("payoutTotal").textContent=money(items.reduce((sum,x)=>sum+Number(x.payout_amount||0),0));
   const totals={};items.forEach(x=>{const name=String(x.caller_name||"Unknown").trim()||"Unknown";const k=name.toLowerCase();if(!totals[k])totals[k]={name,total:0,count:0};totals[k].total+=Number(x.payout_amount||0);totals[k].count++;});
   const standings=Object.values(totals).sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name));
@@ -78,6 +78,7 @@ $("bonusForm").addEventListener("submit",async e=>{
  finally{button.disabled=false;button.textContent="ADD BONUS TO COZIES";}
 });
 async function coziesQueueAction(action,extra={}){if(!organizerSession){$("coziesQueueStatus").textContent="Sign in with the organizer Kick account first.";return;}try{const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,session_key:organizerSession,...extra})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Queue update failed.");$("coziesQueueStatus").textContent=d.message||"Queue updated.";await loadBonuses();}catch(e){$("coziesQueueStatus").textContent=e.message;}}
+window.prepareCoziesBonus=id=>{const item=(window.coziesQueueData||[]).find(x=>Number(x.id)===Number(id));if(!item)return;$("callerName").value=item.username||"";$("bonusName").value=item.game_name||"";$("bonusForm").scrollIntoView({behavior:"smooth",block:"center"});$("spinAmount").focus({preventScroll:true});$("loginStatus").textContent="Ready to add the bonus for @"+(item.username||"")+" — enter the spin amount and payout, then save! 💗";};
 window.deleteCoziesQueue=id=>coziesQueueAction("queue-delete",{id});
 $("coziesOn").onclick=()=>coziesQueueAction("queue-mode",{mode:"cozies"});
 $("coziesOff").onclick=()=>coziesQueueAction("queue-mode",{mode:"off"});
