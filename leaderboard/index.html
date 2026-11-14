@@ -189,5 +189,5 @@ client.channel("leaderboard-live").on("postgres_changes",{event:"*",schema:"publ
  if(status==="SUBSCRIBED")document.getElementById("connection").textContent="💗💙 LIVE — connected to the shared leaderboard";
 });
 document.getElementById("share").onclick=async()=>{const url=location.href;if(navigator.share){try{await navigator.share({title:"Top Supporters So Far!",url});}catch(e){}}else if(navigator.clipboard){await navigator.clipboard.writeText(url);alert("Page link copied.");}else{prompt("Copy this page link:",url);}};
-</script><script src="../slotbuddy/kick-chat-panel.js"></script>
+</script>
 </body></html>
