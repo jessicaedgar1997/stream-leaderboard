@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090d1d">
+<title>Bonus Hunt OBS Widget | SlotBuddy</title>
+<style>
+:root{--pink:#ff39b9;--blue:#35d5ff;--gold:#ffd76a;--white:#f8f9ff;--muted:#c4cce3;--line:#60739d}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;min-height:100%;background:transparent;color:var(--white);font-family:Arial,Helvetica,sans-serif}
+body{padding:10px}
+.widget{width:100%;max-width:570px;border:2px solid #35d5ff;border-radius:20px;overflow:hidden;background:linear-gradient(145deg,rgba(13,22,48,.96),rgba(35,14,48,.96));box-shadow:0 0 22px rgba(53,213,255,.25),0 0 26px rgba(255,57,185,.18)}
+.header{padding:15px 18px;background:linear-gradient(90deg,rgba(255,57,185,.22),rgba(53,213,255,.2));border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em}
+.brand{font-size:10px;color:var(--blue);font-weight:900;letter-spacing:.16em;margin-top:5px}
+.live{font-size:10px;font-weight:900;color:#a7f3d0;border:1px solid #43d6a0;border-radius:99px;padding:5px 8px;white-space:nowrap}
+.hunt{padding:8px 16px;color:var(--muted);font-size:12px;border-bottom:1px solid rgba(96,115,157,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.highlights{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:10px}
+.highlight{background:rgba(5,11,28,.75);border:1px solid var(--line);border-radius:13px;padding:11px;min-width:0}
+.highlight.top{border-color:rgba(255,215,106,.8)}
+.highlight.low{border-color:rgba(255,57,185,.7)}
+.kicker{font-size:10px;font-weight:1000;letter-spacing:.07em;color:var(--gold);margin-bottom:6px}
+.low .kicker{color:var(--pink)}
+.game{font-size:15px;font-weight:1000;overflow-wrap:anywhere;color:var(--white)}
+.details{font-size:11px;line-height:1.55;color:var(--muted);margin-top:5px;overflow-wrap:anywhere}
+.details b{color:var(--blue)}
+.section-title{padding:4px 14px 7px;font-size:11px;letter-spacing:.1em;font-weight:1000;color:var(--blue)}
+.rows{padding:0 10px 11px;display:grid;gap:6px}
+.entry{display:grid;grid-template-columns:minmax(0,1.5fr) auto;gap:8px;align-items:center;padding:9px 10px;border-radius:10px;background:rgba(5,11,28,.72);border:1px solid rgba(96,115,157,.6);min-width:0}
+.entry-main{min-width:0}
+.entry-game{font-size:12px;font-weight:900;overflow-wrap:anywhere}
+.entry-caller{font-size:10px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
+.entry-stats{text-align:right;font-size:11px;font-weight:900;white-space:nowrap}
+.entry-stats .mult{display:block;color:var(--blue);font-size:10px;margin-top:3px}
+.empty{padding:18px 12px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5;background:rgba(5,11,28,.65);border-radius:11px;margin:0 10px 12px}
+.footer{padding:7px 14px 10px;text-align:center;color:#aebbd8;font-size:9px;letter-spacing:.08em}
+@media(max-width:380px){body{padding:5px}.highlights{gap:6px;padding:7px}.highlight{padding:8px}.game{font-size:13px}.details{font-size:10px}.entry{padding:7px}}
+</style>
+</head>
+<body>
+<div class="widget">
+ <div class="header"><div><h1>🎰 BONUS HUNT RESULTS</h1><div class="brand">JESSICAEDGAR1997 · SLOTBUDDY</div></div><span class="live" id="live">● LIVE</span></div>
+ <div class="hunt" id="hunt">Loading current Bonus Hunt…</div>
+ <div class="highlights">
+  <div class="highlight top"><div class="kicker">🏆 TOP-PAYING SLOT</div><div class="game" id="topGame">Waiting for payout</div><div class="details" id="topDetails">The highest saved payout will appear here.</div></div>
+  <div class="highlight low"><div class="kicker">📉 LOWEST-PAYING SLOT</div><div class="game" id="lowGame">Waiting for payout</div><div class="details" id="lowDetails">The lowest saved payout will appear here.</div></div>
+ </div>
+ <div class="section-title">🎮 ALL BONUSED SLOTS</div>
+ <div class="rows" id="entries"><div class="empty">Loading bonus entries…</div></div>
+ <div class="footer">UPDATES AUTOMATICALLY · 💗 PINK × BLUE 💙</div>
+</div>
+<script>
+const API="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-bonus-hunt";
+const $=id=>document.getElementById(id);
+const money=v=>"$"+(Number(v||0)).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=v=>String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const mult=x=>Number(x.spin_amount)>0?(Number(x.payout_amount||0)/Number(x.spin_amount)).toFixed(2)+"x":"—";
+function details(x){return "@"+esc(x.username)+"<br>Spin: <b>"+money(x.spin_amount)+"</b> · Payout: <b>"+money(x.payout_amount)+"</b><br>Multiplier: <b>"+mult(x)+"</b>";}
+function render(s){
+ const entries=Array.isArray(s?.entries)?s.entries:[];
+ const paid=entries.filter(x=>Number(x.payout_amount||0)>0).slice().sort((a,b)=>Number(b.payout_amount||0)-Number(a.payout_amount||0));
+ $("hunt").textContent=s?.hunt?.title?(s.hunt.title+" · "+entries.length+" bonuses bonused"):(entries.length?entries.length+" bonuses saved":"No active Bonus Hunt");
+ const top=paid[0],low=paid[paid.length-1];
+ $("topGame").textContent=top?.game_name||"Waiting for payout";
+ $("topDetails").innerHTML=top?details(top):"The highest saved payout will appear here.";
+ $("lowGame").textContent=low?.game_name||"Waiting for payout";
+ $("lowDetails").innerHTML=low?details(low):"The lowest saved payout will appear here.";
+ $("entries").innerHTML=entries.length?entries.slice().sort((a,b)=>Number(b.payout_amount||0)-Number(a.payout_amount||0)).map(x=>'<div class="entry"><div class="entry-main"><div class="entry-game">'+esc(x.game_name||"Unnamed slot")+'</div><div class="entry-caller">@'+esc(x.username||"Unknown caller")+' · '+esc(x.bonus_type||"Regular")+'</div></div><div class="entry-stats">'+(Number(x.payout_amount)>0?money(x.payout_amount):"Pending")+'<span class="mult">'+(Number(x.payout_amount)>0?mult(x):"Payout pending")+'</span></div></div>').join(""):'<div class="empty">No slots have been bonused yet. They will appear here as bonuses are added.</div>';
+}
+async function refresh(){
+ try{const r=await fetch(API+"?action=snapshot",{cache:"no-store"});const s=await r.json();if(!r.ok||s.error)throw new Error(s.error||"Unable to load");render(s);$("live").textContent="● LIVE";$("live").style.color="#a7f3d0";}
+ catch(e){$("live").textContent="● RECONNECTING";$("live").style.color="#ffd76a";}
+}
+refresh();setInterval(refresh,3000);
+</script>
+</body>
+</html>
