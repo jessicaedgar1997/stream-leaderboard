@@ -33,7 +33,8 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-i
 </form>
 </section>
 <section class="panel"><h2>🏆 Cozies Leaderboard</h2><p class="msg">Ranked by each person's combined bonus payouts. Highest total is 1st place.</p><div id="leaderboard" class="list"><div class="empty">Loading standings…</div></div></section>
-<section class="panel"><h2>💰 Bonus Queue & History</h2><div id="bonusList" class="list"><div class="empty">Loading bonus history…</div></div></section>
+<section class="panel"><h2>💰 Cozies Bonus History</h2><div id="bonusList" class="list"><div class="empty">Loading bonus history…</div></div></section>
+<section class="panel" id="coziesQueuePanel"><h2>🎮 Cozies Slot Queue</h2><p class="msg" id="coziesQueueStatus">Loading queue…</p><div id="coziesQueueControls" class="actions hidden"><button class="btn" id="coziesOn">TURN COZIES CALLS ON</button><button class="btn" id="coziesOff">TURN CALLS OFF</button><button class="btn" id="coziesClear">CLEAR QUEUE</button><button class="btn" id="coziesRefresh">REFRESH QUEUE</button></div><div id="coziesQueueList" class="list"><div class="empty">Loading queue…</div></div></section>
 <footer class="footer">JessicaEdgar1997 · Cozy vibes and bonus wins 💗💙</footer>
 </main>
 <script>
@@ -47,7 +48,9 @@ function safe(value){return String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","
 async function loadBonuses(){
  try{
   const r=await fetch(API,{cache:"no-store"});const d=await r.json();if(!r.ok||d.error)throw new Error(d.error||"Couldn't load bonuses.");
-  const items=d.bonuses||[];$("bonusCount").textContent=String(items.length);
+  const items=d.bonuses||[];const queue=d.queue||[];window.coziesQueueData=queue;window.coziesActiveQueue=d.active_queue||null;$("bonusCount").textContent=String(items.length);
+  $("coziesQueueStatus").textContent=d.active_queue==="cozies"?"Cozies calls are ON. Bonus Hunt calls are OFF.":d.active_queue==="bonus_hunt"?"Cozies calls are OFF. Bonus Hunt is accepting !slot requests.":"Both queues are OFF. !slot requests are paused.";
+  $("coziesQueueList").innerHTML=queue.length?queue.map((x,i)=>'<div class="entry"><div><strong>#'+(i+1)+' @'+safe(x.username)+'</strong><small>'+safe(x.game_name)+' · '+new Date(x.created_at).toLocaleString()+'</small></div><button class="btn" onclick="deleteCoziesQueue('+Number(x.id)+')">DELETE</button></div>').join(""):'<div class="empty">The Cozies queue is empty.</div>';
   $("payoutTotal").textContent=money(items.reduce((sum,x)=>sum+Number(x.payout_amount||0),0));
   const totals={};items.forEach(x=>{const name=String(x.caller_name||"Unknown").trim()||"Unknown";const k=name.toLowerCase();if(!totals[k])totals[k]={name,total:0,count:0};totals[k].total+=Number(x.payout_amount||0);totals[k].count++;});
   const standings=Object.values(totals).sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name));
@@ -62,7 +65,7 @@ async function checkOrganizer(){
   const r=await fetch(LOGIN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:key})});
   const d=await r.json();if(!r.ok||!d.ok||!d.user)throw new Error("Please sign in again.");
   if(String(d.user.username).toLowerCase()!=="jessicaedgar1997"){$("loginStatus").textContent="You're signed in as @"+d.user.username+", but only the organizer account can add Cozies bonuses.";$("signInPrompt").classList.remove("hidden");return;}
-  organizerSession=key;$("loginStatus").textContent="Signed in as @"+d.user.username+" — you can add Cozies bonuses!";$("bonusForm").classList.remove("hidden");
+  organizerSession=key;$("loginStatus").textContent="Signed in as @"+d.user.username+" — you can manage Cozies!";$("bonusForm").classList.remove("hidden");$("coziesQueueControls").classList.remove("hidden");
  }catch(e){localStorage.removeItem(SESSION_KEY);$("loginStatus").textContent="Your Kick sign-in needs to be renewed.";$("signInPrompt").classList.remove("hidden");}
 }
 $("bonusForm").addEventListener("submit",async e=>{
@@ -74,6 +77,12 @@ $("bonusForm").addEventListener("submit",async e=>{
  }catch(err){$("loginStatus").textContent=err.message||"Couldn't save that bonus.";}
  finally{button.disabled=false;button.textContent="ADD BONUS TO COZIES";}
 });
+async function coziesQueueAction(action,extra={}){if(!organizerSession){$("coziesQueueStatus").textContent="Sign in with the organizer Kick account first.";return;}try{const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,session_key:organizerSession,...extra})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Queue update failed.");$("coziesQueueStatus").textContent=d.message||"Queue updated.";await loadBonuses();}catch(e){$("coziesQueueStatus").textContent=e.message;}}
+window.deleteCoziesQueue=id=>coziesQueueAction("queue-delete",{id});
+$("coziesOn").onclick=()=>coziesQueueAction("queue-mode",{mode:"cozies"});
+$("coziesOff").onclick=()=>coziesQueueAction("queue-mode",{mode:"off"});
+$("coziesClear").onclick=()=>{if(confirm("Clear every waiting Cozies request? Saved bonus history will stay."))coziesQueueAction("queue-clear");};
+$("coziesRefresh").onclick=loadBonuses;
 loadBonuses();checkOrganizer();
 </script>
 </body></html>
