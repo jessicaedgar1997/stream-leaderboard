@@ -21,19 +21,10 @@
 
 
 
+<section class="panel"><h2>🎮 Bonus Hunt Slot Queue</h2><div class="actions"><button class="btn secondary" id="bonusQueueClear">CLEAR QUEUE</button><button class="btn secondary" id="bonusQueueRefresh">REFRESH QUEUE</button></div><div class="list" id="bonusQueueList"><div class="empty">Loading queue…</div></div></section>
 <section class="panel"><h2>➕ Add a bonus</h2><p class="muted">Username and game fill in from the current slot call. Add the bonus when you open it. Enter the payout afterward when the bonus finishes.</p>
 <div class="fields"><div class="field"><label for="username">Kick username</label><input id="username" maxlength="25" placeholder="jessicaedgar1997"></div><div class="field"><label for="gameName">Game name</label><input id="gameName" maxlength="80" placeholder="Game name"></div><div class="field"><label for="bonusType">Bonus type</label><select id="bonusType"><option value="Regular">Regular</option><option value="Super">Super</option><option value="Epic">Epic</option></select></div><div class="field"><label for="spinAmount">Spin amount ($)</label><input id="spinAmount" type="number" min="0" step="0.01" placeholder="2.00"></div></div>
 <div class="actions"><button class="btn" id="addBonus">ADD BONUS</button><button class="btn secondary" id="clearForm">Clear fields</button></div><p class="message" id="formMessage" role="status"></p></section>
-
-
-
-
-
-
-
-
-<section class="panel"><h2>🗂️ Past Hunt Records</h2><p class="muted">Completed hunts are saved here. Delete an old hunt to remove its record and all bonuses from that hunt.</p><div class="list" id="pastHuntList"><div class="empty">Loading past hunts…</div></div></section>
-<section class="panel"><h2>🎮 Bonus Hunt Slot Queue</h2><div class="actions"><button class="btn secondary" id="bonusQueueClear">CLEAR QUEUE</button><button class="btn secondary" id="bonusQueueRefresh">REFRESH QUEUE</button></div><div class="list" id="bonusQueueList"><div class="empty">Loading queue…</div></div></section>
 
 <section class="panel"><h2>🏆 BONUS PAYOUT LEADERBOARD</h2><p class="muted">Games are automatically ranked from the highest payout to the lowest. Save a payout below and the standings move into place.</p><div class="list" id="payoutRankList"><div class="empty">Loading payout standings…</div></div></section>
 <section class="panel"><h2>📋 Bonus list</h2><p class="muted">Each bonus stays connected to the viewer who called it.</p><div class="list" id="bonusList"><div class="empty">Loading bonuses…</div></div></section>
