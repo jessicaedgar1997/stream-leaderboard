@@ -63,7 +63,7 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 <h2>🎰 LIVE SLOT-CALL QUEUE</h2>
 <div class="setup-grid">
 <div><div class="hint">Games waiting</div><div class="live-count" id="slotCallCount">0</div></div>
-<div><div class="hint">Queue status</div><div class="live-status">LIVE QUEUE</div></div>
+<div><div class="hint">Queue status</div><div class="live-status" id="slotQueueStatus">CALLS CLOSED</div></div>
 </div>
 <div class="entrant-list" id="slotQueue"><span class="hint">Loading slot calls…</span></div>
 <p class="hint">Tell chat: <strong>!slot + your game</strong> — one active request per viewer. The queue updates live.</p>
@@ -121,6 +121,7 @@ const SUPABASE_URL = "https://xbogfbyysrjttyfvzluh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_rU0twvbtzrYlKqqbuNPD6g_B38iNXt5";
 const CONTROL_URL = SUPABASE_URL + "/functions/v1/tournament-join";
 const BONUS_HUNT_URL = SUPABASE_URL + "/functions/v1/slotbuddy-bonus-hunt";
+const QUEUE_URL = SUPABASE_URL + "/functions/v1/slotbuddy-queue";
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let livePlayers = [];
 let liveCalls = [];
@@ -137,7 +138,10 @@ async function refreshLivePlayers(){
   if(!response.ok)throw new Error("Snapshot unavailable");
   const snapshot=await response.json();
   if(snapshot.error)throw new Error(snapshot.error);
-  livePlayers=snapshot.players||[];liveCalls=snapshot.calls||[];liveState=snapshot.state;renderTournamentBonuses(snapshot.bonus_entries||[]);
+  const queueResponse=await fetch(QUEUE_URL+"?action=snapshot",{cache:"no-store"});
+  const queueSnapshot=queueResponse.ok?await queueResponse.json():{calls:[],active_queue:null};
+  livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;renderTournamentBonuses(snapshot.bonus_entries||[]);
+  const queueStatus=$("slotQueueStatus");if(queueStatus){queueStatus.textContent=queueSnapshot.active_queue==="cozies"?"COZIES CALLS OPEN":queueSnapshot.active_queue==="bonus_hunt"?"BONUS HUNT CALLS OPEN":"CALLS CLOSED";queueStatus.style.color=queueSnapshot.active_queue?"var(--blue)":"var(--pink)";}
   if(snapshot.bracket&&snapshot.bracket.rounds?.length&&!hasLoadedSavedBracket){restoreSavedBracket(snapshot.bracket);hasLoadedSavedBracket=true;}
  }catch(error){$("liveStatus").textContent="CONNECTION ISSUE";$("entrantList").innerHTML='<span class="hint">Could not load the live player list. Refresh in a moment.</span>';return;}
  $("liveCount").textContent=livePlayers.length+" / "+liveState.max_players;
@@ -171,19 +175,18 @@ $("loadChatPlayers").onclick=async()=>{
 };
 $("refreshPlayers").onclick=refreshLivePlayers;
 async function adminSlotAction(action,extra={}){
- const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
- if(!key&&!session_key){$("slotAdminMessage").textContent="Sign in with Kick on SlotBuddy first.";return;}
- const u=new URL(CONTROL_URL);u.searchParams.set("action",action);
- Object.entries(extra).forEach(([k,v])=>u.searchParams.set(k,String(v)));
+ const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!session_key){$("slotAdminMessage").textContent="Sign in with Kick on SlotBuddy first.";return;}
+ const queueAction=action==="remove-call"?"remove":action==="clear-calls"?"clear":action;
  $("slotAdminMessage").textContent="Working…";
- try{const res=await fetch(u.toString(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key})});const msg=await res.text();$("slotAdminMessage").textContent=msg;if(res.ok)await refreshLivePlayers();}
+ try{const res=await fetch(QUEUE_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:queueAction,session_key,...extra})});const data=await res.json();$("slotAdminMessage").textContent=data.message||data.error||"Queue updated.";if(res.ok)await refreshLivePlayers();}
  catch(e){$("slotAdminMessage").textContent="Couldn't reach the slot queue. Try again.";}
 }
 $("nextSlotCall").onclick=async()=>{
- const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
- if(!key&&!session_key){$("slotAdminMessage").textContent="Sign in with Kick on SlotBuddy first.";return;}
+ const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!session_key){$("slotAdminMessage").textContent="Sign in with Kick on SlotBuddy first.";return;}
  $("slotAdminMessage").textContent="Calling the next game…";
- try{const res=await fetch(BONUS_HUNT_URL+"?action=next",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key})});const data=await res.json();$("slotAdminMessage").textContent=data.message||data.error||"Couldn't call the next game.";if(res.ok)await refreshLivePlayers();}
+ try{const res=await fetch(QUEUE_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"next",session_key})});const data=await res.json();$("slotAdminMessage").textContent=data.message||data.error||"Couldn't call the next game.";if(res.ok)await refreshLivePlayers();}
  catch(e){$("slotAdminMessage").textContent="Couldn't reach the slot queue. Try again.";}
 };
 $("clearSlotCalls").onclick=()=>{if(confirm("Clear the entire slot-call queue?"))adminSlotAction("clear-calls");};
@@ -221,7 +224,7 @@ $("testKick").onclick=async()=>{
 };
 refreshKickStatus();
 applyStaffView();refreshLivePlayers();
-sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"slot_calls"},refreshLivePlayers).subscribe();
+sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"slot_calls"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"cozies_queue"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"bonus_hunt_queue"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"stream_call_settings"},refreshLivePlayers).subscribe();
 function renderTournamentBonuses(items){
  const list=$("tournamentBonusList");if(!list)return;
  list.innerHTML=items.length?items.map(x=>"<div class='entrant' style='border-radius:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap'><strong>"+safeText(x.caller_name)+"</strong> · "+safeText(x.bonus_type||"Regular")+" · "+safeText(x.bonus_name)+" · Spin "+Number(x.spin_amount||0).toFixed(2)+" · Paid "+Number(x.payout_amount||0).toFixed(2)+" <button class='dark' style='padding:4px 8px' onclick='deleteTournamentBonus("+Number(x.id)+")'>DELETE</button></div>").join(""):"<span class='hint'>No tournament bonus buys recorded yet.</span>";
