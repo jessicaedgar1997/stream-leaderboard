@@ -34,7 +34,6 @@ h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em
 .entry-stats{text-align:right;font-size:11px;font-weight:900;white-space:nowrap}
 .entry-stats .mult{display:block;color:var(--blue);font-size:10px;margin-top:3px}
 .empty{padding:18px 12px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5;background:rgba(5,11,28,.65);border-radius:11px;margin:0 10px 12px}
-.footer{padding:7px 14px 10px;text-align:center;color:#aebbd8;font-size:9px;letter-spacing:.08em}
 @media(max-width:380px){body{padding:5px}.highlights{gap:6px;padding:7px}.highlight{padding:8px}.game{font-size:13px}.details{font-size:10px}.entry{padding:7px}}
 </style>
 </head>
@@ -42,9 +41,9 @@ h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em
 <div class="widget">
  <div class="header"><div><h1>🎰 BONUS HUNT RESULTS</h1><div class="brand">JESSICAEDGAR1997 · SLOTBUDDY</div></div><span class="live" id="live">● LIVE</span></div>
  <div class="hunt" id="hunt">Loading current Bonus Hunt…</div>
- <div class="highlights" style="padding-bottom:0">
-  <div class="highlight"><div class="kicker" style="color:var(--blue)">💰 STARTING AMOUNT</div><div class="game" id="startingAmount">$0.00</div></div>
-  <div class="highlight"><div class="kicker" style="color:var(--blue)">🏁 ENDING AMOUNT</div><div class="game" id="endingAmount">Not ended yet</div></div>
+ <div class="highlights balances">
+  <div class="balance-card"><div class="balance-label">💰 STARTING AMOUNT</div><div class="balance-value" id="startingAmount">—</div></div>
+  <div class="balance-card end"><div class="balance-label">🏁 ENDING AMOUNT</div><div class="balance-value" id="endingAmount">Waiting for End Hunt</div></div>
  </div>
  <div class="highlights">
   <div class="highlight top"><div class="kicker">🏆 TOP-PAYING SLOT</div><div class="game" id="topGame">Waiting for payout</div><div class="details" id="topDetails">The highest saved payout will appear here.</div></div>
@@ -52,7 +51,6 @@ h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em
  </div>
  <div class="section-title">🎮 ALL BONUSED SLOTS</div>
  <div class="rows" id="entries"><div class="empty">Loading bonus entries…</div></div>
- <div class="footer">UPDATES AUTOMATICALLY · 💗 PINK × BLUE 💙</div>
 </div>
 <script>
 const API="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-bonus-hunt";
