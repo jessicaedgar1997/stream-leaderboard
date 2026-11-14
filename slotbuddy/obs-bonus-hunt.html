@@ -17,9 +17,7 @@ h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em
 .live{font-size:10px;font-weight:900;color:#a7f3d0;border:1px solid #43d6a0;border-radius:99px;padding:5px 8px;white-space:nowrap}
 .hunt{grid-column:1/-1;padding:8px 16px;color:var(--muted);font-size:12px;border-bottom:1px solid rgba(96,115,157,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .highlights{display:contents}.balances{display:contents}.balance-card{grid-column:span 2;margin:10px 5px 2px;background:rgba(5,11,28,.88);border:2px solid var(--blue);border-radius:13px;padding:12px 16px;min-width:0;display:grid;grid-template-columns:1fr 1fr;align-items:center;text-align:center;box-shadow:0 0 12px rgba(53,213,255,.12)}.balance-item{padding:4px 10px;min-width:0}.balance-item+ .balance-item{border-left:1px solid var(--line)}.balance-label{font-size:11px;font-weight:1000;letter-spacing:.09em;color:var(--blue);margin-bottom:7px}.balance-item.end .balance-label{color:var(--pink)}.balance-value{font-size:23px;line-height:1.15;font-weight:1000;color:var(--white);overflow-wrap:anywhere}
-.highlight{margin:8px 5px;background:rgba(5,11,28,.75);border:1px solid var(--line);border-radius:13px;padding:11px;min-width:0}
-.highlight.top{border-color:rgba(255,215,106,.8)}
-.highlight.low{border-color:rgba(255,57,185,.7)}
+.results-card{grid-column:span 2;margin:8px 5px;background:rgba(5,11,28,.88);border:2px solid var(--blue);border-radius:13px;padding:10px;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:0;box-shadow:0 0 12px rgba(53,213,255,.12)}.highlight{margin:0;background:transparent;border:0;border-radius:0;padding:8px 12px;min-width:0}.highlight+ .highlight{border-left:1px solid var(--line)}
 .kicker{font-size:10px;font-weight:1000;letter-spacing:.07em;color:var(--gold);margin-bottom:6px}
 .low .kicker{color:var(--pink)}
 .game{font-size:15px;font-weight:1000;overflow-wrap:anywhere;color:var(--white)}
@@ -34,7 +32,7 @@ h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em
 .entry-stats{text-align:right;font-size:11px;font-weight:900;white-space:nowrap}
 .entry-stats .mult{display:block;color:var(--blue);font-size:10px;margin-top:3px}
 .empty{grid-column:1/-1;padding:18px 12px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5;background:rgba(5,11,28,.65);border-radius:11px;margin:0 10px 12px}
-@media(max-width:760px){.widget{grid-template-columns:repeat(2,minmax(0,1fr))}.rows{grid-template-columns:repeat(2,minmax(0,1fr))}.balance-card,.highlight{margin:6px 4px}.balance-value{font-size:19px}}@media(max-width:420px){body{padding:5px}.widget{grid-template-columns:1fr}.balance-card{grid-column:span 1;padding:10px 5px}.balance-item{padding:4px}.balance-label{font-size:9px}.balance-value{font-size:17px}.balance-card,.highlight{margin:5px}.rows{grid-template-columns:1fr}.game{font-size:13px}.details{font-size:10px}.entry{padding:7px}}
+@media(max-width:760px){.widget{grid-template-columns:repeat(2,minmax(0,1fr))}.rows{grid-template-columns:repeat(2,minmax(0,1fr))}.balance-card,.results-card{margin:6px 4px}.balance-value{font-size:19px}}@media(max-width:420px){body{padding:5px}.widget{grid-template-columns:1fr}.balance-card,.results-card{grid-column:span 1;margin:5px}.balance-card{padding:10px 5px}.balance-item{padding:4px}.balance-label{font-size:9px}.balance-value{font-size:17px}.results-card{padding:7px}.highlight{padding:7px 8px}.rows{grid-template-columns:1fr}.game{font-size:13px}.details{font-size:10px}.entry{padding:7px}}
 </style>
 </head>
 <body>
@@ -47,7 +45,7 @@ h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em
    <div class="balance-item end"><div class="balance-label">🏁 ENDING AMOUNT</div><div class="balance-value" id="endingAmount">Waiting for End Hunt</div></div>
   </div>
  </div>
- <div class="highlights">
+ <div class="results-card">
   <div class="highlight top"><div class="kicker">🏆 TOP-PAYING SLOT</div><div class="game" id="topGame">Waiting for payout</div><div class="details" id="topDetails">The highest saved payout will appear here.</div></div>
   <div class="highlight low"><div class="kicker">📉 LOWEST-PAYING SLOT</div><div class="game" id="lowGame">Waiting for payout</div><div class="details" id="lowDetails">The lowest saved payout will appear here.</div></div>
  </div>
