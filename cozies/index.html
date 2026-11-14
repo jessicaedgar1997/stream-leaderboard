@@ -40,7 +40,7 @@ form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-i
 const API="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/cozies-bonus-tracker";
 const LOGIN="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login";
 const SESSION_KEY="slotbuddy_kick_session";
-let organizerSession="";
+let organizerSession="",canAddBonuses=false,isOwner=false;
 const $=id=>document.getElementById(id);
 const money=value=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(Number(value)||0);
 function ordinal(n){const mod100=n%100;if(mod100>=11&&mod100<=13)return n+"th";return n+({1:"st",2:"nd",3:"rd"}[n%10]||"th");}
@@ -50,7 +50,7 @@ async function loadBonuses(){
   const r=await fetch(API,{cache:"no-store"});const d=await r.json();if(!r.ok||d.error)throw new Error(d.error||"Couldn't load bonuses.");
   const items=d.bonuses||[];const queue=d.queue||[];$("coziesCallLimit").value=String(d.call_limit||1);window.coziesQueueData=queue;window.coziesActiveQueue=d.active_queue||null;$("bonusCount").textContent=String(items.length);
   $("coziesQueueStatus").textContent=d.active_queue==="cozies"?"Cozies calls are ON. Bonus Hunt calls are OFF.":d.active_queue==="bonus_hunt"?"Cozies calls are OFF. Bonus Hunt is accepting !slot requests.":"Both queues are OFF. !slot requests are paused.";
-  $("coziesQueueList").innerHTML=queue.length?queue.map((x,i)=>'<div class="entry"><div><strong>#'+(i+1)+' @'+safe(x.username)+'</strong><small>'+safe(String(x.game_name||"").replace(/^\$\(urlencode\s*/i,"").replace(/\)$/,""))+' · '+new Date(x.created_at).toLocaleString()+'</small></div><div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><button class="btn" onclick="prepareCoziesBonus('+Number(x.id)+')">ADD BONUS</button><button class="btn" onclick="deleteCoziesQueue('+Number(x.id)+')">DELETE</button></div></div>').join(""):'<div class="empty">The Cozies queue is empty.</div>';
+  $("coziesQueueList").innerHTML=queue.length?queue.map((x,i)=>'<div class="entry"><div><strong>#'+(i+1)+' @'+safe(x.username)+'</strong><small>'+safe(String(x.game_name||"").replace(/^\$\(urlencode\s*/i,"").replace(/\)$/,""))+' · '+new Date(x.created_at).toLocaleString()+'</small></div><div style="display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end"><button class="btn" '+(canAddBonuses?'':'hidden')+' onclick="prepareCoziesBonus('+Number(x.id)+')">ADD BONUS</button>'+(isOwner?'<button class="btn" onclick="deleteCoziesQueue('+Number(x.id)+')">DELETE</button>':'')+'</div></div>').join(""):'<div class="empty">The Cozies queue is empty.</div>';
   $("payoutTotal").textContent=money(items.reduce((sum,x)=>sum+Number(x.payout_amount||0),0));
   const totals={};items.forEach(x=>{const name=String(x.caller_name||"Unknown").trim()||"Unknown";const k=name.toLowerCase();if(!totals[k])totals[k]={name,total:0,bet:0,count:0,bonuses:[]};totals[k].total+=Number(x.payout_amount||0);totals[k].bet+=Number(x.spin_amount||0);totals[k].count++;totals[k].bonuses.push(x);});
   const standings=Object.values(totals).sort((a,b)=>b.total-a.total||a.name.localeCompare(b.name));
@@ -60,12 +60,13 @@ async function loadBonuses(){
 }
 async function checkOrganizer(){
  const key=localStorage.getItem(SESSION_KEY);
- if(!key){$("loginStatus").textContent="Sign in with the organizer Kick account to add bonuses. Everyone can view the standings.";$("signInPrompt").classList.remove("hidden");return;}
+ if(!key){$("loginStatus").textContent="Sign in with Kick on SlotBuddy to add bonuses. Everyone can view the standings.";$("signInPrompt").classList.remove("hidden");return;}
  try{
   const r=await fetch(LOGIN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:key})});
   const d=await r.json();if(!r.ok||!d.ok||!d.user)throw new Error("Please sign in again.");
-  if(String(d.user.username).toLowerCase()!=="jessicaedgar1997"){$("loginStatus").textContent="You're signed in as @"+d.user.username+", but only the organizer account can add Cozies bonuses.";$("signInPrompt").classList.remove("hidden");return;}
-  organizerSession=key;$("loginStatus").textContent="Signed in as @"+d.user.username+" — you can manage Cozies!";$("bonusForm").classList.remove("hidden");$("coziesQueueControls").classList.remove("hidden");await loadBonuses();
+  const role=d.user.role||"viewer";isOwner=role==="owner"||String(d.user.username).toLowerCase()==="jessicaedgar1997";canAddBonuses=isOwner||role==="moderator";
+  if(!canAddBonuses){$("loginStatus").textContent="You're signed in as @"+d.user.username+", but this account doesn't have permission to add bonuses.";$("signInPrompt").classList.remove("hidden");return;}
+  organizerSession=key;$("loginStatus").textContent="Signed in as @"+d.user.username+(isOwner?" — owner access enabled.":" — moderator access enabled.");$("bonusForm").classList.remove("hidden");if(isOwner){$("coziesQueueControls").classList.remove("hidden");}else{$("coziesCallLimit").hidden=true;$("saveCoziesCallLimit").hidden=true;}await loadBonuses();
  }catch(e){localStorage.removeItem(SESSION_KEY);$("loginStatus").textContent="Your Kick sign-in needs to be renewed.";$("signInPrompt").classList.remove("hidden");}
 }
 $("bonusForm").addEventListener("submit",async e=>{
