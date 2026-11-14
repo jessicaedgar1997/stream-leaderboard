@@ -16,7 +16,7 @@ h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em
 .brand{font-size:10px;color:var(--blue);font-weight:900;letter-spacing:.16em;margin-top:5px}
 .live{font-size:10px;font-weight:900;color:#a7f3d0;border:1px solid #43d6a0;border-radius:99px;padding:5px 8px;white-space:nowrap}
 .hunt{grid-column:1/-1;padding:8px 16px;color:var(--muted);font-size:12px;border-bottom:1px solid rgba(96,115,157,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.highlights{display:contents}.balances{display:contents}.balance-card{margin:10px 5px 2px;background:rgba(5,11,28,.88);border:2px solid var(--blue);border-radius:13px;padding:13px 11px;min-width:0;text-align:center;box-shadow:0 0 12px rgba(53,213,255,.12)}.balance-card.end{border-color:var(--pink)}.balance-label{font-size:11px;font-weight:1000;letter-spacing:.09em;color:var(--blue);margin-bottom:7px}.balance-card.end .balance-label{color:var(--pink)}.balance-value{font-size:23px;line-height:1.15;font-weight:1000;color:var(--white);overflow-wrap:anywhere}
+.highlights{display:contents}.balances{display:contents}.balance-card{grid-column:span 2;margin:10px 5px 2px;background:rgba(5,11,28,.88);border:2px solid var(--blue);border-radius:13px;padding:12px 16px;min-width:0;display:grid;grid-template-columns:1fr 1fr;align-items:center;text-align:center;box-shadow:0 0 12px rgba(53,213,255,.12)}.balance-item{padding:4px 10px;min-width:0}.balance-item+ .balance-item{border-left:1px solid var(--line)}.balance-label{font-size:11px;font-weight:1000;letter-spacing:.09em;color:var(--blue);margin-bottom:7px}.balance-item.end .balance-label{color:var(--pink)}.balance-value{font-size:23px;line-height:1.15;font-weight:1000;color:var(--white);overflow-wrap:anywhere}
 .highlight{margin:8px 5px;background:rgba(5,11,28,.75);border:1px solid var(--line);border-radius:13px;padding:11px;min-width:0}
 .highlight.top{border-color:rgba(255,215,106,.8)}
 .highlight.low{border-color:rgba(255,57,185,.7)}
@@ -34,7 +34,7 @@ h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em
 .entry-stats{text-align:right;font-size:11px;font-weight:900;white-space:nowrap}
 .entry-stats .mult{display:block;color:var(--blue);font-size:10px;margin-top:3px}
 .empty{grid-column:1/-1;padding:18px 12px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5;background:rgba(5,11,28,.65);border-radius:11px;margin:0 10px 12px}
-@media(max-width:760px){.widget{grid-template-columns:repeat(2,minmax(0,1fr))}.rows{grid-template-columns:repeat(2,minmax(0,1fr))}.balance-card,.highlight{margin:6px 4px}.balance-value{font-size:19px}}@media(max-width:420px){body{padding:5px}.widget{grid-template-columns:1fr}.balance-card,.highlight{margin:5px}.rows{grid-template-columns:1fr}.game{font-size:13px}.details{font-size:10px}.entry{padding:7px}}
+@media(max-width:760px){.widget{grid-template-columns:repeat(2,minmax(0,1fr))}.rows{grid-template-columns:repeat(2,minmax(0,1fr))}.balance-card,.highlight{margin:6px 4px}.balance-value{font-size:19px}}@media(max-width:420px){body{padding:5px}.widget{grid-template-columns:1fr}.balance-card{grid-column:span 1;padding:10px 5px}.balance-item{padding:4px}.balance-label{font-size:9px}.balance-value{font-size:17px}.balance-card,.highlight{margin:5px}.rows{grid-template-columns:1fr}.game{font-size:13px}.details{font-size:10px}.entry{padding:7px}}
 </style>
 </head>
 <body>
@@ -42,8 +42,10 @@ h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em
  <div class="header"><div><h1>🎰 BONUS HUNT RESULTS</h1><div class="brand">JESSICAEDGAR1997 · SLOTBUDDY</div></div><span class="live" id="live">● LIVE</span></div>
  <div class="hunt" id="hunt">Loading current Bonus Hunt…</div>
  <div class="highlights balances">
-  <div class="balance-card"><div class="balance-label">💰 STARTING AMOUNT</div><div class="balance-value" id="startingAmount">—</div></div>
-  <div class="balance-card end"><div class="balance-label">🏁 ENDING AMOUNT</div><div class="balance-value" id="endingAmount">Waiting for End Hunt</div></div>
+  <div class="balance-card">
+   <div class="balance-item"><div class="balance-label">💰 STARTING AMOUNT</div><div class="balance-value" id="startingAmount">—</div></div>
+   <div class="balance-item end"><div class="balance-label">🏁 ENDING AMOUNT</div><div class="balance-value" id="endingAmount">Waiting for End Hunt</div></div>
+  </div>
  </div>
  <div class="highlights">
   <div class="highlight top"><div class="kicker">🏆 TOP-PAYING SLOT</div><div class="game" id="topGame">Waiting for payout</div><div class="details" id="topDetails">The highest saved payout will appear here.</div></div>
