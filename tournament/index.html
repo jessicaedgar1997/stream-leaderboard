@@ -126,7 +126,7 @@ let liveCalls = [];
 let liveState = null;
 async function applyStaffView(){
  const session=localStorage.getItem("slotbuddy_kick_session");if(!session)return;
- try{const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});const d=await r.json();if(d.ok&&d.user?.role==="moderator")$("ownerControls").hidden=true;}catch{}
+ try{const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});const d=await r.json();if(d.ok&&d.user?.role==="moderator")$("liveAdminMessage").textContent="Signed in as a SlotBuddy manager. Full tournament controls are enabled.";}catch{}
 }
 
 function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
@@ -150,12 +150,12 @@ async function refreshLivePlayers(){
  $("slotQueue").querySelectorAll(".remove-slot").forEach(btn=>btn.addEventListener("click",()=>adminSlotAction("remove-call",{id:btn.dataset.id})));
 }
 async function adminAction(action,extra={}){
- const key=$("adminKey").value.trim();
- if(!key){$("liveAdminMessage").textContent="Paste your organizer access key first.";return;}
- const u=new URL(CONTROL_URL);u.searchParams.set("action",action);u.searchParams.set("key",key);
+ const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!key&&!session_key){$("liveAdminMessage").textContent="Sign in with Kick on SlotBuddy first.";return;}
+ const u=new URL(CONTROL_URL);u.searchParams.set("action",action);
  Object.entries(extra).forEach(([k,v])=>u.searchParams.set(k,String(v)));
  $("liveAdminMessage").textContent="Working…";
- try{const res=await fetch(u.toString());const msg=await res.text();$("liveAdminMessage").textContent=msg;if(res.ok)await refreshLivePlayers();}
+ try{const res=await fetch(u.toString(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key})});const msg=await res.text();$("liveAdminMessage").textContent=msg;if(res.ok)await refreshLivePlayers();}
  catch(e){$("liveAdminMessage").textContent="Couldn't reach the tournament controls. Try again.";}
 }
 $("loadChatPlayers").onclick=async()=>{
@@ -170,24 +170,20 @@ $("loadChatPlayers").onclick=async()=>{
 };
 $("refreshPlayers").onclick=refreshLivePlayers;
 async function adminSlotAction(action,extra={}){
- const key=$("adminKey").value.trim();
- if(!key){$("slotAdminMessage").textContent="Open Organizer controls and paste your access key first.";return;}
- const u=new URL(CONTROL_URL);u.searchParams.set("action",action);u.searchParams.set("key",key);
+ const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!key&&!session_key){$("slotAdminMessage").textContent="Sign in with Kick on SlotBuddy first.";return;}
+ const u=new URL(CONTROL_URL);u.searchParams.set("action",action);
  Object.entries(extra).forEach(([k,v])=>u.searchParams.set(k,String(v)));
  $("slotAdminMessage").textContent="Working…";
- try{const res=await fetch(u.toString());const msg=await res.text();$("slotAdminMessage").textContent=msg;if(res.ok)await refreshLivePlayers();}
+ try{const res=await fetch(u.toString(),{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key})});const msg=await res.text();$("slotAdminMessage").textContent=msg;if(res.ok)await refreshLivePlayers();}
  catch(e){$("slotAdminMessage").textContent="Couldn't reach the slot queue. Try again.";}
 }
 $("nextSlotCall").onclick=async()=>{
- const key=$("adminKey").value.trim();
- if(!key){$("slotAdminMessage").textContent="Open Organizer controls and paste your access key first.";return;}
+ const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!key&&!session_key){$("slotAdminMessage").textContent="Sign in with Kick on SlotBuddy first.";return;}
  $("slotAdminMessage").textContent="Calling the next game…";
- try{
-  const res=await fetch(BONUS_HUNT_URL+"?action=next",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key})});
-  const data=await res.json();
-  $("slotAdminMessage").textContent=data.message||data.error||"Couldn't call the next game.";
-  if(res.ok)await refreshLivePlayers();
- }catch(e){$("slotAdminMessage").textContent="Couldn't reach the slot queue. Try again.";}
+ try{const res=await fetch(BONUS_HUNT_URL+"?action=next",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key})});const data=await res.json();$("slotAdminMessage").textContent=data.message||data.error||"Couldn't call the next game.";if(res.ok)await refreshLivePlayers();}
+ catch(e){$("slotAdminMessage").textContent="Couldn't reach the slot queue. Try again.";}
 };
 $("clearSlotCalls").onclick=()=>{if(confirm("Clear the entire slot-call queue?"))adminSlotAction("clear-calls");};
 $("refreshSlotCalls").onclick=refreshLivePlayers;
@@ -209,26 +205,18 @@ async function refreshKickStatus(){
  }catch(e){$("kickStatus").textContent="Couldn't check Kick connection status.";}
 }
 $("connectKick").onclick=async()=>{
- const key=$("adminKey").value.trim();
- if(!key){$("kickStatus").textContent="Open Organizer controls and enter your private organizer key first.";return;}
+ const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!key&&!session_key){$("kickStatus").textContent="Sign in with Kick on SlotBuddy first.";return;}
  $("kickStatus").textContent="Opening Kick authorization…";
- try{
-  const u=new URL(SUPABASE_URL+"/functions/v1/kick-connect");
-  u.searchParams.set("action","start");u.searchParams.set("key",key);
-  const r=await fetch(u.toString());const data=await r.json();
-  if(!r.ok||!data.authorize_url)throw new Error(data.error||"Couldn't start the Kick connection.");
-  location.href=data.authorize_url;
- }catch(e){$("kickStatus").textContent=e.message||"Couldn't start the Kick connection.";}
+ try{const u=new URL(SUPABASE_URL+"/functions/v1/kick-connect");u.searchParams.set("action","start");if(key)u.searchParams.set("key",key);if(session_key)u.searchParams.set("session_key",session_key);const r=await fetch(u.toString());const data=await r.json();if(!r.ok||!data.authorize_url)throw new Error(data.error||"Couldn't start the Kick connection.");location.href=data.authorize_url;}
+ catch(e){$("kickStatus").textContent=e.message||"Couldn't start the Kick connection.";}
 };
 $("testKick").onclick=async()=>{
- const key=$("adminKey").value.trim();
- if(!key){$("kickStatus").textContent="Enter your organizer key first.";return;}
+ const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!key&&!session_key){$("kickStatus").textContent="Sign in with Kick on SlotBuddy first.";return;}
  $("kickStatus").textContent="Sending a test message to Kick…";
- try{
-  const r=await fetch(SUPABASE_URL+"/functions/v1/kick-connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"send-test",key})});
-  const data=await r.json();
-  $("kickStatus").textContent=r.ok?data.message:(data.error||"Test message failed.");
- }catch(e){$("kickStatus").textContent="Couldn't send the test message. Please try again.";}
+ try{const r=await fetch(SUPABASE_URL+"/functions/v1/kick-connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"send-test",key,session_key})});const data=await r.json();$("kickStatus").textContent=r.ok?data.message:(data.error||"Test message failed.");}
+ catch(e){$("kickStatus").textContent="Couldn't send the test message. Please try again.";}
 };
 refreshKickStatus();
 applyStaffView();refreshLivePlayers();
