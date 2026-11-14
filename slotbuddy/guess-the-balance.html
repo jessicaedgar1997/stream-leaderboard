@@ -36,7 +36,7 @@ button,.btn{display:inline-flex;justify-content:center;align-items:center;border
   <div id="openControls"><label for="roundName">Round name</label><input id="roundName" maxlength="80" value="Guess the Balance"><button id="openRound">OPEN GUESS THE BALANCE</button></div>
   <div id="closeControls" class="hidden"><p class="status">Pausing stops new guesses. Existing guesses stay saved, and you can reopen this same round.</p><button id="pauseRound" class="secondary">PAUSE ENTRIES</button></div>
   <div id="revealControls" class="hidden" style="margin-top:14px"><p class="status">The final bankroll will be pulled automatically from your most recently completed Bonus Hunt.</p><button id="revealWinner">REVEAL WINNER USING BONUS HUNT BALANCE</button></div>
-  <div id="clearControls" class="hidden" style="margin-top:14px"><p class="status">Clear this round's guesses after recording the winner. The round record and final balance stay saved.</p><button id="clearGuesses" class="secondary">CLEAR GUESSES</button></div>
+  <div id="clearControls" class="hidden" style="margin-top:14px"><p class="status">Remove every viewer's guess from this round. This does not open, pause, or reset the round.</p><button id="clearGuesses" class="secondary">CLEAR ALL GUESSES</button></div>
   <p id="adminMessage" class="message" aria-live="polite"></p>
  </div>
 </section>
@@ -65,7 +65,7 @@ async function load(){
    $("openControls").classList.toggle("hidden",isOpen);
    $("closeControls").classList.toggle("hidden",!isOpen);
    $("revealControls").classList.toggle("hidden",!hasRound||isOpen||hasReveal);
-   $("clearControls").classList.toggle("hidden",!hasReveal);
+   $("clearControls").classList.toggle("hidden",!hasRound);
    $("openRound").textContent=!hasRound?"OPEN GUESS THE BALANCE":hasReveal?"OPEN NEW ROUND":"REOPEN GUESS THE BALANCE";
    $("roundName").previousElementSibling.classList.toggle("hidden",hasRound&&!hasReveal);$("roundName").classList.toggle("hidden",hasRound&&!hasReveal);
   }
@@ -86,7 +86,7 @@ $("guessForm").addEventListener("submit",async e=>{e.preventDefault();if(!sessio
 $("openRound").onclick=async()=>{if(!isStaff)return;$("adminMessage").textContent="Opening round…";try{const d=await request("POST",{action:"open",session_key:sessionKey,title:$("roundName").value});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
 $("pauseRound").onclick=async()=>{if(!isStaff)return;if(!confirm("Pause new guesses? All submitted guesses will be saved, and you can reopen this same round."))return;$("adminMessage").textContent="Pausing entries…";try{const d=await request("POST",{action:"pause",session_key:sessionKey});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
 $("revealWinner").onclick=async()=>{if(!isStaff||!round||round.is_open)return;if(!confirm("Reveal the winner using the final bankroll saved from the most recently completed Bonus Hunt?"))return;$("adminMessage").textContent="Getting final balance from Bonus Hunt…";try{const d=await request("POST",{action:"reveal",session_key:sessionKey});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
-$("clearGuesses").onclick=async()=>{if(!isStaff||!round||round.is_open||round.actual_balance===null)return;if(!confirm("Clear every guess from this revealed round? The round record and final balance will stay saved, but the guesses and winner display will be removed."))return;$("adminMessage").textContent="Clearing guesses…";try{const d=await request("POST",{action:"clear",session_key:sessionKey});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
+$("clearGuesses").onclick=async()=>{if(!isStaff||!round)return;if(!confirm("Clear ALL guesses from this round? Every viewer's entry will be permanently removed. The round will stay in its current state."))return;$("adminMessage").textContent="Clearing guesses…";try{const d=await request("POST",{action:"clear",session_key:sessionKey});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
 (async()=>{await checkLogin();await load();setInterval(()=>{if(!document.hidden)load();},10000);})();
 </script>
 </body></html>
