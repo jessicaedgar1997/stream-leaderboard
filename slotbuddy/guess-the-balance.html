@@ -33,9 +33,10 @@ button,.btn{display:inline-flex;justify-content:center;align-items:center;border
  <p id="guessMessage" class="message" aria-live="polite"></p>
  <div id="adminPanel" class="hidden" style="border-top:1px solid #49345f;margin-top:22px;padding-top:18px">
   <h2>👑 Organizer controls</h2>
-  <div id="openControls"><label for="roundName">Round name</label><input id="roundName" maxlength="80" value="Guess the Balance"><button id="openRound">OPEN NEW ROUND</button></div>
-  <div id="closeControls" class="hidden"><label for="actualBalance">Correct balance ($)</label><input id="actualBalance" type="number" min="0" max="1000000000" step="0.01" placeholder="Enter the real balance"><button id="closeRound" class="secondary">CLOSE ENTRIES & REVEAL WINNER</button></div>
-  <div id="clearControls" class="hidden" style="margin-top:14px"><p class="status">After you've recorded the winner, clear this round's guesses to tidy up before the next hunt.</p><button id="clearGuesses" class="secondary">CLEAR GUESSES</button></div>
+  <div id="openControls"><label for="roundName">Round name</label><input id="roundName" maxlength="80" value="Guess the Balance"><button id="openRound">OPEN GUESS THE BALANCE</button></div>
+  <div id="closeControls" class="hidden"><p class="status">Pausing stops new guesses. Existing guesses stay saved, and you can reopen this same round.</p><button id="pauseRound" class="secondary">PAUSE ENTRIES</button></div>
+  <div id="revealControls" class="hidden" style="margin-top:14px"><p class="status">The final bankroll will be pulled automatically from your most recently completed Bonus Hunt.</p><button id="revealWinner">REVEAL WINNER USING BONUS HUNT BALANCE</button></div>
+  <div id="clearControls" class="hidden" style="margin-top:14px"><p class="status">Clear this round's guesses after recording the winner. The round record and final balance stay saved.</p><button id="clearGuesses" class="secondary">CLEAR GUESSES</button></div>
   <p id="adminMessage" class="message" aria-live="polite"></p>
  </div>
 </section>
@@ -58,8 +59,16 @@ async function load(){
  try{
   const d=await request("GET");round=d.round;$("entryCount").textContent=String(d.entry_count||0);
   if(!round){$("roundTitle").textContent="NO ROUND OPEN";$("roundDescription").textContent="Check back when Jessica opens the next Guess the Balance game.";$("roundState").textContent="WAITING";}
-  else{$("roundTitle").textContent=round.title;$("roundState").textContent=round.is_open?"OPEN":"CLOSED";$("roundDescription").textContent=round.is_open?"Entries are open. Submit one guess using your Kick account. Once submitted, your guess is locked and cannot be changed.":"Entries are locked. The correct balance and closest guesses are revealed below.";}
-  if(isStaff){$("openControls").classList.toggle("hidden",!!round?.is_open);$("closeControls").classList.toggle("hidden",!round?.is_open);$("clearControls").classList.toggle("hidden",!round||!!round.is_open);}
+  else{$("roundTitle").textContent=round.title;$("roundState").textContent=round.is_open?"OPEN":round.actual_balance===null?"PAUSED":"REVEALED";$("roundDescription").textContent=round.is_open?"Entries are open. Submit one guess using your Kick account. Once submitted, your guess is locked and cannot be changed.":round.actual_balance===null?"Entries are paused. Your guesses are saved, and the organizer may reopen this round.":"Entries are locked. The final Bonus Hunt balance and closest guesses are shown below.";}
+  if(isStaff){
+   const isOpen=!!round?.is_open,hasRound=!!round,hasReveal=hasRound&&round.actual_balance!==null;
+   $("openControls").classList.toggle("hidden",isOpen);
+   $("closeControls").classList.toggle("hidden",!isOpen);
+   $("revealControls").classList.toggle("hidden",!hasRound||isOpen||hasReveal);
+   $("clearControls").classList.toggle("hidden",!hasReveal);
+   $("openRound").textContent=!hasRound?"OPEN GUESS THE BALANCE":hasReveal?"OPEN NEW ROUND":"REOPEN GUESS THE BALANCE";
+   $("roundName").parentElement.classList.toggle("hidden",hasRound&&!hasReveal);
+  }
   hasSubmitted=false;
   if(sessionKey){const st=await request("POST",{action:"status",session_key:sessionKey});hasSubmitted=!!st.has_submitted;}
   const canSubmit=!!round?.is_open&&!!sessionKey&&!hasSubmitted;
@@ -67,15 +76,17 @@ async function load(){
   if(!sessionKey)$("signInBox").classList.toggle("hidden",!round?.is_open);
   if(hasSubmitted){$("guessMessage").textContent="Your guess is already submitted and locked for this round. Good luck! 💗";}
   else if(round?.is_open&&sessionKey){$("guessMessage").textContent="You're signed in. You get one guess, and it locks as soon as you submit.";}
-  else if(!round?.is_open){$("guessMessage").textContent="This round is closed. Watch for the next one!";}
+  else if(round&&!round.is_open&&round.actual_balance===null){$("guessMessage").textContent="Entries are paused for now. Your saved guess will stay in this round if it reopens.";}
+  else if(!round?.is_open){$("guessMessage").textContent="This round is finished. Watch for the next one!";}
   const showResults=!!round&&!round.is_open;$("resultsPanel").classList.toggle("hidden",!showResults);
-  if(showResults){const winners=d.winners||[];$("resultSummary").innerHTML="Correct balance: <strong>"+("$"+Number(round.actual_balance||0).toFixed(2))+"</strong>"+(winners.length?" · Closest guess"+(winners.length>1?"es":"")+": <strong class=\"winner\">"+winners.map(esc).join(", ")+"</strong>":" · No guesses were submitted.");$("guessResults").innerHTML=(d.entries||[]).map(x=>'<div class="entry"><span>'+esc(x.username)+'</span><strong>'+("$"+Number(x.guess).toFixed(2))+'</strong></div>').join("")||'<p class="status">No entries were submitted.</p>';}
+  if(showResults){const winners=d.winners||[];if(round.actual_balance===null){$("resultSummary").textContent="Entries are paused. These guesses are saved and will remain if the round is reopened.";}else{$("resultSummary").innerHTML="Final Bonus Hunt balance: <strong>"+("$"+Number(round.actual_balance).toFixed(2))+"</strong>"+(winners.length?" · Closest guess"+(winners.length>1?"es":"")+": <strong class=\"winner\">"+winners.map(esc).join(", ")+"</strong>":" · No guesses were submitted.");}$("guessResults").innerHTML=(d.entries||[]).map(x=>'<div class="entry"><span>'+esc(x.username)+'</span><strong>'+("$"+Number(x.guess).toFixed(2))+'</strong></div>').join("")||'<p class="status">No entries were submitted.</p>';}
  }catch(e){$("roundDescription").textContent=e.message||"Could not load this round.";}
 }
 $("guessForm").addEventListener("submit",async e=>{e.preventDefault();if(!sessionKey||hasSubmitted||!round?.is_open)return;const button=$("submitGuess");button.disabled=true;button.textContent="LOCKING…";$("guessMessage").textContent="Submitting your one allowed guess…";try{const d=await request("POST",{action:"submit",session_key:sessionKey,guess:$("guessInput").value});$("guessMessage").textContent=d.message||"Your guess is locked!";hasSubmitted=true;$("guessInput").value="";await load();}catch(err){$("guessMessage").textContent=err.message;}finally{button.disabled=false;button.textContent="LOCK IN MY GUESS";}});
 $("openRound").onclick=async()=>{if(!isStaff)return;$("adminMessage").textContent="Opening round…";try{const d=await request("POST",{action:"open",session_key:sessionKey,title:$("roundName").value});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
-$("closeRound").onclick=async()=>{if(!isStaff)return;$("adminMessage").textContent="Closing entries…";try{const d=await request("POST",{action:"close",session_key:sessionKey,actual_balance:$("actualBalance").value});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
-$("clearGuesses").onclick=async()=>{if(!isStaff||!round||round.is_open)return;if(!confirm("Clear every guess from this completed round? Make sure you've recorded the winner first. The round and final balance will stay saved, but the guesses and winner display will be removed."))return;$("adminMessage").textContent="Clearing guesses…";try{const d=await request("POST",{action:"clear",session_key:sessionKey});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
+$("pauseRound").onclick=async()=>{if(!isStaff)return;if(!confirm("Pause new guesses? All submitted guesses will be saved, and you can reopen this same round."))return;$("adminMessage").textContent="Pausing entries…";try{const d=await request("POST",{action:"pause",session_key:sessionKey});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
+$("revealWinner").onclick=async()=>{if(!isStaff||!round||round.is_open)return;if(!confirm("Reveal the winner using the final bankroll saved from the most recently completed Bonus Hunt?"))return;$("adminMessage").textContent="Getting final balance from Bonus Hunt…";try{const d=await request("POST",{action:"reveal",session_key:sessionKey});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
+$("clearGuesses").onclick=async()=>{if(!isStaff||!round||round.is_open||round.actual_balance===null)return;if(!confirm("Clear every guess from this revealed round? The round record and final balance will stay saved, but the guesses and winner display will be removed."))return;$("adminMessage").textContent="Clearing guesses…";try{const d=await request("POST",{action:"clear",session_key:sessionKey});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
 (async()=>{await checkLogin();await load();setInterval(()=>{if(!document.hidden)load();},10000);})();
 </script>
 </body></html>
