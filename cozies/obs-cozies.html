@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#090d1d">
+<title>Cozies OBS Widget | SlotBuddy</title>
+<style>
+:root{--pink:#ff39b9;--blue:#35d5ff;--gold:#ffd76a;--white:#f8f9ff;--muted:#c4cce3;--line:#60739d}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;min-height:100%;background:transparent;color:var(--white);font-family:Arial,Helvetica,sans-serif}
+body{padding:10px}
+.widget{width:100%;max-width:1100px;border:2px solid #35d5ff;border-radius:20px;overflow:hidden;background:linear-gradient(145deg,rgba(13,22,48,.96),rgba(35,14,48,.96));box-shadow:0 0 22px rgba(53,213,255,.25),0 0 26px rgba(255,57,185,.18);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch}
+.header{grid-column:1/-1;padding:15px 18px;background:linear-gradient(90deg,rgba(255,57,185,.22),rgba(53,213,255,.2));border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em}
+.brand{font-size:10px;color:var(--blue);font-weight:900;letter-spacing:.16em;margin-top:5px}
+.live{font-size:10px;font-weight:900;color:#a7f3d0;border:1px solid #43d6a0;border-radius:99px;padding:5px 8px;white-space:nowrap}
+.hunt{grid-column:1/-1;padding:8px 16px;color:var(--muted);font-size:12px;border-bottom:1px solid rgba(96,115,157,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.highlights{display:contents}.balances{display:contents}.balance-card{grid-column:span 2;margin:10px 5px 2px;background:rgba(5,11,28,.88);border:2px solid var(--blue);border-radius:13px;padding:12px 16px;min-width:0;display:grid;grid-template-columns:1fr 1fr;align-items:center;text-align:center;box-shadow:0 0 12px rgba(53,213,255,.12)}.balance-item{padding:4px 10px;min-width:0}.balance-item+ .balance-item{border-left:1px solid var(--line)}.balance-label{font-size:11px;font-weight:1000;letter-spacing:.09em;color:var(--blue);margin-bottom:7px}.balance-item.end .balance-label{color:var(--pink)}.balance-value{font-size:23px;line-height:1.15;font-weight:1000;color:var(--white);overflow-wrap:anywhere}
+.results-card{grid-column:span 2;margin:8px 5px;background:rgba(5,11,28,.88);border:2px solid var(--blue);border-radius:13px;padding:10px;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:0;box-shadow:0 0 12px rgba(53,213,255,.12)}.highlight{margin:0;background:transparent;border:0;border-radius:0;padding:8px 12px;min-width:0}.highlight+ .highlight{border-left:1px solid var(--line)}
+.kicker{font-size:10px;font-weight:1000;letter-spacing:.07em;color:var(--gold);margin-bottom:6px}
+.low .kicker{color:var(--pink)}
+.game{font-size:15px;font-weight:1000;overflow-wrap:anywhere;color:var(--white)}
+.details{font-size:11px;line-height:1.55;color:var(--muted);margin-top:5px;overflow-wrap:anywhere}
+.details b{color:var(--blue)}
+.section-title{grid-column:1/-1;padding:4px 14px 7px;font-size:11px;letter-spacing:.1em;font-weight:1000;color:var(--blue)}
+.rows{grid-column:1/-1;padding:0 10px 11px;height:168px;overflow:hidden;position:relative}.scroll-track{display:flex;flex-direction:column;animation:slot-scroll var(--scroll-duration,24s) linear infinite}.scroll-track:hover{animation-play-state:paused}.scroll-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding-bottom:6px;flex:none}@keyframes slot-scroll{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+.entry{display:grid;grid-template-columns:minmax(0,1.5fr) auto;gap:8px;align-items:center;padding:9px 10px;border-radius:10px;background:rgba(5,11,28,.72);border:1px solid rgba(96,115,157,.6);min-width:0}
+.entry-main{min-width:0}
+.entry-game{font-size:12px;font-weight:900;overflow-wrap:anywhere}
+.entry-caller{font-size:10px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
+.entry-stats{text-align:right;font-size:11px;font-weight:900;white-space:nowrap}
+.entry-stats .mult{display:block;color:var(--blue);font-size:10px;margin-top:3px}
+.empty{grid-column:1/-1;padding:18px 12px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5;background:rgba(5,11,28,.65);border-radius:11px;margin:0 10px 12px}
+@media(max-width:760px){.widget{grid-template-columns:repeat(2,minmax(0,1fr))}.scroll-group{grid-template-columns:repeat(2,minmax(0,1fr))}.balance-card,.results-card{margin:6px 4px}.balance-value{font-size:19px}}@media(max-width:420px){body{padding:5px}.widget{grid-template-columns:1fr}.balance-card,.results-card{grid-column:span 1;margin:5px}.balance-card{padding:10px 5px}.balance-item{padding:4px}.balance-label{font-size:9px}.balance-value{font-size:17px}.results-card{padding:7px}.highlight{padding:7px 8px}.scroll-group{grid-template-columns:1fr}.rows{height:150px}.game{font-size:13px}.details{font-size:10px}.entry{padding:7px}}
+</style>
+</head>
+<body>
+<div class="widget">
+ <div class="header"><div><h1>💗 COZIES BONUS RESULTS</h1><div class="brand">JESSICAEDGAR1997 · SLOTBUDDY</div></div><span class="live" id="live">● LIVE</span></div>
+ <div class="hunt" id="hunt">Loading Cozies bonuses…</div>
+ <div class="highlights balances">
+  <div class="balance-card" style="grid-template-columns:1fr">
+   <div class="balance-item"><div class="balance-label">💰 STARTING AMOUNT</div><div class="balance-value" id="startingAmount">Not set</div></div>
+  </div>
+ </div>
+ <div class="results-card">
+  <div class="highlight top"><div class="kicker">🏆 TOP-PAYING SLOT</div><div class="game" id="topGame">Waiting for payout</div><div class="details" id="topDetails">The highest saved payout will appear here.</div></div>
+  <div class="highlight low"><div class="kicker">📉 LOWEST-PAYING SLOT</div><div class="game" id="lowGame">Waiting for payout</div><div class="details" id="lowDetails">The lowest saved payout will appear here.</div></div>
+ </div>
+ <div class="section-title">🎮 ALL BONUSED SLOTS</div>
+ <div class="rows" id="entries"><div class="empty">Loading bonus entries…</div></div>
+</div>
+<script>
+const API="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/cozies-bonus-tracker";
+const $=id=>document.getElementById(id);
+const money=v=>"$"+(Number(v||0)).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=v=>String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const mult=x=>Number(x.spin_amount)>0?(Number(x.payout_amount||0)/Number(x.spin_amount)).toFixed(2)+"x":"—";
+function details(x){return "@"+esc(x.caller_name||"Unknown")+"<br>Spin: <b>"+money(x.spin_amount)+"</b> · Payout: <b>"+money(x.payout_amount)+"</b><br>Multiplier: <b>"+mult(x)+"</b>";}
+function render(s){
+ const entries=Array.isArray(s?.bonuses)?s.bonuses:[];
+ const paid=entries.filter(x=>Number(x.payout_amount||0)>0).slice().sort((a,b)=>Number(b.payout_amount||0)-Number(a.payout_amount||0));
+ $("startingAmount").textContent=s?.starting_balance!==null&&s?.starting_balance!==undefined?money(s.starting_balance):"Not set";
+ $("hunt").textContent=entries.length?entries.length+" bonuses recorded in Cozies":"Cozies is waiting for bonuses";
+ const top=paid[0],low=paid[paid.length-1];
+ $("topGame").textContent=top?.bonus_name||"Waiting for payout";
+ $("topDetails").innerHTML=top?details(top):"The highest saved payout will appear here.";
+ $("lowGame").textContent=low?.bonus_name||"Waiting for payout";
+ $("lowDetails").innerHTML=low?details(low):"The lowest saved payout will appear here.";
+ const cards=entries.slice().sort((a,b)=>Number(b.payout_amount||0)-Number(a.payout_amount||0)).map(x=>'<div class="entry"><div class="entry-main"><div class="entry-game">'+esc(x.bonus_name||"Unnamed slot")+'</div><div class="entry-caller">@'+esc(x.caller_name||"Unknown caller")+' · '+esc(x.bonus_type||"Regular")+'</div></div><div class="entry-stats">'+(Number(x.payout_amount)>0?money(x.payout_amount):"Pending")+'<span class="mult">'+(Number(x.payout_amount)>0?mult(x):"Payout pending")+'</span></div></div>').join("");
+ if(entries.length>0){
+  const duration=Math.max(14,entries.length*3);
+  $("entries").innerHTML='<div class="scroll-track" style="--scroll-duration:'+duration+'s"><div class="scroll-group">'+cards+'</div><div class="scroll-group" aria-hidden="true">'+cards+'</div></div>';
+ }else{
+  $("entries").innerHTML='<div class="empty">No Cozies bonuses have been saved yet. They will scroll here as bonuses are added.</div>';
+ }
+}
+async function refresh(){
+ try{const r=await fetch(API+"?action=snapshot",{cache:"no-store"});const s=await r.json();if(!r.ok||s.error)throw new Error(s.error||"Unable to load");render(s);$("live").textContent="● LIVE";$("live").style.color="#a7f3d0";}
+ catch(e){$("live").textContent="● RECONNECTING";$("live").style.color="#ffd76a";}
+}
+refresh();setInterval(refresh,3000);
+</script>
+</body>
+</html>
