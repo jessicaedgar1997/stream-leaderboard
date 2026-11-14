@@ -42,6 +42,10 @@ h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em
 <div class="widget">
  <div class="header"><div><h1>🎰 BONUS HUNT RESULTS</h1><div class="brand">JESSICAEDGAR1997 · SLOTBUDDY</div></div><span class="live" id="live">● LIVE</span></div>
  <div class="hunt" id="hunt">Loading current Bonus Hunt…</div>
+ <div class="highlights" style="padding-bottom:0">
+  <div class="highlight"><div class="kicker" style="color:var(--blue)">💰 STARTING AMOUNT</div><div class="game" id="startingAmount">$0.00</div></div>
+  <div class="highlight"><div class="kicker" style="color:var(--blue)">🏁 ENDING AMOUNT</div><div class="game" id="endingAmount">Not ended yet</div></div>
+ </div>
  <div class="highlights">
   <div class="highlight top"><div class="kicker">🏆 TOP-PAYING SLOT</div><div class="game" id="topGame">Waiting for payout</div><div class="details" id="topDetails">The highest saved payout will appear here.</div></div>
   <div class="highlight low"><div class="kicker">📉 LOWEST-PAYING SLOT</div><div class="game" id="lowGame">Waiting for payout</div><div class="details" id="lowDetails">The lowest saved payout will appear here.</div></div>
@@ -60,7 +64,10 @@ function details(x){return "@"+esc(x.username)+"<br>Spin: <b>"+money(x.spin_amou
 function render(s){
  const entries=Array.isArray(s?.entries)?s.entries:[];
  const paid=entries.filter(x=>Number(x.payout_amount||0)>0).slice().sort((a,b)=>Number(b.payout_amount||0)-Number(a.payout_amount||0));
- $("hunt").textContent=s?.hunt?.title?(s.hunt.title+" · "+entries.length+" bonuses bonused"):(entries.length?entries.length+" bonuses saved":"No active Bonus Hunt");
+ const balanceHunt=s?.hunt||s?.past_hunts?.[0]||null;
+ $("startingAmount").textContent=balanceHunt?.starting_balance!==null&&balanceHunt?.starting_balance!==undefined?money(balanceHunt.starting_balance):"—";
+ $("endingAmount").textContent=balanceHunt?.final_balance!==null&&balanceHunt?.final_balance!==undefined?money(balanceHunt.final_balance):(s?.hunt?"Not ended yet":"—");
+ $("hunt").textContent=s?.hunt?.title?(s.hunt.title+" · "+entries.length+" bonuses bonused"):(balanceHunt?.title?(balanceHunt.title+" · Completed hunt"):(entries.length?entries.length+" bonuses saved":"No active Bonus Hunt"));
  const top=paid[0],low=paid[paid.length-1];
  $("topGame").textContent=top?.game_name||"Waiting for payout";
  $("topDetails").innerHTML=top?details(top):"The highest saved payout will appear here.";
