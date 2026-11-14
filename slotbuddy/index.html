@@ -16,7 +16,7 @@ p{color:#b7c2df;line-height:1.55;margin:0 0 20px}
 .btn{border:0;border-radius:999px;padding:14px 25px;font-size:1rem;font-weight:900;cursor:pointer;color:#090d1d;background:linear-gradient(90deg,#35d5ff,#fff,#ff39b9);box-shadow:0 0 22px #35d5ff33}
 .btn:disabled{opacity:.6;cursor:wait}
 .msg{min-height:24px;margin:16px 0 0;font-size:.9rem}
-.signed{color:#a7f3d0;font-weight:800}
+.signed{color:#a7f3d0;font-weight:800}.dashboard-link{display:inline-block;margin-top:14px;color:#35d5ff;font-weight:850;text-decoration:none;border:1px solid #52628c;border-radius:99px;padding:9px 14px}.dashboard-link[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -26,15 +26,18 @@ p{color:#b7c2df;line-height:1.55;margin:0 0 20px}
 <p>Use your Kick account to sign in.</p>
 <button class="btn" id="kickLogin" type="button">Sign in with Kick</button>
 <p class="msg" id="loginMessage" role="status" aria-live="polite">You are not signed in.</p>
+<a class="dashboard-link" id="dashboardLink" href="./dashboard.html" hidden>🛠️ Open Organizer Dashboard</a>
 </main>
 <script>
 const LOGIN_URL = "https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login";
 const button = document.getElementById("kickLogin");
 const message = document.getElementById("loginMessage");
+const dashboardLink = document.getElementById("dashboardLink");
 const SESSION_KEY = "slotbuddy_kick_session";
 let signedIn = false;
 function showSignedIn(user) {
   signedIn = true;
+  dashboardLink.hidden = String(user.id) !== "44093684";
   message.textContent = "You're signed in as @" + user.username + ". You'll stay signed in on this browser until you choose to sign out.";
   message.className = "msg signed";
   button.textContent = "Sign out";
@@ -56,6 +59,7 @@ async function resumeSavedLogin() {
   } catch (error) {
     localStorage.removeItem(SESSION_KEY);
     signedIn = false;
+    dashboardLink.hidden = true;
     message.textContent = "Your saved sign-in needs to be renewed. Please sign in with Kick again.";
     message.className = "msg";
     button.textContent = "Sign in with Kick";
@@ -74,6 +78,7 @@ button.addEventListener("click", async () => {
       });
       localStorage.removeItem(SESSION_KEY);
       signedIn = false;
+      dashboardLink.hidden = true;
       message.textContent = "You've signed out. Sign in with Kick whenever you're ready.";
       message.className = "msg";
       button.textContent = "Sign in with Kick";
