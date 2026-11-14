@@ -94,6 +94,7 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 <p class="hint">These commands let chat ask BotRix for the latest bracket results. They update as soon as the bracket is saved.</p>
 </details>
 </section>
+<section class="panel" id="tournamentBonusTracker"><h2>🎁 TOURNAMENT BONUS-BUY TRACKER</h2><p class="hint">Record each player's bonus buy and choose Regular, Super, or Epic.</p><div class="setup-grid"><div class="field"><label for="buyPlayer">Player / Kick username</label><input id="buyPlayer" maxlength="40" placeholder="Player name"></div><div class="field"><label for="buyType">Bonus type</label><select id="buyType"><option value="Regular">Regular</option><option value="Super">Super</option><option value="Epic">Epic</option></select></div></div><div class="setup-grid"><div class="field"><label for="buyGame">Bonus / Game name</label><input id="buyGame" maxlength="100" placeholder="Game name"></div><div class="field"><label for="buySpin">Spin amount ($)</label><input id="buySpin" type="number" min="0" step="0.01" placeholder="2.00"></div></div><div class="field"><label for="buyPayout">Payout ($)</label><input id="buyPayout" type="number" min="0" step="0.01" placeholder="0.00"></div><div class="actions"><button id="addTournamentBonus">ADD BONUS BUY</button></div><p class="status" id="bonusBuyStatus" role="status"></p><div id="tournamentBonusList" class="entrant-list"><span class="hint">Loading bonus buys…</span></div></section>
 <section class="panel setup" id="setup">
 <h2>🎮 Set up your tournament</h2>
 <div class="setup-grid">
@@ -136,7 +137,7 @@ async function refreshLivePlayers(){
   if(!response.ok)throw new Error("Snapshot unavailable");
   const snapshot=await response.json();
   if(snapshot.error)throw new Error(snapshot.error);
-  livePlayers=snapshot.players||[];liveCalls=snapshot.calls||[];liveState=snapshot.state;
+  livePlayers=snapshot.players||[];liveCalls=snapshot.calls||[];liveState=snapshot.state;renderTournamentBonuses(snapshot.bonus_entries||[]);
   if(snapshot.bracket&&snapshot.bracket.rounds?.length&&!hasLoadedSavedBracket){restoreSavedBracket(snapshot.bracket);hasLoadedSavedBracket=true;}
  }catch(error){$("liveStatus").textContent="CONNECTION ISSUE";$("entrantList").innerHTML='<span class="hint">Could not load the live player list. Refresh in a moment.</span>';return;}
  $("liveCount").textContent=livePlayers.length+" / "+liveState.max_players;
@@ -221,6 +222,181 @@ $("testKick").onclick=async()=>{
 refreshKickStatus();
 applyStaffView();refreshLivePlayers();
 sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"slot_calls"},refreshLivePlayers).subscribe();
+function renderTournamentBonuses(items){const list=$("tournamentBonusList");if(!list)return;list.innerHTML=items.length?items.map(x=>'<div class="entrant" style="border-radius:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><strong>'+safeText(x.caller_name)+'</strong> · '+safeText(x.bonus_type||"Regular")+' · '+safeText(x.bonus_name)+' · Spin 
+let playerTotal = 4;
+let hasLoadedSavedBracket = false;
+let bracketSaveTimer = null;
+async function saveBracketOnline(){
+ const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return;}
+ if(!rounds.length)return;
+ const payload={name:$("eventName").value.trim()||"Tournament",count:playerTotal,rounds};
+ try{const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});const msg=await res.text();$("setupStatus").textContent=msg;}
+ catch(e){$("setupStatus").textContent="Bracket is on this screen, but the online save failed. Please try Save bracket again.";}
+}
+function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
+function restoreSavedBracket(data){
+ if(!data||!Array.isArray(data.rounds)||!data.rounds.length)return;
+ rounds=data.rounds;playerTotal=Number(data.count)||4;
+ $("eventName").value=data.name||"Chaos Queen Tournament";
+ $("playerCount").value=String(playerTotal);
+ $("bracketTitle").textContent=data.name||"Tournament Bracket";
+ $("bracketInfo").textContent=playerTotal+" players • Saved tournament • Click a name to advance them.";
+ $("tournament").classList.remove("hidden");
+ renderBracket();
+ $("setupStatus").textContent="Your saved tournament bracket has been restored. 💗💙";
+}
+const saved = localStorage.getItem("chaosQueenTournamentDraft");
+if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
+function namesFromInput(){return $("players").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);}
+function updateHint(){const count=Number($("playerCount").value),got=namesFromInput().length;$("countHint").textContent="Enter exactly "+count+" player names ("+got+" entered).";localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count,players:$("players").value}));}
+$("playerCount").addEventListener("change",updateHint);$("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
+$("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
+$("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
+function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function buildBracket(list){
+ playerTotal=list.length;const size=playerTotal===6?8:playerTotal;const roundCount=Math.log2(size);
+ rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null})));
+ const shuffled=shuffle(list);
+ if(playerTotal===6){
+  const byeMatches=shuffle([0,1,2,3]).slice(0,2);
+  let cursor=0;
+  rounds[0].forEach((m,i)=>{if(byeMatches.includes(i)){m.a=shuffled[cursor++];m.b=null;m.winner=m.a;}else{m.a=shuffled[cursor++];m.b=shuffled[cursor++];}});
+ }else{
+  const slots=shuffle(shuffled);
+  rounds[0].forEach((m,i)=>{m.a=slots[i*2]||null;m.b=slots[i*2+1]||null;});
+ }
+ propagate(0);renderBracket();
+}
+function propagate(fromRound){
+ for(let r=Math.max(1,fromRound+1);r<rounds.length;r++){
+  const prev=rounds[r-1];
+  rounds[r].forEach((m,i)=>{m.a=prev[i*2]?.winner||null;m.b=prev[i*2+1]?.winner||null;m.winner=null;if(m.a&&!m.b)m.winner=m.a;else if(m.b&&!m.a)m.winner=m.b;});
+ }
+}
+function chooseWinner(r,i,side){
+ const match=rounds[r][i],chosen=match[side];
+ if(!chosen)return;
+ match.winner=chosen;
+ for(let later=r+1;later<rounds.length;later++)rounds[later].forEach(m=>m.winner=null);
+ propagate(r);renderBracket();queueBracketSave();
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function roundName(r){if(r===rounds.length-1)return "Final";if(r===rounds.length-2)return "Semi-finals";if(r===0)return "Round 1";return "Round "+(r+1);}
+function playerButton(name,r,i,side,winner){
+ if(!name)return '<div class="player empty">— BYE —</div>';
+ const isWinner=winner===name;
+ return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+escapeHtml(name)+(isWinner?' <small>✓ ADVANCES</small>':'')+'</button>';
+}
+function renderBracket(){
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+'</div>'+playerButton(m.a,r,i,"a",m.winner)+playerButton(m.b,r,i,"b",m.winner)+'</div>').join("")+'</div>').join("");
+ $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
+ const champ=rounds[rounds.length-1][0]?.winner;
+ $("champion").classList.toggle("hidden",!champ);
+ $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champ):"";
+}
+$("build").onclick=()=>{
+ const list=namesFromInput(),required=Number($("playerCount").value);
+ if(list.length!==required){$("setupStatus").textContent="You need exactly "+required+" names. Right now you have "+list.length+".";return;}
+ if(new Set(list.map(n=>n.toLowerCase())).size!==list.length){$("setupStatus").textContent="Each player needs a unique name. Check for duplicates.";return;}
+ if(list.some(n=>n.length>40)){$("setupStatus").textContent="Please keep each player name to 40 characters or less.";return;}
+ buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("newTournament").onclick=()=>{$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";window.scrollTo({top:0,behavior:"smooth"});};
+$("print").onclick=()=>window.print();
+$("saveBracket").onclick=saveBracketOnline;
+updateHint();
+</script>
+</body></html>+Number(x.spin_amount||0).toFixed(2)+' · Paid 
+let playerTotal = 4;
+let hasLoadedSavedBracket = false;
+let bracketSaveTimer = null;
+async function saveBracketOnline(){
+ const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return;}
+ if(!rounds.length)return;
+ const payload={name:$("eventName").value.trim()||"Tournament",count:playerTotal,rounds};
+ try{const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});const msg=await res.text();$("setupStatus").textContent=msg;}
+ catch(e){$("setupStatus").textContent="Bracket is on this screen, but the online save failed. Please try Save bracket again.";}
+}
+function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
+function restoreSavedBracket(data){
+ if(!data||!Array.isArray(data.rounds)||!data.rounds.length)return;
+ rounds=data.rounds;playerTotal=Number(data.count)||4;
+ $("eventName").value=data.name||"Chaos Queen Tournament";
+ $("playerCount").value=String(playerTotal);
+ $("bracketTitle").textContent=data.name||"Tournament Bracket";
+ $("bracketInfo").textContent=playerTotal+" players • Saved tournament • Click a name to advance them.";
+ $("tournament").classList.remove("hidden");
+ renderBracket();
+ $("setupStatus").textContent="Your saved tournament bracket has been restored. 💗💙";
+}
+const saved = localStorage.getItem("chaosQueenTournamentDraft");
+if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
+function namesFromInput(){return $("players").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);}
+function updateHint(){const count=Number($("playerCount").value),got=namesFromInput().length;$("countHint").textContent="Enter exactly "+count+" player names ("+got+" entered).";localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count,players:$("players").value}));}
+$("playerCount").addEventListener("change",updateHint);$("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
+$("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
+$("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
+function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function buildBracket(list){
+ playerTotal=list.length;const size=playerTotal===6?8:playerTotal;const roundCount=Math.log2(size);
+ rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null})));
+ const shuffled=shuffle(list);
+ if(playerTotal===6){
+  const byeMatches=shuffle([0,1,2,3]).slice(0,2);
+  let cursor=0;
+  rounds[0].forEach((m,i)=>{if(byeMatches.includes(i)){m.a=shuffled[cursor++];m.b=null;m.winner=m.a;}else{m.a=shuffled[cursor++];m.b=shuffled[cursor++];}});
+ }else{
+  const slots=shuffle(shuffled);
+  rounds[0].forEach((m,i)=>{m.a=slots[i*2]||null;m.b=slots[i*2+1]||null;});
+ }
+ propagate(0);renderBracket();
+}
+function propagate(fromRound){
+ for(let r=Math.max(1,fromRound+1);r<rounds.length;r++){
+  const prev=rounds[r-1];
+  rounds[r].forEach((m,i)=>{m.a=prev[i*2]?.winner||null;m.b=prev[i*2+1]?.winner||null;m.winner=null;if(m.a&&!m.b)m.winner=m.a;else if(m.b&&!m.a)m.winner=m.b;});
+ }
+}
+function chooseWinner(r,i,side){
+ const match=rounds[r][i],chosen=match[side];
+ if(!chosen)return;
+ match.winner=chosen;
+ for(let later=r+1;later<rounds.length;later++)rounds[later].forEach(m=>m.winner=null);
+ propagate(r);renderBracket();queueBracketSave();
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function roundName(r){if(r===rounds.length-1)return "Final";if(r===rounds.length-2)return "Semi-finals";if(r===0)return "Round 1";return "Round "+(r+1);}
+function playerButton(name,r,i,side,winner){
+ if(!name)return '<div class="player empty">— BYE —</div>';
+ const isWinner=winner===name;
+ return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+escapeHtml(name)+(isWinner?' <small>✓ ADVANCES</small>':'')+'</button>';
+}
+function renderBracket(){
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+'</div>'+playerButton(m.a,r,i,"a",m.winner)+playerButton(m.b,r,i,"b",m.winner)+'</div>').join("")+'</div>').join("");
+ $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
+ const champ=rounds[rounds.length-1][0]?.winner;
+ $("champion").classList.toggle("hidden",!champ);
+ $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champ):"";
+}
+$("build").onclick=()=>{
+ const list=namesFromInput(),required=Number($("playerCount").value);
+ if(list.length!==required){$("setupStatus").textContent="You need exactly "+required+" names. Right now you have "+list.length+".";return;}
+ if(new Set(list.map(n=>n.toLowerCase())).size!==list.length){$("setupStatus").textContent="Each player needs a unique name. Check for duplicates.";return;}
+ if(list.some(n=>n.length>40)){$("setupStatus").textContent="Please keep each player name to 40 characters or less.";return;}
+ buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("newTournament").onclick=()=>{$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";window.scrollTo({top:0,behavior:"smooth"});};
+$("print").onclick=()=>window.print();
+$("saveBracket").onclick=saveBracketOnline;
+updateHint();
+</script>
+</body></html>+Number(x.payout_amount||0).toFixed(2)+' <button class="dark" style="padding:4px 8px" onclick="deleteTournamentBonus('+Number(x.id)+')">DELETE</button></div>').join(""):'<span class="hint">No tournament bonus buys recorded yet.</span>';}
+async function addTournamentBonus(){const session_key=localStorage.getItem("slotbuddy_kick_session")||"",key=$("adminKey").value.trim();if(!session_key&&!key){$("bonusBuyStatus").textContent="Sign in with Kick on SlotBuddy first.";return;}const caller_name=$("buyPlayer").value.trim(),bonus_name=$("buyGame").value.trim(),spin_amount=$("buySpin").value,payout_amount=$("buyPayout").value,bonus_type=$("buyType").value;if(!caller_name||!bonus_name||spin_amount===""||payout_amount===""){$("bonusBuyStatus").textContent="Enter player, game, spin amount, and payout.";return;}$("bonusBuyStatus").textContent="Saving bonus buy…";try{const r=await fetch(CONTROL_URL+"?action=bonus-add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,caller_name,bonus_name,bonus_type,spin_amount,payout_amount,tournament_name:$("liveEventName").value||$("eventName").value||"Tournament"})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Couldn't save the bonus buy.");$("bonusBuyStatus").textContent="Bonus buy saved!";$("buyGame").value="";$("buySpin").value="";$("buyPayout").value="";await refreshLivePlayers();}catch(e){$("bonusBuyStatus").textContent=e.message;}}
+async function deleteTournamentBonus(id){const session_key=localStorage.getItem("slotbuddy_kick_session")||"",key=$("adminKey").value.trim();if(!session_key&&!key){$("bonusBuyStatus").textContent="Sign in with Kick on SlotBuddy first.";return;}if(!confirm("Delete this tournament bonus buy?"))return;try{const r=await fetch(CONTROL_URL+"?action=bonus-delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,id})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Couldn't delete the bonus buy.");$("bonusBuyStatus").textContent="Bonus buy deleted.";await refreshLivePlayers();}catch(e){$("bonusBuyStatus").textContent=e.message;}}
+$("addTournamentBonus").onclick=addTournamentBonus;
+
 let rounds = [];
 let playerTotal = 4;
 let hasLoadedSavedBracket = false;
