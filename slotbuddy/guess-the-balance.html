@@ -33,8 +33,8 @@ button,.btn{display:inline-flex;justify-content:center;align-items:center;border
  <p id="guessMessage" class="message" aria-live="polite"></p>
  <div id="adminPanel" class="hidden" style="border-top:1px solid #49345f;margin-top:22px;padding-top:18px">
   <h2>👑 Organizer controls</h2>
-  <div id="openControls"><label for="roundName">Round name</label><input id="roundName" maxlength="80" value="Guess the Balance"><button id="openRound">OPEN GUESS THE BALANCE</button></div>
-  <div id="closeControls" class="hidden"><p class="status">Pausing stops new guesses. Existing guesses stay saved, and you can reopen this same round.</p><button id="pauseRound" class="secondary">PAUSE ENTRIES</button></div>
+  <div id="openControls"><label for="roundName">Round name</label><input id="roundName" maxlength="80" value="Guess the Balance"><button id="openRound">GTB ON</button></div>
+  <div id="closeControls" class="hidden"><p class="status">Pausing stops new guesses. Existing guesses stay saved, and you can reopen this same round.</p><button id="pauseRound" class="secondary">GTB OFF</button></div>
   <div id="revealControls" class="hidden" style="margin-top:14px"><p class="status">The final bankroll will be pulled automatically from your most recently completed Bonus Hunt.</p><button id="revealWinner">REVEAL WINNER USING BONUS HUNT BALANCE</button></div>
   <div id="clearControls" class="hidden" style="margin-top:14px"><p class="status">Remove every viewer's guess from this round. This does not open, pause, or reset the round.</p><button id="clearGuesses" class="secondary">CLEAR ALL GUESSES</button></div>
   <p id="adminMessage" class="message" aria-live="polite"></p>
@@ -66,7 +66,7 @@ async function load(){
    $("closeControls").classList.toggle("hidden",!isOpen);
    $("revealControls").classList.toggle("hidden",!hasRound||isOpen||hasReveal);
    $("clearControls").classList.toggle("hidden",!hasRound);
-   $("openRound").textContent=!hasRound?"OPEN GUESS THE BALANCE":hasReveal?"OPEN NEW ROUND":"REOPEN GUESS THE BALANCE";
+   $("openRound").textContent="GTB ON";
    $("roundName").previousElementSibling.classList.toggle("hidden",hasRound&&!hasReveal);$("roundName").classList.toggle("hidden",hasRound&&!hasReveal);
   }
   hasSubmitted=false;
