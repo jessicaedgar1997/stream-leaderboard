@@ -67,7 +67,7 @@ async function load(){
    $("revealControls").classList.toggle("hidden",!hasRound||isOpen||hasReveal);
    $("clearControls").classList.toggle("hidden",!hasReveal);
    $("openRound").textContent=!hasRound?"OPEN GUESS THE BALANCE":hasReveal?"OPEN NEW ROUND":"REOPEN GUESS THE BALANCE";
-   $("roundName").parentElement.classList.toggle("hidden",hasRound&&!hasReveal);
+   $("roundName").previousElementSibling.classList.toggle("hidden",hasRound&&!hasReveal);$("roundName").classList.toggle("hidden",hasRound&&!hasReveal);
   }
   hasSubmitted=false;
   if(sessionKey){const st=await request("POST",{action:"status",session_key:sessionKey});hasSubmitted=!!st.has_submitted;}
