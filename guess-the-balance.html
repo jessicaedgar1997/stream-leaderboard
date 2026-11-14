@@ -76,5 +76,5 @@ $("openRound").onclick=async()=>{if(!isStaff)return;$("adminMessage").textConten
 $("closeRound").onclick=async()=>{if(!isStaff)return;$("adminMessage").textContent="Closing entries…";try{const d=await request("POST",{action:"close",session_key:sessionKey,actual_balance:$("actualBalance").value});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
 (async()=>{await checkLogin();await load();setInterval(()=>{if(!document.hidden)load();},10000);})();
 </script>
-<script src="./slotbuddy/kick-chat-panel.js"></script>
+
 </body></html>
