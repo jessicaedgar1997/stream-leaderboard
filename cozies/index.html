@@ -63,9 +63,9 @@ async function checkOrganizer(){
  try{
   const r=await fetch(LOGIN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:key})});
   const d=await r.json();if(!r.ok||!d.ok||!d.user)throw new Error("Please sign in again.");
-  const role=d.user.role||"viewer";isOwner=role==="owner"||String(d.user.username).toLowerCase()==="jessicaedgar1997";canAddBonuses=isOwner||role==="moderator";
+  const role=d.user.role||"viewer";isOwner=role==="owner"||role==="moderator"||String(d.user.username).toLowerCase()==="jessicaedgar1997";canAddBonuses=isOwner;
   if(!canAddBonuses){$("loginStatus").textContent="You're signed in as @"+d.user.username+", but this account doesn't have permission to add bonuses.";$("signInPrompt").classList.remove("hidden");return;}
-  organizerSession=key;$("loginStatus").textContent="Signed in as @"+d.user.username+(isOwner?" — owner access enabled.":" — moderator access enabled.");$("bonusForm").classList.remove("hidden");if(isOwner){$("coziesQueueControls").classList.remove("hidden");}else{$("coziesCallLimit").hidden=true;$("saveCoziesCallLimit").hidden=true;}await loadBonuses();
+  organizerSession=key;$("loginStatus").textContent="Signed in as @"+d.user.username+(role==="moderator"?" — full Cozies manager access enabled.":" — owner access enabled.");$("bonusForm").classList.remove("hidden");if(isOwner){$("coziesQueueControls").classList.remove("hidden");}else{$("coziesCallLimit").hidden=true;$("saveCoziesCallLimit").hidden=true;}await loadBonuses();
  }catch(e){localStorage.removeItem(SESSION_KEY);$("loginStatus").textContent="Your Kick sign-in needs to be renewed.";$("signInPrompt").classList.remove("hidden");}
 }
 $("bonusForm").addEventListener("submit",async e=>{
