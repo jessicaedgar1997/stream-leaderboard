@@ -58,6 +58,11 @@ const QUEUE_URL = "https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbud
 const queueList = document.getElementById("queueList");
 const queueCount = document.getElementById("queueCount");
 const queueUpdated = document.getElementById("queueUpdated");
+function queueDisplayGame(value) {
+  const raw = String(value || "").trim();
+  const wrapped = raw.match(/^\$\(urlencode\s+([\s\S]+)\)$/i);
+  return wrapped ? wrapped[1].trim() : raw;
+}
 function queueSafeText(value) {
   return String(value).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 }
@@ -70,7 +75,7 @@ async function refreshQueue() {
     const calls = data.calls || [];
     queueCount.textContent = String(calls.length);
     queueList.innerHTML = calls.length
-          ? calls.map((call, index) => '<div class="queue-item"><strong>#' + (index + 1) + ' · ' + queueSafeText(call.game) + ' · @' + queueSafeText(call.username) + '</strong></div>').join("")
+          ? calls.map((call, index) => '<div class="queue-item"><strong>#' + (index + 1) + ' · ' + queueSafeText(queueDisplayGame(call.game)) + ' · @' + queueSafeText(call.username) + '</strong></div>').join("")
       : '<div class="queue-empty">The queue is empty. Be the first to call a game in chat!</div>';
     queueUpdated.textContent = "Last checked " + new Date().toLocaleTimeString() + " · refreshes automatically";
   } catch (error) {
