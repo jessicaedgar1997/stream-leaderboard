@@ -35,6 +35,7 @@ button,.btn{display:inline-flex;justify-content:center;align-items:center;border
   <h2>👑 Organizer controls</h2>
   <div id="openControls"><label for="roundName">Round name</label><input id="roundName" maxlength="80" value="Guess the Balance"><button id="openRound">OPEN NEW ROUND</button></div>
   <div id="closeControls" class="hidden"><label for="actualBalance">Correct balance ($)</label><input id="actualBalance" type="number" min="0" max="1000000000" step="0.01" placeholder="Enter the real balance"><button id="closeRound" class="secondary">CLOSE ENTRIES & REVEAL WINNER</button></div>
+  <div id="clearControls" class="hidden" style="margin-top:14px"><p class="status">After you've recorded the winner, clear this round's guesses to tidy up before the next hunt.</p><button id="clearGuesses" class="secondary">CLEAR GUESSES</button></div>
   <p id="adminMessage" class="message" aria-live="polite"></p>
  </div>
 </section>
@@ -58,7 +59,7 @@ async function load(){
   const d=await request("GET");round=d.round;$("entryCount").textContent=String(d.entry_count||0);
   if(!round){$("roundTitle").textContent="NO ROUND OPEN";$("roundDescription").textContent="Check back when Jessica opens the next Guess the Balance game.";$("roundState").textContent="WAITING";}
   else{$("roundTitle").textContent=round.title;$("roundState").textContent=round.is_open?"OPEN":"CLOSED";$("roundDescription").textContent=round.is_open?"Entries are open. Submit one guess using your Kick account. Once submitted, your guess is locked and cannot be changed.":"Entries are locked. The correct balance and closest guesses are revealed below.";}
-  if(isStaff){$("openControls").classList.toggle("hidden",!!round?.is_open);$("closeControls").classList.toggle("hidden",!round?.is_open);}
+  if(isStaff){$("openControls").classList.toggle("hidden",!!round?.is_open);$("closeControls").classList.toggle("hidden",!round?.is_open);$("clearControls").classList.toggle("hidden",!round||!!round.is_open);}
   hasSubmitted=false;
   if(sessionKey){const st=await request("POST",{action:"status",session_key:sessionKey});hasSubmitted=!!st.has_submitted;}
   const canSubmit=!!round?.is_open&&!!sessionKey&&!hasSubmitted;
@@ -74,6 +75,7 @@ async function load(){
 $("guessForm").addEventListener("submit",async e=>{e.preventDefault();if(!sessionKey||hasSubmitted||!round?.is_open)return;const button=$("submitGuess");button.disabled=true;button.textContent="LOCKING…";$("guessMessage").textContent="Submitting your one allowed guess…";try{const d=await request("POST",{action:"submit",session_key:sessionKey,guess:$("guessInput").value});$("guessMessage").textContent=d.message||"Your guess is locked!";hasSubmitted=true;$("guessInput").value="";await load();}catch(err){$("guessMessage").textContent=err.message;}finally{button.disabled=false;button.textContent="LOCK IN MY GUESS";}});
 $("openRound").onclick=async()=>{if(!isStaff)return;$("adminMessage").textContent="Opening round…";try{const d=await request("POST",{action:"open",session_key:sessionKey,title:$("roundName").value});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
 $("closeRound").onclick=async()=>{if(!isStaff)return;$("adminMessage").textContent="Closing entries…";try{const d=await request("POST",{action:"close",session_key:sessionKey,actual_balance:$("actualBalance").value});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
+$("clearGuesses").onclick=async()=>{if(!isStaff||!round||round.is_open)return;if(!confirm("Clear every guess from this completed round? Make sure you've recorded the winner first. The round and final balance will stay saved, but the guesses and winner display will be removed."))return;$("adminMessage").textContent="Clearing guesses…";try{const d=await request("POST",{action:"clear",session_key:sessionKey});$("adminMessage").textContent=d.message;await load();}catch(e){$("adminMessage").textContent=e.message;}};
 (async()=>{await checkLogin();await load();setInterval(()=>{if(!document.hidden)load();},10000);})();
 </script>
 </body></html>
