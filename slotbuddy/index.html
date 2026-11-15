@@ -36,7 +36,7 @@ const SESSION_KEY = "slotbuddy_kick_session";
 let signedIn = false;
 function showSignedIn(user) {
   signedIn = true;
-  dashboardLink.hidden = String(user.id) !== "44093684";
+  dashboardLink.hidden = user.role !== "owner";
   message.textContent = "You're signed in as @" + user.username + ". You'll stay signed in on this browser until you choose to sign out.";
   message.className = "msg signed";
   button.textContent = "Sign out";
