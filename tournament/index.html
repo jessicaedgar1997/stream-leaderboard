@@ -128,7 +128,7 @@ let liveCalls = [];
 let liveState = null;
 async function applyStaffView(){
  const session=localStorage.getItem("slotbuddy_kick_session");if(!session)return;
- try{const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});const d=await r.json();if(d.ok&&d.user?.role==="moderator")$("liveAdminMessage").textContent="Signed in as a SlotBuddy manager. Full tournament controls are enabled.";}catch{}
+ try{const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});const d=await r.json();if(d.ok&&(d.user?.role==="owner"||d.user?.role==="moderator"))$("liveAdminMessage").textContent="Signed in as a SlotBuddy manager. Full tournament controls are enabled.";}catch{}
 }
 
 function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
