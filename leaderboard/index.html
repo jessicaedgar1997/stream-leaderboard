@@ -165,7 +165,7 @@ document.getElementById("editRows").addEventListener("click",async e=>{
   if(!error)await loadLeaderboard();
  }
  if(e.target.classList.contains("deleteRow")){
-  if(!confirm("Remove "+username+" from the leaderboard?"))return;
+  
   const {error}=await client.from("leaderboard_entries").delete().eq("username",username);
   msg.textContent=error?"Remove failed: "+error.message:"Removed "+username+".";
   if(!error)await loadLeaderboard();
