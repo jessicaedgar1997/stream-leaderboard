@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "SlotBuddy Quick Add for Rainbet",
+  "version": "1.0.0",
+  "description": "Add the Rainbet game you're viewing directly to your SlotBuddy Bonus Hunt queue.",
+  "permissions": ["activeTab", "tabs", "storage"],
+  "host_permissions": [
+    "https://rainbet.com/*",
+    "https://www.rainbet.com/*",
+    "https://jessicaedgar1997.github.io/stream-leaderboard/*",
+    "https://xbogfbyysrjttyfvzluh.supabase.co/*"
+  ],
+  "action": {
+    "default_title": "SlotBuddy Quick Add",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://rainbet.com/*", "https://www.rainbet.com/*"],
+      "js": ["rainbet.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://jessicaedgar1997.github.io/stream-leaderboard/*"],
+      "js": ["slotbuddy-auth.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
