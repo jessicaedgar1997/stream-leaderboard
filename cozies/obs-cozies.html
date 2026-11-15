@@ -24,7 +24,7 @@ h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em
 .details{font-size:11px;line-height:1.55;color:var(--muted);margin-top:5px;overflow-wrap:anywhere}
 .details b{color:var(--blue)}
 .section-title{grid-column:1/-1;padding:4px 14px 7px;font-size:11px;letter-spacing:.1em;font-weight:1000;color:var(--blue)}
-.rows{grid-column:1/-1;padding:0 10px 11px;height:168px;overflow:hidden;position:relative}.scroll-track{display:flex;flex-direction:column;animation:slot-scroll var(--scroll-duration,24s) linear infinite}.scroll-track:hover{animation-play-state:paused}.scroll-group{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding-bottom:6px;flex:none}@keyframes slot-scroll{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+.rows{grid-column:1/-1;padding:0 10px 11px;height:168px;overflow:hidden;position:relative}.scroll-track{display:flex;flex-direction:column;animation:slot-scroll var(--scroll-duration,24s) linear infinite}.scroll-track:hover{animation-play-state:paused}.scroll-group{display:grid;grid-template-columns:1fr;gap:6px;padding-bottom:6px;flex:none}@keyframes slot-scroll{from{transform:translateY(0)}to{transform:translateY(-50%)}}
 .entry{display:grid;grid-template-columns:minmax(0,1.5fr) auto;gap:8px;align-items:center;padding:9px 10px;border-radius:10px;background:rgba(5,11,28,.72);border:1px solid rgba(96,115,157,.6);min-width:0}
 .entry-main{min-width:0}
 .entry-game{font-size:12px;font-weight:900;overflow-wrap:anywhere}
@@ -32,7 +32,7 @@ h1{font-size:21px;line-height:1.1;margin:0;font-weight:1000;letter-spacing:.04em
 .entry-stats{text-align:right;font-size:11px;font-weight:900;white-space:nowrap}
 .entry-stats .mult{display:block;color:var(--blue);font-size:10px;margin-top:3px}
 .empty{grid-column:1/-1;padding:18px 12px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5;background:rgba(5,11,28,.65);border-radius:11px;margin:0 10px 12px}
-@media(max-width:760px){.widget{grid-template-columns:repeat(2,minmax(0,1fr))}.scroll-group{grid-template-columns:repeat(2,minmax(0,1fr))}.balance-card,.results-card{margin:6px 4px}.balance-value{font-size:19px}}@media(max-width:420px){body{padding:5px}.widget{grid-template-columns:1fr}.balance-card,.results-card{grid-column:span 1;margin:5px}.balance-card{padding:10px 5px}.balance-item{padding:4px}.balance-label{font-size:9px}.balance-value{font-size:17px}.results-card{padding:7px}.highlight{padding:7px 8px}.scroll-group{grid-template-columns:1fr}.rows{height:150px}.game{font-size:13px}.details{font-size:10px}.entry{padding:7px}}
+@media(max-width:760px){.widget{grid-template-columns:repeat(2,minmax(0,1fr))}.balance-card,.results-card{margin:6px 4px}.balance-value{font-size:19px}}@media(max-width:420px){body{padding:5px}.widget{grid-template-columns:1fr}.balance-card,.results-card{grid-column:span 1;margin:5px}.balance-card{padding:10px 5px}.balance-item{padding:4px}.balance-label{font-size:9px}.balance-value{font-size:17px}.results-card{padding:7px}.highlight{padding:7px 8px}.rows{height:150px}.game{font-size:13px}.details{font-size:10px}.entry{padding:7px}}
 </style>
 </head>
 <body>
