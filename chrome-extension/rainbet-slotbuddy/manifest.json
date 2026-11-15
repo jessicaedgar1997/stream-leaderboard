@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SlotBuddy Quick Add",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Rainbet Quick Add for SlotBuddy Bonus Hunt and Cozies, with customizable settings and a master on/off switch.",
   "permissions": [
     "activeTab",
