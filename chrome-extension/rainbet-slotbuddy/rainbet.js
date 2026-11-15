@@ -34,6 +34,9 @@ function findGameName() {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "slotbuddy-get-game") {
-    sendResponse({ gameName: findGameName(), pageTitle: document.title });
+    chrome.storage.local.get("slotbuddyAddonEnabled").then(({ slotbuddyAddonEnabled = true }) => {
+      sendResponse(slotbuddyAddonEnabled ? { gameName: findGameName(), pageTitle: document.title } : { gameName: "", disabled: true });
+    });
+    return true;
   }
 });
