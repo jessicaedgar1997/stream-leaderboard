@@ -25,12 +25,11 @@
     <button class="btn" id="startGiveaway">START GIVEAWAY</button>
     <button class="btn secondary" id="toggleEntries" disabled>CLOSE ENTRIES</button>
     <button class="btn pink" id="drawGiveaway">DRAW WINNER</button>
-    <button class="btn secondary" id="clearGiveaway">CLEAR ENTRIES & WINNERS</button>
     <button class="btn secondary" id="refreshGiveaway">REFRESH</button>
   </div>
   <div class="current" id="giveawayWinner" style="display:none"><strong>🏆 WINNERS</strong><div id="giveawayWinnerName" style="font-size:1.15rem;margin-top:8px;line-height:1.8"></div></div>
   <p class="message" id="giveawayMessage" role="status"></p><p class="muted">Activity is measured from each entrant’s latest Kick chat message. Subscriber status is read from Kick’s chat badge.</p>
-  <h2 style="margin-top:16px">👥 Giveaway entries</h2>
+  <div class="head" style="margin-top:16px"><h2 style="margin:0">👥 Giveaway entries</h2><button class="btn secondary" id="clearGiveaway">CLEAR</button></div>
   <div class="list" id="giveawayEntries"><div class="empty">No giveaway entries yet.</div></div>
 </section>
 <footer class="foot">SlotBuddy Keyword Giveaway · One entry per Kick account. 💗💙</footer>
