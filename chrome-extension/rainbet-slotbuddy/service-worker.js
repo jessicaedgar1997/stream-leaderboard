@@ -1,4 +1,5 @@
-const API = "https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-bonus-hunt";
+const BONUS_HUNT_API = "https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-bonus-hunt";
+const COZIES_API = "https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/cozies-bonus-tracker";
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "slotbuddy-session" && typeof message.session === "string" && message.session.length > 10) {
@@ -17,17 +18,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     (async () => {
       const { slotbuddySession } = await chrome.storage.local.get("slotbuddySession");
       if (!slotbuddySession) {
-        sendResponse({ ok: false, error: "Connect SlotBuddy first. Open the Bonus Hunt page and sign in with Kick." });
+        sendResponse({ ok: false, error: "Connect SlotBuddy first. Open either SlotBuddy page and sign in with Kick." });
         return;
       }
-      const response = await fetch(API + "?action=queue-add", {
+      const destination = message.destination === "cozies" ? "cozies" : "bonus_hunt";
+      const isCozies = destination === "cozies";
+      const endpoint = isCozies ? COZIES_API : BONUS_HUNT_API;
+      const payload = isCozies
+        ? { action: "queue-add", session_key: slotbuddySession, username: message.username, game_name: message.gameName }
+        : { session_key: slotbuddySession, username: message.username, game_name: message.gameName };
+      const url = isCozies ? endpoint : endpoint + "?action=queue-add";
+      const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_key: slotbuddySession,
-          username: message.username,
-          game_name: message.gameName
-        })
+        body: JSON.stringify(payload)
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || data.error || data.ok !== true) {
@@ -37,7 +41,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ ok: false, error: data.error || "SlotBuddy could not add that game." });
         return;
       }
-      sendResponse({ ok: true, message: data.message || "Game added to your Bonus Hunt queue!" });
+      sendResponse({ ok: true, message: data.message || (isCozies ? "Game added to your Cozies queue!" : "Game added to your Bonus Hunt queue!") });
     })().catch(error => sendResponse({ ok: false, error: error?.message || "Something went wrong." }));
     return true;
   }
