@@ -17,15 +17,16 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .status{font-size:16px;font-weight:900;color:var(--gold);text-align:right}
 .main{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;min-height:0;flex:1}
 .entries-wrap,.winner-wrap{border:1px solid #52628c;border-radius:16px;background:#090f25bb;padding:14px;min-height:0}
+.entries-wrap{display:flex;flex-direction:column}
 .entries-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
 .heading{font-size:18px;font-weight:1000;color:var(--blue);letter-spacing:.06em}
 .count{font-size:15px;font-weight:900;color:#fff;background:#ff39b933;border:1px solid #ff39b988;border-radius:99px;padding:5px 10px}
-#entryList{width:100%;height:58px;display:flex;align-items:center;overflow:hidden;white-space:nowrap;position:relative;mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
-.ticker-track{display:flex;align-items:center;gap:12px;width:max-content;flex:0 0 auto;animation:ticker-scroll var(--ticker-duration,28s) linear infinite}
-.ticker-group{display:flex;align-items:center;gap:12px;flex:0 0 auto}
-.entry{display:inline-flex;align-items:center;font-size:18px;font-weight:900;padding:10px 16px;border-radius:999px;background:#1b2545;border:1px solid #35d5ff88;white-space:nowrap;box-shadow:0 0 10px #35d5ff22}
-.empty{font-size:17px;color:#b7c2df;padding:12px 4px;white-space:nowrap}
-@keyframes ticker-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+#entryList{width:100%;flex:1;min-height:0;display:flex;align-items:flex-start;justify-content:center;overflow:hidden;white-space:normal;position:relative;mask-image:linear-gradient(180deg,transparent,#000 5%,#000 95%,transparent)}
+.ticker-track{display:flex;flex-direction:column;align-items:stretch;gap:10px;width:100%;flex:0 0 auto;animation:ticker-scroll-down var(--ticker-duration,28s) linear infinite}
+.ticker-group{display:flex;flex-direction:column;align-items:stretch;gap:10px;flex:0 0 auto}
+.entry{display:flex;align-items:center;justify-content:center;width:100%;font-size:18px;font-weight:900;padding:8px 12px;border-radius:12px;background:#1b2545;border:1px solid #35d5ff88;white-space:nowrap;box-shadow:0 0 10px #35d5ff22}
+.empty{font-size:17px;color:#b7c2df;padding:12px 4px;white-space:normal;text-align:center}
+@keyframes ticker-scroll-down{from{transform:translateY(-50%)}to{transform:translateY(0)}}
 .winner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .winner-label{font-size:17px;font-weight:1000;letter-spacing:.14em;color:var(--blue)}
 .winner-name{font-size:clamp(30px,4.3vw,56px);line-height:1.08;font-weight:1000;color:#fff;margin:14px 0;text-shadow:0 0 14px var(--pink),0 0 28px #ff39b988;overflow-wrap:anywhere}
@@ -37,7 +38,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .winner-wrap.rolling .winner-label{color:var(--pink)}
 .footer{font-size:12px;color:#aab8d8;text-align:right}
 @keyframes orbit{to{transform:rotate(360deg)}}
-@media(max-width:700px){#stage{padding:5px}.panel{padding:12px;border-radius:16px}.brand{font-size:18px}.status{font-size:12px}.main{grid-template-columns:1fr .9fr;gap:8px}.entries-wrap,.winner-wrap{padding:8px}.heading{font-size:13px}.count{font-size:11px;padding:4px 7px}#entryList{height:48px}.ticker-track,.ticker-group{gap:7px}.entry{font-size:12px;padding:7px 10px}.winner-label{font-size:12px}.winner-name{font-size:clamp(20px,5vw,34px);margin:8px 0}.winner-sub{font-size:12px}.timer{font-size:27px}#rollText{font-size:20px}}
+@media(max-width:700px){#stage{padding:5px}.panel{padding:12px;border-radius:16px}.brand{font-size:18px}.status{font-size:12px}.main{grid-template-columns:1fr .9fr;gap:8px}.entries-wrap,.winner-wrap{padding:8px}.heading{font-size:13px}.count{font-size:11px;padding:4px 7px}.ticker-track,.ticker-group{gap:7px}.entry{font-size:12px;padding:7px 10px}.winner-label{font-size:12px}.winner-name{font-size:clamp(20px,5vw,34px);margin:8px 0}.winner-sub{font-size:12px}.timer{font-size:27px}#rollText{font-size:20px}}
 </style>
 </head>
 <body>
