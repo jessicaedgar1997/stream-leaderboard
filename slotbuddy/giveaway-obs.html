@@ -20,9 +20,12 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .entries-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
 .heading{font-size:18px;font-weight:1000;color:var(--blue);letter-spacing:.06em}
 .count{font-size:15px;font-weight:900;color:#fff;background:#ff39b933;border:1px solid #ff39b988;border-radius:99px;padding:5px 10px}
-#entryList{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:245px;overflow:hidden}
-.entry{font-size:17px;font-weight:800;padding:7px 10px;border-radius:9px;background:#1b2545;border:1px solid #3a527c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.empty{font-size:17px;color:#b7c2df;padding:12px 4px}
+#entryList{width:100%;height:58px;display:flex;align-items:center;overflow:hidden;white-space:nowrap;position:relative;mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+.ticker-track{display:flex;align-items:center;gap:12px;width:max-content;flex:0 0 auto;animation:ticker-scroll var(--ticker-duration,28s) linear infinite}
+.ticker-group{display:flex;align-items:center;gap:12px;flex:0 0 auto}
+.entry{display:inline-flex;align-items:center;font-size:18px;font-weight:900;padding:10px 16px;border-radius:999px;background:#1b2545;border:1px solid #35d5ff88;white-space:nowrap;box-shadow:0 0 10px #35d5ff22}
+.empty{font-size:17px;color:#b7c2df;padding:12px 4px;white-space:nowrap}
+@keyframes ticker-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .winner-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .winner-label{font-size:17px;font-weight:1000;letter-spacing:.14em;color:var(--blue)}
 .winner-name{font-size:clamp(30px,4.3vw,56px);line-height:1.08;font-weight:1000;color:#fff;margin:14px 0;text-shadow:0 0 14px var(--pink),0 0 28px #ff39b988;overflow-wrap:anywhere}
@@ -34,7 +37,7 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent
 .winner-wrap.rolling .winner-label{color:var(--pink)}
 .footer{font-size:12px;color:#aab8d8;text-align:right}
 @keyframes orbit{to{transform:rotate(360deg)}}
-@media(max-width:700px){#stage{padding:5px}.panel{padding:12px;border-radius:16px}.brand{font-size:18px}.status{font-size:12px}.main{grid-template-columns:1fr .9fr;gap:8px}.entries-wrap,.winner-wrap{padding:8px}.heading{font-size:13px}.count{font-size:11px;padding:4px 7px}#entryList{grid-template-columns:1fr;gap:4px;max-height:260px}.entry{font-size:12px;padding:5px 6px}.winner-label{font-size:12px}.winner-name{font-size:clamp(20px,5vw,34px);margin:8px 0}.winner-sub{font-size:12px}.timer{font-size:27px}#rollText{font-size:20px}}
+@media(max-width:700px){#stage{padding:5px}.panel{padding:12px;border-radius:16px}.brand{font-size:18px}.status{font-size:12px}.main{grid-template-columns:1fr .9fr;gap:8px}.entries-wrap,.winner-wrap{padding:8px}.heading{font-size:13px}.count{font-size:11px;padding:4px 7px}#entryList{height:48px}.ticker-track,.ticker-group{gap:7px}.entry{font-size:12px;padding:7px 10px}.winner-label{font-size:12px}.winner-name{font-size:clamp(20px,5vw,34px);margin:8px 0}.winner-sub{font-size:12px}.timer{font-size:27px}#rollText{font-size:20px}}
 </style>
 </head>
 <body>
@@ -68,13 +71,30 @@ async function readSnapshot(){
 function renderEntries(data){
  const entries=data.entries||[];
  $("count").textContent=entries.length+" ENTERED";
- $("entryList").innerHTML="";
- if(!entries.length){const empty=document.createElement("div");empty.className="empty";empty.textContent=data.giveaway?"Waiting for entries…":"No giveaway running."; $("entryList").appendChild(empty);return;}
- for(const entry of entries){
-  const item=document.createElement("div");item.className="entry";
-  item.textContent="@"+entry.username+(entry.is_subscriber?" 💎":"");
-  $("entryList").appendChild(item);
+ const viewport=$("entryList");
+ const signature=entries.map(entry=>entry.username+(entry.is_subscriber?"💎":"")).join("|");
+ if(viewport.dataset.signature===signature)return;
+ viewport.dataset.signature=signature;
+ viewport.innerHTML="";
+ if(!entries.length){
+  const empty=document.createElement("div");empty.className="empty";
+  empty.textContent=data.giveaway?"Waiting for entries…":"No giveaway running.";
+  viewport.appendChild(empty);return;
  }
+ const track=document.createElement("div");track.className="ticker-track";
+ const makeGroup=()=>{
+  const group=document.createElement("div");group.className="ticker-group";
+  for(const entry of entries){
+   const item=document.createElement("div");item.className="entry";
+   item.textContent="@"+entry.username+(entry.is_subscriber?" 💎":"");
+   group.appendChild(item);
+  }
+  return group;
+ };
+ track.appendChild(makeGroup());
+ track.appendChild(makeGroup());
+ track.style.setProperty("--ticker-duration",Math.max(14,entries.length*3.2)+"s");
+ viewport.appendChild(track);
 }
 function renderStatus(data){
  const g=data.giveaway;
