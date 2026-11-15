@@ -59,6 +59,7 @@ const money=v=>"$"+(Number(v||0)).toLocaleString("en-US",{minimumFractionDigits:
 const esc=v=>String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const mult=x=>Number(x.spin_amount)>0?(Number(x.payout_amount||0)/Number(x.spin_amount)).toFixed(2)+"x":"—";
 function details(x){return "@"+esc(x.username)+"<br>Spin: <b>"+money(x.spin_amount)+"</b> · Payout: <b>"+money(x.payout_amount)+"</b><br>Multiplier: <b>"+mult(x)+"</b>";}
+let lastEntriesSignature=null;
 function render(s){
  const entries=Array.isArray(s?.entries)?s.entries:[];
  const paid=entries.filter(x=>Number(x.payout_amount||0)>0).slice().sort((a,b)=>Number(b.payout_amount||0)-Number(a.payout_amount||0));
@@ -71,12 +72,24 @@ function render(s){
  $("topDetails").innerHTML=top?details(top):"The highest saved payout will appear here.";
  $("lowGame").textContent=low?.game_name||"Waiting for payout";
  $("lowDetails").innerHTML=low?details(low):"The lowest saved payout will appear here.";
- const cards=entries.slice().sort((a,b)=>Number(b.payout_amount||0)-Number(a.payout_amount||0)).map(x=>'<div class="entry"><div class="entry-main"><div class="entry-game">'+esc(x.game_name||"Unnamed slot")+'</div><div class="entry-caller">@'+esc(x.username||"Unknown caller")+' · '+esc(x.bonus_type||"Regular")+'</div></div><div class="entry-stats">'+(Number(x.payout_amount)>0?money(x.payout_amount):"Pending")+'<span class="mult">'+(Number(x.payout_amount)>0?mult(x):"Payout pending")+'</span></div></div>').join("");
- if(entries.length>0){
-  const duration=Math.max(14,entries.length*3);
-  $("entries").innerHTML='<div class="scroll-track" style="--scroll-duration:'+duration+'s"><div class="scroll-group">'+cards+'</div><div class="scroll-group" aria-hidden="true">'+cards+'</div></div>';
- }else{
-  $("entries").innerHTML='<div class="empty">No slots have been bonused yet. They will appear here as bonuses are added.</div>';
+ const sortedEntries=entries.slice().sort((a,b)=>Number(b.payout_amount||0)-Number(a.payout_amount||0));
+ const signature=JSON.stringify(sortedEntries.map(x=>[x.id,x.game_name,x.username,x.bonus_type,x.spin_amount,x.payout_amount]));
+ if(signature!==lastEntriesSignature){
+  lastEntriesSignature=signature;
+  const cards=sortedEntries.map(x=>'<div class="entry"><div class="entry-main"><div class="entry-game">'+esc(x.game_name||"Unnamed slot")+'</div><div class="entry-caller">@'+esc(x.username||"Unknown caller")+' · '+esc(x.bonus_type||"Regular")+'</div></div><div class="entry-stats">'+(Number(x.payout_amount)>0?money(x.payout_amount):"Pending")+'<span class="mult">'+(Number(x.payout_amount)>0?mult(x):"Payout pending")+'</span></div></div>').join("");
+  if(entries.length>0){
+   const duration=Math.max(14,entries.length*3);
+   $("entries").innerHTML='<div class="scroll-track" style="--scroll-duration:'+duration+'s"><div class="scroll-group">'+cards+'</div></div>';
+   const track=$("entries").querySelector(".scroll-track");
+   const firstGroup=track.querySelector(".scroll-group");
+   if(firstGroup.getBoundingClientRect().height>$("entries").clientHeight){
+    track.insertAdjacentHTML("beforeend",'<div class="scroll-group" aria-hidden="true">'+cards+'</div>');
+   }else{
+    track.style.animation="none";
+   }
+  }else{
+   $("entries").innerHTML='<div class="empty">No slots have been bonused yet. They will appear here as bonuses are added.</div>';
+  }
  }
 }
 async function refresh(){
