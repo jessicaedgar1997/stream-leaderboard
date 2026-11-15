@@ -7,6 +7,19 @@ function updateButtonLabel() {
 }
 $("destination").addEventListener("change", updateButtonLabel);
 
+async function refreshAddonState() {
+  const { slotbuddyAddonEnabled = true } = await chrome.storage.local.get("slotbuddyAddonEnabled");
+  $("toggleAddon").textContent = slotbuddyAddonEnabled ? "SLOTBUDDY ADD-ON: ON" : "SLOTBUDDY ADD-ON: OFF";
+  $("toggleAddon").style.background = slotbuddyAddonEnabled ? "#17634f" : "#71344f";
+  $("addGame").disabled = !slotbuddyAddonEnabled;
+  if (!slotbuddyAddonEnabled) $("status").textContent = "SlotBuddy is paused on this computer. Turn it ON to use Quick Add.";
+}
+$("toggleAddon").addEventListener("click", async () => {
+  const { slotbuddyAddonEnabled = true } = await chrome.storage.local.get("slotbuddyAddonEnabled");
+  await chrome.storage.local.set({ slotbuddyAddonEnabled: !slotbuddyAddonEnabled });
+  await refreshAddonState();
+  $("status").textContent = slotbuddyAddonEnabled ? "SlotBuddy is OFF. BonusHunt.gg can be used normally." : "SlotBuddy is ON again!";
+});
 async function refreshConnectionStatus() {
   const { slotbuddySession } = await chrome.storage.local.get("slotbuddySession");
   if (slotbuddySession) $("status").textContent = "SlotBuddy is connected. 💗";
@@ -14,6 +27,8 @@ async function refreshConnectionStatus() {
 }
 
 async function detectGame() {
+  const { slotbuddyAddonEnabled = true } = await chrome.storage.local.get("slotbuddyAddonEnabled");
+  if (!slotbuddyAddonEnabled) return;
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id || !/^https?:\/\/(www\.)?rainbet\.com\//i.test(tab.url || "")) {
     $("status").textContent = "Open a game on Rainbet, then open this extension.";
@@ -58,5 +73,6 @@ $("disconnect").addEventListener("click", async () => {
 });
 
 updateButtonLabel();
+refreshAddonState();
 detectGame();
 refreshConnectionStatus();
