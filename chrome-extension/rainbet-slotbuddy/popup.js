@@ -42,6 +42,7 @@ $("addGame").addEventListener("click",async()=>{
 });
 $("connect").addEventListener("click",async()=>{const url=$("destination").value==="cozies"?COZIES_URL:BONUS_HUNT_URL;await chrome.tabs.create({url});$("status").textContent="SlotBuddy opened. Sign in with Kick there, then reopen this extension.";});
 $("disconnect").addEventListener("click",async()=>{await chrome.runtime.sendMessage({type:"slotbuddy-disconnect"});$("status").textContent="SlotBuddy disconnected.";});
+$("settings").addEventListener("click",()=>chrome.runtime.openOptionsPage());
 updateButtonLabel();refreshAddonState();detectGame();refreshConnectionStatus();
 
 const BONUS_API="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-bonus-hunt";
