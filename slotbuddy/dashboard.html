@@ -27,7 +27,7 @@ async function load(){
  }catch(error){$("status").textContent=error.message;$("users").innerHTML='<tr><td colspan="6" class="empty">Organizer access is required to view this page.</td></tr>';}
  finally{$("refresh").disabled=false;}
 }
-$("refresh").addEventListener("click",load);$("users").addEventListener("click",async event=>{const button=event.target.closest("[data-signout]");if(!button)return;if(!confirm("Sign this Kick account out of SlotBuddy on all devices?"))return;button.disabled=true;try{await call("dashboard-signout",{kick_user_id:button.dataset.signout});await load();}catch(error){$("status").textContent=error.message;button.disabled=false;}});
-$("staff").addEventListener("click",async event=>{const button=event.target.closest("[data-remove-mod]");if(!button)return;if(!confirm("Remove moderator access for this Kick account?"))return;button.disabled=true;try{await call("dashboard-remove-moderator",{kick_user_id:button.dataset.removeMod});await load();}catch(error){$("status").textContent=error.message;button.disabled=false;}});
+$("refresh").addEventListener("click",load);$("users").addEventListener("click",async event=>{const button=event.target.closest("[data-signout]");if(!button)return;button.disabled=true;try{await call("dashboard-signout",{kick_user_id:button.dataset.signout});await load();}catch(error){$("status").textContent=error.message;button.disabled=false;}});
+$("staff").addEventListener("click",async event=>{const button=event.target.closest("[data-remove-mod]");if(!button)return;button.disabled=true;try{await call("dashboard-remove-moderator",{kick_user_id:button.dataset.removeMod});await load();}catch(error){$("status").textContent=error.message;button.disabled=false;}});
 load();
 </script></body></html>
