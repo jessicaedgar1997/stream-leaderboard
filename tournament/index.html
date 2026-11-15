@@ -189,7 +189,7 @@ $("nextSlotCall").onclick=async()=>{
  try{const res=await fetch(QUEUE_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"next",session_key})});const data=await res.json();$("slotAdminMessage").textContent=data.message||data.error||"Couldn't call the next game.";if(res.ok)await refreshLivePlayers();}
  catch(e){$("slotAdminMessage").textContent="Couldn't reach the slot queue. Try again.";}
 };
-$("clearSlotCalls").onclick=()=>{if(confirm("Clear the entire slot-call queue?"))adminSlotAction("clear-calls");};
+$("clearSlotCalls").onclick=()=>{adminSlotAction("clear-calls");};
 $("refreshSlotCalls").onclick=refreshLivePlayers;
 $("saveLiveSettings").onclick=async()=>{
  const size=$("livePlayerCount").value,name=$("liveEventName").value.trim();
@@ -199,7 +199,7 @@ $("saveLiveSettings").onclick=async()=>{
 };
 $("closeEntries").onclick=()=>adminAction("close");
 $("openEntries").onclick=()=>adminAction("open");
-$("clearEntries").onclick=()=>{if(confirm("Clear everyone from the live registration list and reopen entries?"))adminAction("clear");};
+$("clearEntries").onclick=()=>{adminAction("clear");};
 async function refreshKickStatus(){
  try{
   const r=await fetch(SUPABASE_URL+"/functions/v1/kick-connect?action=status",{cache:"no-store"});
@@ -244,7 +244,7 @@ async function addTournamentBonus(){
 async function deleteTournamentBonus(id){
  const session_key=localStorage.getItem("slotbuddy_kick_session")||"",key=$("adminKey").value.trim();
  if(!session_key&&!key){$("bonusBuyStatus").textContent="Sign in with Kick on SlotBuddy first.";return;}
- if(!confirm("Delete this tournament bonus buy?"))return;
+ 
  try{
   const r=await fetch(CONTROL_URL+"?action=bonus-delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,id})});
   const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Couldn't delete the bonus buy.");
@@ -423,7 +423,7 @@ updateHint();
 </script>
 </body></html>+Number(x.payout_amount||0).toFixed(2)+' <button class="dark" style="padding:4px 8px" onclick="deleteTournamentBonus('+Number(x.id)+')">DELETE</button></div>').join(""):'<span class="hint">No tournament bonus buys recorded yet.</span>';}
 async function addTournamentBonus(){const session_key=localStorage.getItem("slotbuddy_kick_session")||"",key=$("adminKey").value.trim();if(!session_key&&!key){$("bonusBuyStatus").textContent="Sign in with Kick on SlotBuddy first.";return;}const caller_name=$("buyPlayer").value.trim(),bonus_name=$("buyGame").value.trim(),spin_amount=$("buySpin").value,payout_amount=$("buyPayout").value,bonus_type=$("buyType").value;if(!caller_name||!bonus_name||spin_amount===""||payout_amount===""){$("bonusBuyStatus").textContent="Enter player, game, spin amount, and payout.";return;}$("bonusBuyStatus").textContent="Saving bonus buy…";try{const r=await fetch(CONTROL_URL+"?action=bonus-add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,caller_name,bonus_name,bonus_type,spin_amount,payout_amount,tournament_name:$("liveEventName").value||$("eventName").value||"Tournament"})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Couldn't save the bonus buy.");$("bonusBuyStatus").textContent="Bonus buy saved!";$("buyGame").value="";$("buySpin").value="";$("buyPayout").value="";await refreshLivePlayers();}catch(e){$("bonusBuyStatus").textContent=e.message;}}
-async function deleteTournamentBonus(id){const session_key=localStorage.getItem("slotbuddy_kick_session")||"",key=$("adminKey").value.trim();if(!session_key&&!key){$("bonusBuyStatus").textContent="Sign in with Kick on SlotBuddy first.";return;}if(!confirm("Delete this tournament bonus buy?"))return;try{const r=await fetch(CONTROL_URL+"?action=bonus-delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,id})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Couldn't delete the bonus buy.");$("bonusBuyStatus").textContent="Bonus buy deleted.";await refreshLivePlayers();}catch(e){$("bonusBuyStatus").textContent=e.message;}}
+async function deleteTournamentBonus(id){const session_key=localStorage.getItem("slotbuddy_kick_session")||"",key=$("adminKey").value.trim();if(!session_key&&!key){$("bonusBuyStatus").textContent="Sign in with Kick on SlotBuddy first.";return;}try{const r=await fetch(CONTROL_URL+"?action=bonus-delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,id})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Couldn't delete the bonus buy.");$("bonusBuyStatus").textContent="Bonus buy deleted.";await refreshLivePlayers();}catch(e){$("bonusBuyStatus").textContent=e.message;}}
 $("addTournamentBonus").onclick=addTournamentBonus;
 
 let rounds = [];
