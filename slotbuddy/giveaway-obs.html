@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SlotBuddy Giveaway OBS Roll</title>
+<style>
+:root{--pink:#ff39b9;--blue:#35d5ff;--gold:#ffd76a}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;font-family:system-ui,Segoe UI,sans-serif}
+#stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.96);transition:opacity .35s ease,transform .35s ease}
+#stage.show{opacity:1;transform:scale(1)}
+.panel{width:94%;min-height:270px;padding:30px 36px;border:3px solid var(--blue);border-radius:30px;background:linear-gradient(135deg,rgba(17,20,48,.94),rgba(48,18,66,.92));box-shadow:0 0 26px #35d5ff88,0 0 60px #ff39b955,inset 0 0 35px #35d5ff18;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.panel:before{content:"";position:absolute;inset:-80%;background:conic-gradient(from 0deg,transparent,rgba(53,213,255,.12),transparent,rgba(255,57,185,.13),transparent);animation:orbit 7s linear infinite}
+.content{position:relative;z-index:1;width:100%}
+.label{font-size:27px;line-height:1.2;font-weight:1000;letter-spacing:.2em;color:var(--blue);text-shadow:0 0 16px #35d5ff99}
+.name{font-size:clamp(58px,9vw,108px);line-height:1.12;font-weight:1000;color:#fff;margin:22px 0;text-shadow:0 0 12px #ff39b9,0 0 34px #ff39b9aa;overflow-wrap:anywhere}
+.sub{font-size:22px;font-weight:800;color:#dce7ff;letter-spacing:.04em}
+.spark{position:absolute;color:#fff;font-size:26px;animation:twinkle 1s ease-in-out infinite alternate}
+.spark.a{top:18px;left:28px}.spark.b{top:24px;right:32px;animation-delay:.4s}.spark.c{bottom:20px;left:48px;animation-delay:.7s}.spark.d{bottom:18px;right:42px;animation-delay:.2s}
+@keyframes orbit{to{transform:rotate(360deg)}}
+@keyframes twinkle{from{opacity:.35;transform:scale(.7) rotate(0)}to{opacity:1;transform:scale(1.2) rotate(25deg)}}
+@media(max-width:700px){.panel{min-height:210px;padding:20px 14px;border-radius:20px}.label{font-size:17px}.name{font-size:clamp(38px,10vw,68px);margin:16px 0}.sub{font-size:15px}}
+</style>
+</head>
+<body>
+<div id="stage" aria-live="polite">
+  <div class="panel">
+    <span class="spark a">✦</span><span class="spark b">✧</span><span class="spark c">✧</span><span class="spark d">✦</span>
+    <div class="content">
+      <div class="label" id="label">🎰 DRAWING A WINNER 🎰</div>
+      <div class="name" id="name">GOOD LUCK!</div>
+      <div class="sub" id="sub">The names are rolling…</div>
+    </div>
+  </div>
+</div>
+<script>
+const API="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-giveaway";
+const $=id=>document.getElementById(id);
+let lastRollId=null, active=false;
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function readRoll(){
+  const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"obs_snapshot"})});
+  if(!response.ok)throw new Error("Widget connection unavailable");
+  return await response.json();
+}
+async function playRoll(roll){
+  if(active||!roll?.id||!Array.isArray(roll.names)||!roll.names.length)return;
+  active=true;lastRollId=roll.id;
+  const duration=Number(roll.duration_ms)||5200;
+  const started=Date.parse(roll.started_at)||Date.now();
+  const elapsedNow=Math.max(0,Date.now()-started);
+  if(elapsedNow>=duration){active=false;return;}
+  $("stage").classList.add("show");
+  $("label").textContent="🎰 DRAWING A WINNER 🎰";
+  $("sub").textContent="Good luck everyone!";
+  let index=0;
+  while(Date.now()-started<duration){
+    $("name").textContent="@"+roll.names[index%roll.names.length];
+    index++;
+    const elapsed=Date.now()-started;
+    await wait(Math.min(420,90+Math.floor(elapsed/16)));
+  }
+  $("label").textContent="✨ AND THE WINNER IS… ✨";
+  $("name").textContent="🎉";
+  $("sub").textContent="The draw is complete!";
+  await wait(1800);
+  $("stage").classList.remove("show");
+  active=false;
+}
+async function poll(){
+  try{
+    const data=await readRoll();
+    const roll=data.roll;
+    if(roll?.id&&roll.id!==lastRollId&&!active)playRoll(roll);
+  }catch(e){/* Retry quietly on the next poll. */}
+}
+poll();
+setInterval(poll,700);
+</script>
+</body>
+</html>
