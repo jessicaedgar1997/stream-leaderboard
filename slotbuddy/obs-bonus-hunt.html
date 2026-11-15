@@ -72,7 +72,7 @@ function render(s){
  $("topDetails").innerHTML=top?details(top):"The highest saved payout will appear here.";
  $("lowGame").textContent=low?.game_name||"Waiting for payout";
  $("lowDetails").innerHTML=low?details(low):"The lowest saved payout will appear here.";
- const sortedEntries=entries.slice().sort((a,b)=>Number(b.payout_amount||0)-Number(a.payout_amount||0));
+ const sortedEntries=entries.slice().sort((a,b)=>Number(a.display_order||0)-Number(b.display_order||0));
  const signature=JSON.stringify(sortedEntries.map(x=>[x.id,x.game_name,x.username,x.bonus_type,x.spin_amount,x.payout_amount]));
  if(signature!==lastEntriesSignature){
   lastEntriesSignature=signature;
