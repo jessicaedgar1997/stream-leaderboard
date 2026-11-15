@@ -16,7 +16,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message?.type === "slotbuddy-add-game") {
     (async () => {
-      const { slotbuddySession } = await chrome.storage.local.get("slotbuddySession");
+      const { slotbuddySession, slotbuddyAddonEnabled = true } = await chrome.storage.local.get(["slotbuddySession", "slotbuddyAddonEnabled"]);
+      if (!slotbuddyAddonEnabled) {
+        sendResponse({ ok: false, error: "SlotBuddy Quick Add is turned off. Turn it on in the extension popup first." });
+        return;
+      }
       if (!slotbuddySession) {
         sendResponse({ ok: false, error: "Connect SlotBuddy first. Open either SlotBuddy page and sign in with Kick." });
         return;
