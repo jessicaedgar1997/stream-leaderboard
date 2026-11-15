@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SlotBuddy Quick Add</title>
+<style>
+:root{color-scheme:dark;font-family:Arial,sans-serif}body{width:320px;margin:0;padding:16px;background:#0b1023;color:#f8f9ff}h1{font-size:19px;margin:0 0 5px;color:#ff70cf}p{font-size:12px;line-height:1.45;color:#b7c2df;margin:0 0 13px}.status{font-size:12px;min-height:18px;margin:10px 0;color:#72e4ff}.field{display:block;font-size:12px;font-weight:bold;margin:11px 0 5px;color:#dce6ff}input{width:100%;box-sizing:border-box;padding:10px;border-radius:9px;border:1px solid #52628c;background:#101a35;color:white;font-size:14px}button{width:100%;padding:11px;border:0;border-radius:999px;font-weight:900;cursor:pointer;margin-top:9px;background:linear-gradient(90deg,#35d5ff,#ff39b9);color:#090d1d}.secondary{background:#293654;color:#fff;border:1px solid #52628c}.small{font-size:11px;color:#8f9dbb;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>⚡ SlotBuddy Quick Add</h1>
+<p>Grab the Rainbet game you're viewing and send it to your Bonus Hunt queue.</p>
+<label class="field" for="gameName">Game name</label>
+<input id="gameName" maxlength="80" placeholder="Open a slot on Rainbet">
+<label class="field" for="username">Kick username</label>
+<input id="username" maxlength="25" value="jessicaedgar1997">
+<button id="addGame">ADD TO BONUS HUNT</button>
+<div class="status" id="status" role="status">Checking Rainbet tab…</div>
+<button class="secondary" id="connect">CONNECT / REFRESH SLOTBUDDY LOGIN</button>
+<button class="secondary" id="disconnect">DISCONNECT SLOTBUDDY</button>
+<div class="small">You must be signed in with Kick on your SlotBuddy Bonus Hunt page.</div>
+<script src="popup.js"></script>
+</body>
+</html>
