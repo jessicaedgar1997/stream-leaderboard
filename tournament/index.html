@@ -421,16 +421,32 @@ function matchKey(r,i){return r+":"+i;}
 function renderTournamentSections(){
  const select=$("currentMatchSelect"),card=$("currentMatchCard"),winners=$("tournamentWinners");
  if(!select||!card||!winners)return;
- if(!rounds.length){select.innerHTML='<option value="">Build or load a bracket first<\/option>';$("matchPayoutALabel").textContent=playerLabel(m.a)+" slot payout ($)";
+ if(!rounds.length){
+  select.innerHTML='<option value="">Build or load a bracket first<\\/option>';
+  card.innerHTML='<div class="empty-state">Your current match will appear here once the bracket is ready.<\\/div>';
+  winners.innerHTML='<div class="empty-state">Winners will appear here as matches are completed.<\\/div>';
+  return;
+ }
+ const matches=[];
+ rounds.forEach((list,r)=>list.forEach((m,i)=>{if(m.a&&m.b)matches.push({r,i,m,key:matchKey(r,i)});}));
+ if(!matches.length){select.innerHTML='<option value="">No matches available<\\/option>';return;}
+ if(!matches.some(x=>x.key===selectedMatchKey)||matches.find(x=>x.key===selectedMatchKey)?.m.winner){
+  const next=matches.find(x=>!x.m.winner)||matches[matches.length-1];selectedMatchKey=next.key;
+ }
+ select.innerHTML=matches.map(x=>'<option value="'+x.key+'">'+roundName(x.r)+' · Match '+(x.i+1)+(x.m.winner?' ✓ Complete':' · Up next')+'<\\/option>').join("");
+ select.value=selectedMatchKey;
+ const chosen=matches.find(x=>x.key===selectedMatchKey)||matches[0],m=chosen.m;
+ $("matchPayoutALabel").textContent=playerLabel(m.a)+" slot payout ($)";
  $("matchPayoutBLabel").textContent=playerLabel(m.b)+" slot payout ($)";
- card.innerHTML='<div class="section-kicker">'+roundName(chosen.r)+' · Match '+(chosen.i+1)+(m.winner?' · COMPLETE':' · IN PROGRESS')+'<\/div><div class="match-versus"><div class="match-side">'+escapeHtml(playerLabel(m.a))+'<\/div><div class="versus">VS<\/div><div class="match-side">'+escapeHtml(playerLabel(m.b))+'<\/div><\/div><div class="hint">'+(m.winner?'Winner: <strong>'+escapeHtml(playerLabel(m.winner))+'<\/strong>':'Enter both slot payouts below. The higher payout advances automatically.')+'<\/div><div class="hint" style="margin-top:8px">Saved slot payouts: <strong class="paid">'+(m.aPayout!==""?'$'+Number(m.aPayout).toFixed(2):'Not entered')+'</strong> vs <strong class="paid">'+(m.bPayout!==""?'$'+Number(m.bPayout).toFixed(2):'Not entered')+'</strong><\/div>';
+ card.innerHTML='<div class="section-kicker">'+roundName(chosen.r)+' · Match '+(chosen.i+1)+(m.winner?' · COMPLETE':' · IN PROGRESS')+'<\\/div><div class="match-versus"><div class="match-side">'+escapeHtml(playerLabel(m.a))+'<\\/div><div class="versus">VS<\\/div><div class="match-side">'+escapeHtml(playerLabel(m.b))+'<\\/div><\\/div><div class="hint">'+(m.winner?'Winner: <strong>'+escapeHtml(playerLabel(m.winner))+'<\\/strong>':'Enter both slot payouts below. The higher payout advances automatically.')+'<\\/div><div class="hint" style="margin-top:8px">Saved slot payouts: <strong class="paid">'+(m.aPayout!==""?'$'+Number(m.aPayout).toFixed(2):'Not entered')+'</strong> vs <strong class="paid">'+(m.bPayout!==""?'$'+Number(m.bPayout).toFixed(2):'Not entered')+'</strong><\\/div>';
  $("matchPayoutA").value=m.aPayout==null?"":m.aPayout;
  $("matchPayoutB").value=m.bPayout==null?"":m.bPayout;
  $("saveMatchPayout").disabled=!canManageTournament;
- $("matchPayout").disabled=!canManageTournament;
+ $("matchPayoutA").disabled=!canManageTournament;
+ $("matchPayoutB").disabled=!canManageTournament;
  const completed=matches.filter(x=>x.m.winner);
  const champ=rounds[rounds.length-1][0]?.winner;
- let html=champ?'<div class="champion"><strong>🏆 TOURNAMENT CHAMPION 🏆<\/strong>'+escapeHtml(playerLabel(champ))+'<\/div>':"";
+ let html=champ?'<div class="champion"><strong>🏆 TOURNAMENT CHAMPION 🏆<\\/strong>'+escapeHtml(playerLabel(champ))+'<\\/div>':"";
  html+=completed.length?completed.map(x=>'<div class="winner-row"><div><strong>'+escapeHtml(playerLabel(x.m.winner))+'</strong><div class="hint">'+roundName(x.r)+' · Match '+(x.i+1)+' · vs '+escapeHtml(playerLabel(x.m.winner===x.m.a?x.m.b:x.m.a))+' · Slot payouts: $'+Number(x.m.aPayout||0).toFixed(2)+' vs $'+Number(x.m.bPayout||0).toFixed(2)+'</div></div><div class="paid">$'+Number(x.m.payout||0).toFixed(2)+'</div></div>').join(""):'<div class="empty-state">No matches have been decided yet. Winners will show up here as you advance players.</div>';
  winners.innerHTML=html;
 }
