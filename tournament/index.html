@@ -46,6 +46,9 @@ body:not(.slotbuddy-manager) input:not(#guessInput),
 body:not(.slotbuddy-manager) select,
 body:not(.slotbuddy-manager) textarea,
 body:not(.slotbuddy-manager) [role="button"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+
+/* Giveaway is a private organizer feature: hide its navigation link for viewers. */
+body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 </style>
 </head>
 <body><nav class="hub-nav" aria-label="JessicaEdgar1997 main navigation"><a class="hub-brand" href="../">👑 <span>JESSICAEDGAR1997</span></a><div class="hub-links"><a href="../">Home</a><a href="../leaderboard/">Leaderboard</a><a href="../slotbuddy/bonus-hunt.html">Bonus Hunt</a><a href="../slotbuddy/giveaway.html">Keyword Giveaway</a><a href="../tournament/">Tournament</a><a href="../cozies/">Cozies</a></div></nav>
