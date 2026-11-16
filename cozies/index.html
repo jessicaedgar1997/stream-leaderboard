@@ -13,6 +13,21 @@ a{color:inherit;text-decoration:none}.topbar{position:sticky;top:0;z-index:10;ba
 .panel{background:linear-gradient(145deg,#211a3bf2,#131126f5);border:1px solid var(--line);border-radius:22px;padding:22px;margin:18px 0;box-shadow:0 14px 35px #0005}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.stat{background:#0e1530;border:1px solid #34466f;border-radius:15px;padding:17px;text-align:center}.stat small{display:block;color:var(--muted);font-weight:800}.stat strong{display:block;font-size:1.7rem;color:var(--pink);margin-top:4px}.queue-titlebar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}.queue-titlebar h2{margin:0}.queue-mini-stats{display:flex;gap:9px;flex-wrap:wrap}.queue-mini-stat{min-width:125px;background:#0e1530;border:1px solid #34466f;border-radius:13px;padding:8px 12px;text-align:center}.queue-mini-stat small{display:block;color:var(--muted);font-size:.7rem;font-weight:850}.queue-mini-stat strong{display:block;color:var(--pink);font-size:1.2rem;margin-top:2px}
 form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:end}.field{min-width:0}label{display:block;color:var(--muted);font-size:.83rem;font-weight:850;margin-bottom:6px}input{width:100%;border:1px solid #52628c;border-radius:12px;background:#0b1023;color:white;padding:13px;font:inherit;min-width:0}.btn{border:0;border-radius:99px;padding:13px 19px;font-weight:950;cursor:pointer;color:#130d22;background:linear-gradient(100deg,var(--blue),#fff,var(--pink));white-space:nowrap}.btn:disabled{opacity:.55;cursor:wait}.msg{min-height:22px;color:var(--muted);font-size:.9rem;line-height:1.5}.full{grid-column:1/-1}.list{display:grid;gap:9px;margin-top:15px}.entry,.rank{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:13px 15px;border:1px solid #34466f;border-radius:13px;background:#0e1530}.entry strong{color:var(--blue)}.entry small{display:block;color:var(--muted);margin-top:4px;line-height:1.5}.amount{font-weight:950;color:#a7f3d0;font-size:1.1rem}.rank{grid-template-columns:52px 1fr auto}.place{font-weight:1000;color:var(--pink);font-size:1.2rem}.rankname{font-weight:900}.rank small{display:block;color:var(--muted);margin-top:3px}.empty{text-align:center;color:var(--muted);padding:20px;border:1px dashed #52628c;border-radius:13px}.hidden{display:none!important}.footer{text-align:center;color:#9589ac;font-size:.8rem;padding:22px}
 @media(max-width:700px){nav{padding:11px 12px}.links{width:100%;gap:3px}.links a{padding:7px 8px;font-size:.76rem}.wrap{padding:16px 12px}form{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.rank{grid-template-columns:40px 1fr auto}.panel{padding:17px}}
+
+/* Jessica's site-wide button theme */
+button,.btn,input[type="button"],input[type="submit"]{
+  background:linear-gradient(100deg,#ff39b9 0%,#65dfff 100%)!important;
+  color:#100d20!important;border:1px solid rgba(255,255,255,.22)!important;
+  font-weight:900;box-shadow:0 5px 18px rgba(255,57,185,.16),0 5px 18px rgba(101,223,255,.14);
+  transition:filter .16s ease,transform .16s ease,box-shadow .16s ease;
+}
+button:hover:not(:disabled),.btn:hover,input[type="button"]:hover:not(:disabled),input[type="submit"]:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-1px)}
+button:disabled,input[type="button"]:disabled,input[type="submit"]:disabled{opacity:.48!important;cursor:not-allowed}
+button.is-on,.btn.is-on{background:#ff39b9!important;color:#fff!important;border-color:#ff8bd6!important;box-shadow:0 0 18px #ff39b966!important}
+button.is-off,.btn.is-off{background:#65dfff!important;color:#081526!important;border-color:#a6efff!important;box-shadow:0 0 18px #65dfff55!important}
+#openEntries,#openRound{background:#ff39b9!important;color:#fff!important}
+#closeEntries,#closeRound{background:#65dfff!important;color:#081526!important}
+
 </style>
 </head>
 <body>
@@ -104,6 +119,11 @@ $("coziesClear").onclick=()=>{coziesQueueAction("queue-clear");};
 $("saveCoziesStartingBalance").onclick=async()=>{const raw=$("coziesStartingBalanceInput").value;const amount=Number(raw);if(raw===""||!Number.isFinite(amount)||amount<0||amount>1000000000){$("coziesBalanceMessage").textContent="Enter a valid starting balance.";return;}const button=$("saveCoziesStartingBalance");button.disabled=true;button.textContent="SAVING…";try{const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"starting-balance",session_key:organizerSession,amount})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Couldn't save the starting balance.");$("coziesStartingBalanceDisplay").textContent=money(d.starting_balance);$("coziesBalanceMessage").textContent="Starting balance saved! The OBS widget will update automatically. 💗💙";}catch(e){$("coziesBalanceMessage").textContent=e.message;}finally{button.disabled=false;button.textContent="SAVE STARTING BALANCE";}};
 $("clearAllCoziesBonuses").onclick=window.clearAllCoziesBonuses;$("coziesRefresh").onclick=loadBonuses;$("saveCoziesCallLimit").onclick=()=>coziesQueueAction("queue-limit",{limit:Number($("coziesCallLimit").value)});
 loadBonuses();checkOrganizer();setInterval(()=>{if(!document.hidden)loadBonuses();},2000);
+</script>
+
+
+<script>
+(()=>{const paint=()=>{document.querySelectorAll('button,.btn,input[type="button"],input[type="submit"]').forEach(b=>{const t=(b.textContent||b.value||"").trim().toUpperCase();b.classList.remove("is-on","is-off");if(/\bON\s*$/.test(t)||b.id==="openEntries"||b.id==="openRound")b.classList.add("is-on");else if(/\bOFF\s*$/.test(t)||b.id==="closeEntries"||b.id==="closeRound")b.classList.add("is-off");});};paint();new MutationObserver(paint).observe(document.documentElement,{subtree:true,childList:true,characterData:true});})();
 </script>
 
 </body></html>
