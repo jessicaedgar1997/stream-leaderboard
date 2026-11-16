@@ -427,7 +427,7 @@ function chooseWinner(r,i,side){
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function roundName(r){if(r===rounds.length-1)return "Final";if(r===rounds.length-2)return "Semi-finals";if(r===0)return "Round 1";return "Round "+(r+1);}
 
-function playerLabel(player){if(!player)return "BYE";const p=typeof player==="string"?{username:player,game:""}:player;return p.username+(p.game?" · "+p.game:"")+(p.casino?" · "+p.casino:"")+(p.buy!==""&&p.buy!=null?" · C$"+Number(p.buy).toFixed(2):"")+(p.bonusType?" · "+p.bonusType:"");}
+function playerLabel(player){return player?tournamentSlotLabel(player):"BYE";}
 function matchKey(r,i){return r+":"+i;}
 function renderTournamentSections(){
  const select=$("currentMatchSelect"),card=$("currentMatchCard"),winners=$("tournamentWinners");
@@ -478,14 +478,25 @@ $("saveMatchPayout").addEventListener("click",()=>{
  propagate(r);renderBracket();queueBracketSave();
 });
 
+function tournamentSlotLabel(player){
+ if(!player)return "";
+ const username=typeof player==="string"?player:(player.username??player.name??player.display_name??"");
+ const key=String(username||"").toLowerCase();
+ let slot=0;
+ for(const match of (rounds[0]||[])){
+  for(const candidate of [match.a,match.b]){
+   if(!candidate)continue;
+   slot++;
+   const candidateName=typeof candidate==="string"?candidate:(candidate.username??candidate.name??candidate.display_name??"");
+   if(String(candidateName||"").toLowerCase()===key)return "Player "+slot;
+  }
+ }
+ return "Player";
+}
 function playerButton(player,r,i,side,winner){
  if(!player)return '<div class="player empty" aria-hidden="true"></div>';
- const person=typeof player==="string"?{username:player,game:""}:player;
- const rawName=person.username??person.name??person.display_name??"";
- const name=typeof rawName==="string"?rawName:(rawName&&typeof rawName==="object"?(rawName.username||rawName.name||rawName.display_name||rawName.slug||""):"");
- const isWinner=!!winner&&((winner===player)||(winner.username&&winner.username===person.username&&winner.game===person.game));
- const details=[person.game?"🎰 "+person.game:"",person.casino||"",person.buy!==""&&person.buy!=null?"C$"+Number(person.buy).toFixed(2):"",person.bonusType||""].filter(Boolean).map(escapeHtml).join(" · ");
- const label=escapeHtml(name)+(details?' <small>'+details+'</small>':'')+(isWinner?' <small>✓ ADVANCES</small>':'');
+ const isWinner=!!winner&&((winner===player)||(winner.username&&winner.username===(player.username||player.name)&&winner.game===player.game));
+ const label=escapeHtml(tournamentSlotLabel(player))+(isWinner?' <small>✓ ADVANCES</small>':'');
  if(!canManageTournament)return '<div class="player '+(isWinner?'winner':'')+'">'+label+'</div>';
  return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+label+'</button>';
 }
