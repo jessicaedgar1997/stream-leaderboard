@@ -170,7 +170,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 </section>
 
 <section class="panel hidden" id="tournament">
-<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS: ON</button><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" data-manager-only hidden type="button">🧹 Clear Names &amp; Games</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
+<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS: ON</button><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" data-manager-only hidden type="button">🧹 Clear Names &amp; Games</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button><button class="dark" id="turnTournamentOff" data-manager-only hidden type="button">🔴 TOURNAMENT OFF</button></div></div>
 <div class="bracket" id="bracket"></div>
 <div id="champion" class="champion hidden"></div>
 <p class="hint">To advance a player, click their name in the match. You can change a winner any time; later rounds will update.</p>
@@ -597,6 +597,9 @@ updateHint();
     }
   }catch(error){console.warn("SlotBuddy public-view permissions could not be verified.");}
 })();
+</script>
+<script>
+(()=>{const off=document.getElementById("turnTournamentOff");if(!off)return;off.addEventListener("click",()=>{const panel=document.getElementById("tournament");if(panel)panel.classList.add("hidden");const status=document.getElementById("setupStatus");if(status)status.textContent="Tournament turned OFF. Your bracket and saved results are kept; press Start Tournament when you are ready to show it again.";window.scrollTo({top:0,behavior:"smooth"});});})();
 </script>
 
 </body></html>+Number(x.spin_amount||0).toFixed(2)+' · Paid 
