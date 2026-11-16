@@ -23,16 +23,26 @@ body{padding:18px}.shell{width:100%;padding:18px;border:2px solid #35d5ff99;bord
 const ENDPOINT="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=snapshot";
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function roundTitle(r,total){if(r===total-1)return"Final";if(r===total-2)return"Semi-finals";return r===0?"Round 1":"Round "+(r+1);}
+function playerName(player){if(!player)return "";if(typeof player==="string")return player;const n=player.username??player.name??player.display_name??player.slug??"";return typeof n==="string"?n:"";}
+function slotLabels(rounds){
+ const labels=new Map();let n=0;
+ for(const match of (rounds[0]||[]))for(const player of [match.a,match.b]){
+  if(!player)continue;const name=playerName(player),key=name.toLowerCase();
+  if(!key||labels.has(key))continue;labels.set(key,"Player "+(++n));
+ }
+ return labels;
+}
+function labelFor(player,labels){const name=playerName(player);return name?(labels.get(name.toLowerCase())||"Player"):"";}
 function draw(data){
  const bracket=data?.bracket;
  if(!bracket?.rounds?.length){document.getElementById("event").textContent="Waiting for tournament…";document.getElementById("rounds").innerHTML="";document.getElementById("champion").innerHTML="";document.getElementById("empty").style.display="block";return;}
  document.getElementById("empty").style.display="none";
  document.getElementById("event").textContent=bracket.name||"Tournament Bracket";
  document.getElementById("status").textContent="LIVE • "+(bracket.count||"")+" PLAYERS";
- const rs=bracket.rounds;
- document.getElementById("rounds").innerHTML=rs.map((matches,r)=>'<section class="round"><h3>'+roundTitle(r,rs.length)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="player '+(m.winner&&m.winner===m.a?"winner":"")+'">'+(m.a?esc(m.a):"— BYE —")+'</div><div class="player '+(m.winner&&m.winner===m.b?"winner":"")+'">'+(m.b?esc(m.b):"— BYE —")+'</div></div>').join("")+'</section>').join("");
+ const rs=bracket.rounds,labels=slotLabels(rs);
+ document.getElementById("rounds").innerHTML=rs.map((matches,r)=>'<section class="round"><h3>'+roundTitle(r,rs.length)+'</h3>'+matches.map(m=>'<div class="match"><div class="player '+(m.winner&&playerName(m.winner)===playerName(m.a)?"winner":"")+'">'+(m.a?esc(labelFor(m.a,labels)):"")+'</div><div class="player '+(m.winner&&playerName(m.winner)===playerName(m.b)?"winner":"")+'">'+(m.b?esc(labelFor(m.b,labels)):"")+'</div></div>').join("")+'</section>').join("");
  const champ=rs[rs.length-1]?.[0]?.winner;
- document.getElementById("champion").innerHTML=champ?'<div class="champ"><small>🏆 TOURNAMENT CHAMPION 🏆</small>'+esc(champ)+'</div>':"";
+ document.getElementById("champion").innerHTML=champ?'<div class="champ"><small>🏆 TOURNAMENT CHAMPION 🏆</small>'+esc(labelFor(champ,labels))+'</div>':"";
 }
 async function refresh(){try{const r=await fetch(ENDPOINT,{cache:"no-store"});if(!r.ok)throw new Error();const data=await r.json();draw(data);document.getElementById("status").textContent="LIVE • UPDATED";}catch(e){document.getElementById("status").textContent="RECONNECTING";}}
 refresh();setInterval(refresh,4000);
