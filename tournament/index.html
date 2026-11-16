@@ -353,6 +353,8 @@ function restoreSavedBracket(data){
  rounds=data.rounds.map(round=>round.map(match=>{const normalize=value=>{if(!value)return null;if(typeof value==="string")return {username:value,game:""};const rawName=value.username??value.name??value.display_name??"";const username=typeof rawName==="string"?rawName:(rawName&&typeof rawName==="object"?(rawName.username||rawName.name||rawName.display_name||rawName.slug||""):"");return {...value,username:String(username),game:String(value.game||"")};};const a=normalize(match.a),b=normalize(match.b),w=normalize(match.winner);const winner=w?(a&&a.username===w.username&&a.game===w.game?a:b&&b.username===w.username&&b.game===w.game?b:w):null;return {a,b,winner,payout:match.payout==null?"":String(match.payout),aPayout:match.aPayout==null?"":String(match.aPayout),bPayout:match.bPayout==null?"":String(match.bPayout)};}));playerTotal=Number(data.count)||4;
  $("eventName").value=data.name||"Chaos Queen Tournament";
  $("playerCount").value=String(playerTotal);
+ const savedEntries=(rounds[0]||[]).flatMap(match=>[match.a,match.b]).filter(Boolean).map(p=>({username:typeof p==="string"?p:(p.username||p.name||p.display_name||""),game:p.game||"",buy:p.buy==null?"":String(p.buy),casino:p.casino||"Rainbet",bonusType:p.bonusType||"Regular"}));
+ if(savedEntries.length)writeEntryPlayers(savedEntries);
  $("bracketTitle").textContent=data.name||"Tournament Bracket";
  $("bracketInfo").textContent=playerTotal+" players • Saved tournament • Click a name to advance them.";
  $("tournament").classList.remove("hidden");
@@ -398,7 +400,18 @@ $("addTournamentPlayer").onclick=()=>{
  writeEntryPlayers(players);$("entryUsername").value="";$("entryBuy").value="";$("entryGame").value="";$("entryUsername").focus();
  $("setupStatus").textContent=username+" added to the tournament.";updateHint();
 };
-$("playerCount").addEventListener("change",()=>{resizeEntryPlayers();updateHint();});
+$("playerCount").addEventListener("change",()=>{
+ resizeEntryPlayers();updateHint();
+ if(rounds.length){
+  const nextPlayers=namesFromInput();
+  buildBracket(nextPlayers);
+  playerTotal=nextPlayers.length;
+  $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
+  $("bracketInfo").textContent=playerTotal+" player spots • Bracket resized • Shuffle players or choose winners below.";
+  $("setupStatus").textContent="Bracket updated to "+playerTotal+" player spots. Fill any new spots before starting the tournament.";
+  queueBracketSave();
+ }
+});
 $("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
 $("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
 $("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
