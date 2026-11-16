@@ -353,7 +353,7 @@ function renderTournamentSections(){
  const matches=[];
  rounds.forEach((list,r)=>list.forEach((m,i)=>{if(m.a&&m.b)matches.push({r,i,m,key:matchKey(r,i)});}));
  if(!matches.length){select.innerHTML='<option value="">No matches available</option>';return;}
- if(!matches.some(x=>x.key===selectedMatchKey)){const next=matches.find(x=>!x.m.winner)||matches[matches.length-1];selectedMatchKey=next.key;}
+ if(!matches.some(x=>x.key===selectedMatchKey)||matches.find(x=>x.key===selectedMatchKey)?.m.winner){const next=matches.find(x=>!x.m.winner)||matches[matches.length-1];selectedMatchKey=next.key;}
  select.innerHTML=matches.map(x=>'<option value="'+x.key+'">'+roundName(x.r)+' · Match '+(x.i+1)+(x.m.winner?' ✓ Complete':' · Up next')+'</option>').join("");
  select.value=selectedMatchKey;
  const chosen=matches.find(x=>x.key===selectedMatchKey)||matches[0],m=chosen.m;
