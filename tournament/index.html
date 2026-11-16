@@ -23,6 +23,7 @@ button{border:0;border-radius:11px;padding:11px 15px;font-weight:900;cursor:poin
 @media(max-width:600px){body{padding:10px}.setup-grid{grid-template-columns:1fr}.round{flex-basis:205px}.bracket{gap:10px}}
 @media print{body{background:white;color:#111}.panel{box-shadow:none;background:white;color:#111}.bracket{overflow:visible}.match{background:white;color:#111;break-inside:avoid}.player{background:#eee;color:#111}.round h3,h2{color:#222}.setup,.no-print{display:none!important}}
 
+.tourney-nav{display:flex;gap:10px;flex-wrap:wrap;margin:0 auto 18px;max-width:1180px}.tourney-nav a{flex:1 1 160px;text-align:center;text-decoration:none;color:#fff;padding:13px 16px;border-radius:14px;border:1px solid #4a5a85;background:linear-gradient(135deg,#202b4b,#151b33);font-weight:950;box-shadow:0 5px 18px #0003}.tourney-nav a:hover{border-color:var(--pink);box-shadow:0 0 16px #ff39b944}.section-kicker{font-size:.72rem;font-weight:950;letter-spacing:.16em;color:var(--pink);text-transform:uppercase;margin-bottom:6px}.match-focus{background:linear-gradient(140deg,#101b36,#321b42);border:1px solid #ff39b977;border-radius:18px;padding:clamp(16px,3vw,24px);margin-top:10px}.match-versus{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin:16px 0}.match-side{min-width:0;text-align:center;padding:16px 10px;border-radius:14px;background:#0c1329;border:1px solid #405477;font-size:clamp(1rem,3vw,1.3rem);font-weight:950;overflow-wrap:anywhere}.match-side small{display:block;color:var(--blue);font-size:.72rem;margin-top:5px}.versus{font-weight:1000;color:var(--pink)}.winner-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;margin:8px 0;border:1px solid #405477;border-radius:13px;background:#0d142b}.winner-row strong{color:#fff}.winner-row .paid{color:var(--blue);font-weight:950}.winner-list{display:grid;gap:8px}.empty-state{padding:18px;border:1px dashed #53658e;border-radius:14px;color:#bac8e8;text-align:center}@media(max-width:560px){.tourney-nav a{flex-basis:100%}.match-versus{gap:6px}.match-side{padding:12px 6px}}
 .hub-nav{position:sticky;top:0;z-index:9999;max-width:1180px;margin:0 auto 18px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#0b0a19ed;border:1px solid #49345f;border-radius:16px;box-shadow:0 8px 24px #0004}.hub-brand{font-weight:1000;letter-spacing:.03em;text-decoration:none!important;color:#fffaff!important;border:0!important;padding:0!important}.hub-brand span{background:linear-gradient(90deg,#65dfff,#ff4fc8);background-clip:text;color:transparent}.hub-links{display:flex;gap:6px;flex-wrap:wrap}.hub-links a{display:inline-block;padding:7px 10px;border:1px solid #49345f;border-radius:999px;color:#e8ddf7;text-decoration:none;font-size:.82rem;font-weight:850}.hub-links a:hover{border-color:#ff4fc8;background:#261b3b;color:white}@media(max-width:560px){.hub-nav{padding:10px}.hub-links{width:100%;gap:4px}.hub-links a{font-size:.75rem;padding:6px 8px}}
 
 /* Jessica's site-wide button theme */
@@ -131,12 +132,15 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <div class="actions"><button id="build">🎲 Randomize & Build Bracket</button><button class="dark" id="fillDemo" type="button">Add sample names</button><button class="dark" id="clearNames" type="button">Clear names</button></div>
 <p class="status" id="setupStatus" role="status"></p>
 </section>
+<nav class="tourney-nav" aria-label="Tournament sections"><a href="#tournament">🏆 1. Bracket</a><a href="#currentMatchPanel">🎮 2. Current Match</a><a href="#winnersPanel">🥇 3. Winners</a></nav>
 <section class="panel hidden" id="tournament">
 <div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
 <div class="bracket" id="bracket"></div>
 <div id="champion" class="champion hidden"></div>
 <p class="hint">To advance a player, click their name in the match. You can change a winner any time; later rounds will update.</p>
 </section>
+<section class="panel" id="currentMatchPanel"><div class="section-kicker">Tournament control · Section 2</div><h2>🎮 CURRENT MATCH</h2><p class="hint">Choose the match being played, enter its payout, and save it. Pick the winner in the bracket above.</p><div class="field"><label for="currentMatchSelect">Match being played</label><select id="currentMatchSelect"><option value="">Build or load a bracket first</option></select></div><div class="match-focus" id="currentMatchCard"><div class="empty-state">Your current match will appear here once the bracket is ready.</div></div><div class="setup-grid" style="margin-top:14px"><div class="field"><label for="matchPayout">Match payout ($)</label><input id="matchPayout" type="number" min="0" step="0.01" placeholder="0.00"></div><div class="field" style="display:flex;align-items:end"><button id="saveMatchPayout" type="button" style="width:100%">💾 SAVE PAYOUT</button></div></div><p class="status" id="matchPayoutStatus" role="status"></p></section>
+<section class="panel" id="winnersPanel"><div class="section-kicker">Tournament results · Section 3</div><h2>🥇 WINNERS</h2><p class="hint">Every completed match appears here, including its saved payout. The tournament champion is shown at the top.</p><div id="tournamentWinners" class="winner-list"><div class="empty-state">Winners will appear here as matches are completed.</div></div></section>
 <footer class="hero"><p>💗 Sky blue • Hot pink • Big tournament energy 💙</p></footer>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -281,6 +285,7 @@ $("addTournamentBonus").onclick=addTournamentBonus;
 let playerTotal = 4;
 let hasLoadedSavedBracket = false;
 let bracketSaveTimer = null;
+let selectedMatchKey = "";
 async function saveBracketOnline(){
  const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
  if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return;}
@@ -292,7 +297,7 @@ async function saveBracketOnline(){
 function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
 function restoreSavedBracket(data){
  if(!data||!Array.isArray(data.rounds)||!data.rounds.length)return;
- rounds=data.rounds.map(round=>round.map(match=>{const normalize=value=>!value?null:(typeof value==="string"?{username:value,game:""}:{username:String(value.username||value.name||""),game:String(value.game||"")});const a=normalize(match.a),b=normalize(match.b),w=normalize(match.winner);const winner=w?(a&&a.username===w.username&&a.game===w.game?a:b&&b.username===w.username&&b.game===w.game?b:w):null;return {a,b,winner};}));playerTotal=Number(data.count)||4;
+ rounds=data.rounds.map(round=>round.map(match=>{const normalize=value=>!value?null:(typeof value==="string"?{username:value,game:""}:{username:String(value.username||value.name||""),game:String(value.game||"")});const a=normalize(match.a),b=normalize(match.b),w=normalize(match.winner);const winner=w?(a&&a.username===w.username&&a.game===w.game?a:b&&b.username===w.username&&b.game===w.game?b:w):null;return {a,b,winner,payout:match.payout==null?"":String(match.payout)};}));playerTotal=Number(data.count)||4;
  $("eventName").value=data.name||"Chaos Queen Tournament";
  $("playerCount").value=String(playerTotal);
  $("bracketTitle").textContent=data.name||"Tournament Bracket";
@@ -311,8 +316,144 @@ $("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus")
 function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function buildBracket(list){
  playerTotal=list.length;const entries=list.map(p=>typeof p==="string"?{username:p,game:""}:{username:String(p.username||p.name||""),game:String(p.game||"")});const size=playerTotal===6?8:playerTotal;const roundCount=Math.log2(size);
- rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null})));
+ rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null,payout:""})));
  const shuffled=shuffle(entries);
+ if(playerTotal===6){
+  const byeMatches=shuffle([0,1,2,3]).slice(0,2);
+  let cursor=0;
+  rounds[0].forEach((m,i)=>{if(byeMatches.includes(i)){m.a=shuffled[cursor++];m.b=null;m.winner=m.a;}else{m.a=shuffled[cursor++];m.b=shuffled[cursor++];}});
+ }else{
+  const slots=shuffle(shuffled);
+  rounds[0].forEach((m,i)=>{m.a=slots[i*2]||null;m.b=slots[i*2+1]||null;});
+ }
+ propagate(0);renderBracket();
+}
+function propagate(fromRound){
+ for(let r=Math.max(1,fromRound+1);r<rounds.length;r++){
+  const prev=rounds[r-1];
+  rounds[r].forEach((m,i)=>{const nextA=prev[i*2]?.winner||null,nextB=prev[i*2+1]?.winner||null;const changed=JSON.stringify(m.a)!==JSON.stringify(nextA)||JSON.stringify(m.b)!==JSON.stringify(nextB);m.a=nextA;m.b=nextB;if(changed){m.winner=null;m.payout="";}if(m.a&&!m.b)m.winner=m.a;else if(m.b&&!m.a)m.winner=m.b;});
+ }
+}
+function chooseWinner(r,i,side){
+ const match=rounds[r][i],chosen=match[side];
+ if(!chosen)return;
+ match.winner=chosen;
+ for(let later=r+1;later<rounds.length;later++)rounds[later].forEach(m=>{m.winner=null;m.payout="";});
+ propagate(r);renderBracket();queueBracketSave();
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function roundName(r){if(r===rounds.length-1)return "Final";if(r===rounds.length-2)return "Semi-finals";if(r===0)return "Round 1";return "Round "+(r+1);}
+
+function playerLabel(player){if(!player)return "BYE";const p=typeof player==="string"?{username:player,game:""}:player;return p.username+(p.game?" · "+p.game:"");}
+function matchKey(r,i){return r+":"+i;}
+function renderTournamentSections(){
+ const select=$("currentMatchSelect"),card=$("currentMatchCard"),winners=$("tournamentWinners");
+ if(!select||!card||!winners)return;
+ if(!rounds.length){select.innerHTML='<option value="">Build or load a bracket first</option>';card.innerHTML='<div class="empty-state">Your current match will appear here once the bracket is ready.</div>';winners.innerHTML='<div class="empty-state">Winners will appear here as matches are completed.</div>';return;}
+ const matches=[];
+ rounds.forEach((list,r)=>list.forEach((m,i)=>{if(m.a&&m.b)matches.push({r,i,m,key:matchKey(r,i)});}));
+ if(!matches.length){select.innerHTML='<option value="">No matches available</option>';return;}
+ if(!matches.some(x=>x.key===selectedMatchKey)){const next=matches.find(x=>!x.m.winner)||matches[matches.length-1];selectedMatchKey=next.key;}
+ select.innerHTML=matches.map(x=>'<option value="'+x.key+'">'+roundName(x.r)+' · Match '+(x.i+1)+(x.m.winner?' ✓ Complete':' · Up next')+'</option>').join("");
+ select.value=selectedMatchKey;
+ const chosen=matches.find(x=>x.key===selectedMatchKey)||matches[0],m=chosen.m;
+ card.innerHTML='<div class="section-kicker">'+roundName(chosen.r)+' · Match '+(chosen.i+1)+(m.winner?' · COMPLETE':' · IN PROGRESS')+'</div><div class="match-versus"><div class="match-side">'+escapeHtml(playerLabel(m.a))+'</div><div class="versus">VS</div><div class="match-side">'+escapeHtml(playerLabel(m.b))+'</div></div><div class="hint">'+(m.winner?'Winner: <strong>'+escapeHtml(playerLabel(m.winner))+'</strong>':'Choose the winner by clicking their name in the bracket.')+'</div><div class="hint" style="margin-top:8px">Saved payout: <strong class="paid">
+ if(!player)return '<div class="player empty">— BYE —</div>';
+ const person=typeof player==="string"?{username:player,game:""}:player;
+ const isWinner=winner===player;
+ const label=escapeHtml(person.username)+(person.game?' <small>🎰 '+escapeHtml(person.game)+'</small>':'')+(isWinner?' <small>✓ ADVANCES</small>':'');
+ if(!canManageTournament)return '<div class="player '+(isWinner?'winner':'')+'">'+label+'</div>';
+ return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+label+'</button>';
+}
+function renderBracket(){
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+'</div>'+playerButton(m.a,r,i,"a",m.winner)+playerButton(m.b,r,i,"b",m.winner)+'</div>').join("")+'</div>').join("");
+ $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
+ const champ=rounds[rounds.length-1][0]?.winner;
+ $("champion").classList.toggle("hidden",!champ);
+ const champName=champ?(typeof champ==="string"?champ:champ.username):"";
+ $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champName)+(typeof champ==="object"&&champ.game?' · '+escapeHtml(champ.game):""):"";
+ renderTournamentSections();
+}
+$("build").onclick=()=>{
+ const list=namesFromInput(),required=Number($("playerCount").value);
+ if(list.length!==required){$("setupStatus").textContent="You need exactly "+required+" names. Right now you have "+list.length+".";return;}
+ if(new Set(list.map(p=>p.username.toLowerCase())).size!==list.length){$("setupStatus").textContent="Each player needs a unique name. Check for duplicates.";return;}
+ if(list.some(p=>p.username.length>40||p.game.length>100)){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
+ buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("shuffleBracket").onclick=()=>{
+ if(!rounds.length)return;
+ if(rounds.some(round=>round.some(match=>match.winner))){
+  $("setupStatus").textContent="A match winner has already been recorded. Start a new bracket before reshuffling so results stay safe.";return;
+ }
+ const entries=rounds[0].flatMap(match=>[match.a,match.b]).filter(Boolean);
+ if(entries.length!==playerTotal){$("setupStatus").textContent="Couldn't safely read every player. No changes were made.";return;}
+ buildBracket(entries);
+ $("setupStatus").textContent="Players shuffled! Each called game stayed with its player. 💗💙";
+ queueBracketSave();
+};
+$("newTournament").onclick=()=>{$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";window.scrollTo({top:0,behavior:"smooth"});};
+$("print").onclick=()=>window.print();
+$("saveBracket").onclick=saveBracketOnline;
+updateHint();
+</script>
+
+<script>
+/* Only Jessica and Corey receive the organizer interface. CSS also covers controls
+   created later by live queue refreshes, so newly-rendered buttons stay hidden. */
+(async()=>{
+  document.body.classList.remove("slotbuddy-manager");
+  const session=localStorage.getItem("slotbuddy_kick_session")||"";
+  if(!session)return;
+  try{
+    const response=await fetch("https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"resume",session_key:session})
+    });
+    const data=await response.json();
+    if(response.ok&&data.ok&&data.user&&["owner","moderator"].includes(data.user.role)){
+      document.body.classList.add("slotbuddy-manager");
+    }
+  }catch(error){console.warn("SlotBuddy public-view permissions could not be verified.");}
+})();
+</script>
+
+</body></html>+Number(x.spin_amount||0).toFixed(2)+' · Paid 
+let playerTotal = 4;
+let hasLoadedSavedBracket = false;
+let bracketSaveTimer = null;
+async function saveBracketOnline(){
+ const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return;}
+ if(!rounds.length)return;
+ const payload={name:$("eventName").value.trim()||"Tournament",count:playerTotal,rounds};
+ try{const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});const msg=await res.text();$("setupStatus").textContent=msg;}
+ catch(e){$("setupStatus").textContent="Bracket is on this screen, but the online save failed. Please try Save bracket again.";}
+}
+function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
+function restoreSavedBracket(data){
+ if(!data||!Array.isArray(data.rounds)||!data.rounds.length)return;
+ rounds=data.rounds;playerTotal=Number(data.count)||4;
+ $("eventName").value=data.name||"Chaos Queen Tournament";
+ $("playerCount").value=String(playerTotal);
+ $("bracketTitle").textContent=data.name||"Tournament Bracket";
+ $("bracketInfo").textContent=playerTotal+" players • Saved tournament • Click a name to advance them.";
+ $("tournament").classList.remove("hidden");
+ renderBracket();
+ $("setupStatus").textContent="Your saved tournament bracket has been restored. 💗💙";
+}
+const saved = localStorage.getItem("chaosQueenTournamentDraft");
+if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
+function namesFromInput(){return $("players").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);}
+function updateHint(){const count=Number($("playerCount").value),got=namesFromInput().length;$("countHint").textContent="Enter exactly "+count+" player names ("+got+" entered).";localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count,players:$("players").value}));}
+$("playerCount").addEventListener("change",updateHint);$("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
+$("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
+$("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
+function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function buildBracket(list){
+ playerTotal=list.length;const size=playerTotal===6?8:playerTotal;const roundCount=Math.log2(size);
+ rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null})));
+ const shuffled=shuffle(list);
  if(playerTotal===6){
   const byeMatches=shuffle([0,1,2,3]).slice(0,2);
   let cursor=0;
@@ -338,6 +479,388 @@ function chooseWinner(r,i,side){
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function roundName(r){if(r===rounds.length-1)return "Final";if(r===rounds.length-2)return "Semi-finals";if(r===0)return "Round 1";return "Round "+(r+1);}
+function playerButton(name,r,i,side,winner){
+ if(!name)return '<div class="player empty">— BYE —</div>';
+ const isWinner=winner===name;
+ return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+escapeHtml(name)+(isWinner?' <small>✓ ADVANCES</small>':'')+'</button>';
+}
+function renderBracket(){
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+'</div>'+playerButton(m.a,r,i,"a",m.winner)+playerButton(m.b,r,i,"b",m.winner)+'</div>').join("")+'</div>').join("");
+ $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
+ const champ=rounds[rounds.length-1][0]?.winner;
+ $("champion").classList.toggle("hidden",!champ);
+ $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champ):"";
+}
+$("build").onclick=()=>{
+ const list=namesFromInput(),required=Number($("playerCount").value);
+ if(list.length!==required){$("setupStatus").textContent="You need exactly "+required+" names. Right now you have "+list.length+".";return;}
+ if(new Set(list.map(n=>n.toLowerCase())).size!==list.length){$("setupStatus").textContent="Each player needs a unique name. Check for duplicates.";return;}
+ if(list.some(n=>n.length>40)){$("setupStatus").textContent="Please keep each player name to 40 characters or less.";return;}
+ buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("newTournament").onclick=()=>{$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";window.scrollTo({top:0,behavior:"smooth"});};
+$("print").onclick=()=>window.print();
+$("saveBracket").onclick=saveBracketOnline;
+updateHint();
+</script>
+</body></html>+Number(x.payout_amount||0).toFixed(2)+' <button class="dark" style="padding:4px 8px" onclick="deleteTournamentBonus('+Number(x.id)+')">DELETE</button></div>').join(""):'<span class="hint">No tournament bonus buys recorded yet.</span>';}
+async function addTournamentBonus(){const session_key=localStorage.getItem("slotbuddy_kick_session")||"",key=$("adminKey").value.trim();if(!session_key&&!key){$("bonusBuyStatus").textContent="Sign in with Kick on SlotBuddy first.";return;}const caller_name=$("buyPlayer").value.trim(),bonus_name=$("buyGame").value.trim(),spin_amount=$("buySpin").value,payout_amount=$("buyPayout").value,bonus_type=$("buyType").value;if(!caller_name||!bonus_name||spin_amount===""||payout_amount===""){$("bonusBuyStatus").textContent="Enter player, game, spin amount, and payout.";return;}$("bonusBuyStatus").textContent="Saving bonus buy…";try{const r=await fetch(CONTROL_URL+"?action=bonus-add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,caller_name,bonus_name,bonus_type,spin_amount,payout_amount,tournament_name:$("liveEventName").value||$("eventName").value||"Tournament"})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Couldn't save the bonus buy.");$("bonusBuyStatus").textContent="Bonus buy saved!";$("buyGame").value="";$("buySpin").value="";$("buyPayout").value="";await refreshLivePlayers();}catch(e){$("bonusBuyStatus").textContent=e.message;}}
+async function deleteTournamentBonus(id){const session_key=localStorage.getItem("slotbuddy_kick_session")||"",key=$("adminKey").value.trim();if(!session_key&&!key){$("bonusBuyStatus").textContent="Sign in with Kick on SlotBuddy first.";return;}try{const r=await fetch(CONTROL_URL+"?action=bonus-delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,id})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Couldn't delete the bonus buy.");$("bonusBuyStatus").textContent="Bonus buy deleted.";await refreshLivePlayers();}catch(e){$("bonusBuyStatus").textContent=e.message;}}
+$("addTournamentBonus").onclick=addTournamentBonus;
+
+let rounds = [];
+let playerTotal = 4;
+let hasLoadedSavedBracket = false;
+let bracketSaveTimer = null;
+async function saveBracketOnline(){
+ const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return;}
+ if(!rounds.length)return;
+ const payload={name:$("eventName").value.trim()||"Tournament",count:playerTotal,rounds};
+ try{const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});const msg=await res.text();$("setupStatus").textContent=msg;}
+ catch(e){$("setupStatus").textContent="Bracket is on this screen, but the online save failed. Please try Save bracket again.";}
+}
+function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
+function restoreSavedBracket(data){
+ if(!data||!Array.isArray(data.rounds)||!data.rounds.length)return;
+ rounds=data.rounds;playerTotal=Number(data.count)||4;
+ $("eventName").value=data.name||"Chaos Queen Tournament";
+ $("playerCount").value=String(playerTotal);
+ $("bracketTitle").textContent=data.name||"Tournament Bracket";
+ $("bracketInfo").textContent=playerTotal+" players • Saved tournament • Click a name to advance them.";
+ $("tournament").classList.remove("hidden");
+ renderBracket();
+ $("setupStatus").textContent="Your saved tournament bracket has been restored. 💗💙";
+}
+const saved = localStorage.getItem("chaosQueenTournamentDraft");
+if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
+function namesFromInput(){return $("players").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);}
+function updateHint(){const count=Number($("playerCount").value),got=namesFromInput().length;$("countHint").textContent="Enter exactly "+count+" player names ("+got+" entered).";localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count,players:$("players").value}));}
+$("playerCount").addEventListener("change",updateHint);$("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
+$("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
+$("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
+function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function buildBracket(list){
+ playerTotal=list.length;const size=playerTotal===6?8:playerTotal;const roundCount=Math.log2(size);
+ rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null})));
+ const shuffled=shuffle(list);
+ if(playerTotal===6){
+  const byeMatches=shuffle([0,1,2,3]).slice(0,2);
+  let cursor=0;
+  rounds[0].forEach((m,i)=>{if(byeMatches.includes(i)){m.a=shuffled[cursor++];m.b=null;m.winner=m.a;}else{m.a=shuffled[cursor++];m.b=shuffled[cursor++];}});
+ }else{
+  const slots=shuffle(shuffled);
+  rounds[0].forEach((m,i)=>{m.a=slots[i*2]||null;m.b=slots[i*2+1]||null;});
+ }
+ propagate(0);renderBracket();
+}
+function propagate(fromRound){
+ for(let r=Math.max(1,fromRound+1);r<rounds.length;r++){
+  const prev=rounds[r-1];
+  rounds[r].forEach((m,i)=>{m.a=prev[i*2]?.winner||null;m.b=prev[i*2+1]?.winner||null;m.winner=null;if(m.a&&!m.b)m.winner=m.a;else if(m.b&&!m.a)m.winner=m.b;});
+ }
+}
+function chooseWinner(r,i,side){
+ const match=rounds[r][i],chosen=match[side];
+ if(!chosen)return;
+ match.winner=chosen;
+ for(let later=r+1;later<rounds.length;later++)rounds[later].forEach(m=>m.winner=null);
+ propagate(r);renderBracket();queueBracketSave();
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function roundName(r){if(r===rounds.length-1)return "Final";if(r===rounds.length-2)return "Semi-finals";if(r===0)return "Round 1";return "Round "+(r+1);}
+function playerButton(name,r,i,side,winner){
+ if(!name)return '<div class="player empty">— BYE —</div>';
+ const isWinner=winner===name;
+ return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+escapeHtml(name)+(isWinner?' <small>✓ ADVANCES</small>':'')+'</button>';
+}
+function renderBracket(){
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+'</div>'+playerButton(m.a,r,i,"a",m.winner)+playerButton(m.b,r,i,"b",m.winner)+'</div>').join("")+'</div>').join("");
+ $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
+ const champ=rounds[rounds.length-1][0]?.winner;
+ $("champion").classList.toggle("hidden",!champ);
+ $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champ):"";
+}
+$("build").onclick=()=>{
+ const list=namesFromInput(),required=Number($("playerCount").value);
+ if(list.length!==required){$("setupStatus").textContent="You need exactly "+required+" names. Right now you have "+list.length+".";return;}
+ if(new Set(list.map(n=>n.toLowerCase())).size!==list.length){$("setupStatus").textContent="Each player needs a unique name. Check for duplicates.";return;}
+ if(list.some(n=>n.length>40)){$("setupStatus").textContent="Please keep each player name to 40 characters or less.";return;}
+ buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("newTournament").onclick=()=>{$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";window.scrollTo({top:0,behavior:"smooth"});};
+$("print").onclick=()=>window.print();
+$("saveBracket").onclick=saveBracketOnline;
+updateHint();
+</script>
+
+<script>
+(()=>{const paint=()=>{document.querySelectorAll('button,.btn,input[type="button"],input[type="submit"]').forEach(b=>{const t=(b.textContent||b.value||"").trim().toUpperCase();b.classList.remove("is-on","is-off");if(/\bON\s*$/.test(t)||b.id==="openEntries"||b.id==="openRound")b.classList.add("is-on");else if(/\bOFF\s*$/.test(t)||b.id==="closeEntries"||b.id==="closeRound")b.classList.add("is-off");});};paint();new MutationObserver(paint).observe(document.documentElement,{subtree:true,childList:true,characterData:true});})();
+</script>
+
+</body></html>+Number(m.payout||0).toFixed(2)+'</strong></div>';
+ $("matchPayout").value=m.payout==null?"":m.payout;
+ $("saveMatchPayout").disabled=!canManageTournament;
+ $("matchPayout").disabled=!canManageTournament;
+ const completed=matches.filter(x=>x.m.winner);
+ const champ=rounds[rounds.length-1][0]?.winner;
+ let html=champ?'<div class="champion"><strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(playerLabel(champ))+'</div>':"";
+ html+=completed.length?completed.map(x=>'<div class="winner-row"><div><strong>'+escapeHtml(playerLabel(x.m.winner))+'</strong><div class="hint">'+roundName(x.r)+' · Match '+(x.i+1)+' · vs '+escapeHtml(playerLabel(x.m.winner===x.m.a?x.m.b:x.m.a))+'</div></div><div class="paid">
+ if(!player)return '<div class="player empty">— BYE —</div>';
+ const person=typeof player==="string"?{username:player,game:""}:player;
+ const isWinner=winner===player;
+ const label=escapeHtml(person.username)+(person.game?' <small>🎰 '+escapeHtml(person.game)+'</small>':'')+(isWinner?' <small>✓ ADVANCES</small>':'');
+ if(!canManageTournament)return '<div class="player '+(isWinner?'winner':'')+'">'+label+'</div>';
+ return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+label+'</button>';
+}
+function renderBracket(){
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+'</div>'+playerButton(m.a,r,i,"a",m.winner)+playerButton(m.b,r,i,"b",m.winner)+'</div>').join("")+'</div>').join("");
+ $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
+ const champ=rounds[rounds.length-1][0]?.winner;
+ $("champion").classList.toggle("hidden",!champ);
+ const champName=champ?(typeof champ==="string"?champ:champ.username):"";
+ $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champName)+(typeof champ==="object"&&champ.game?' · '+escapeHtml(champ.game):""):"";
+ renderTournamentSections();
+}
+$("build").onclick=()=>{
+ const list=namesFromInput(),required=Number($("playerCount").value);
+ if(list.length!==required){$("setupStatus").textContent="You need exactly "+required+" names. Right now you have "+list.length+".";return;}
+ if(new Set(list.map(p=>p.username.toLowerCase())).size!==list.length){$("setupStatus").textContent="Each player needs a unique name. Check for duplicates.";return;}
+ if(list.some(p=>p.username.length>40||p.game.length>100)){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
+ buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("shuffleBracket").onclick=()=>{
+ if(!rounds.length)return;
+ if(rounds.some(round=>round.some(match=>match.winner))){
+  $("setupStatus").textContent="A match winner has already been recorded. Start a new bracket before reshuffling so results stay safe.";return;
+ }
+ const entries=rounds[0].flatMap(match=>[match.a,match.b]).filter(Boolean);
+ if(entries.length!==playerTotal){$("setupStatus").textContent="Couldn't safely read every player. No changes were made.";return;}
+ buildBracket(entries);
+ $("setupStatus").textContent="Players shuffled! Each called game stayed with its player. 💗💙";
+ queueBracketSave();
+};
+$("newTournament").onclick=()=>{$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";window.scrollTo({top:0,behavior:"smooth"});};
+$("print").onclick=()=>window.print();
+$("saveBracket").onclick=saveBracketOnline;
+updateHint();
+</script>
+
+<script>
+/* Only Jessica and Corey receive the organizer interface. CSS also covers controls
+   created later by live queue refreshes, so newly-rendered buttons stay hidden. */
+(async()=>{
+  document.body.classList.remove("slotbuddy-manager");
+  const session=localStorage.getItem("slotbuddy_kick_session")||"";
+  if(!session)return;
+  try{
+    const response=await fetch("https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({action:"resume",session_key:session})
+    });
+    const data=await response.json();
+    if(response.ok&&data.ok&&data.user&&["owner","moderator"].includes(data.user.role)){
+      document.body.classList.add("slotbuddy-manager");
+    }
+  }catch(error){console.warn("SlotBuddy public-view permissions could not be verified.");}
+})();
+</script>
+
+</body></html>+Number(x.spin_amount||0).toFixed(2)+' · Paid 
+let playerTotal = 4;
+let hasLoadedSavedBracket = false;
+let bracketSaveTimer = null;
+async function saveBracketOnline(){
+ const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return;}
+ if(!rounds.length)return;
+ const payload={name:$("eventName").value.trim()||"Tournament",count:playerTotal,rounds};
+ try{const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});const msg=await res.text();$("setupStatus").textContent=msg;}
+ catch(e){$("setupStatus").textContent="Bracket is on this screen, but the online save failed. Please try Save bracket again.";}
+}
+function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
+function restoreSavedBracket(data){
+ if(!data||!Array.isArray(data.rounds)||!data.rounds.length)return;
+ rounds=data.rounds;playerTotal=Number(data.count)||4;
+ $("eventName").value=data.name||"Chaos Queen Tournament";
+ $("playerCount").value=String(playerTotal);
+ $("bracketTitle").textContent=data.name||"Tournament Bracket";
+ $("bracketInfo").textContent=playerTotal+" players • Saved tournament • Click a name to advance them.";
+ $("tournament").classList.remove("hidden");
+ renderBracket();
+ $("setupStatus").textContent="Your saved tournament bracket has been restored. 💗💙";
+}
+const saved = localStorage.getItem("chaosQueenTournamentDraft");
+if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
+function namesFromInput(){return $("players").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);}
+function updateHint(){const count=Number($("playerCount").value),got=namesFromInput().length;$("countHint").textContent="Enter exactly "+count+" player names ("+got+" entered).";localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count,players:$("players").value}));}
+$("playerCount").addEventListener("change",updateHint);$("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
+$("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
+$("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
+function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function buildBracket(list){
+ playerTotal=list.length;const size=playerTotal===6?8:playerTotal;const roundCount=Math.log2(size);
+ rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null})));
+ const shuffled=shuffle(list);
+ if(playerTotal===6){
+  const byeMatches=shuffle([0,1,2,3]).slice(0,2);
+  let cursor=0;
+  rounds[0].forEach((m,i)=>{if(byeMatches.includes(i)){m.a=shuffled[cursor++];m.b=null;m.winner=m.a;}else{m.a=shuffled[cursor++];m.b=shuffled[cursor++];}});
+ }else{
+  const slots=shuffle(shuffled);
+  rounds[0].forEach((m,i)=>{m.a=slots[i*2]||null;m.b=slots[i*2+1]||null;});
+ }
+ propagate(0);renderBracket();
+}
+function propagate(fromRound){
+ for(let r=Math.max(1,fromRound+1);r<rounds.length;r++){
+  const prev=rounds[r-1];
+  rounds[r].forEach((m,i)=>{m.a=prev[i*2]?.winner||null;m.b=prev[i*2+1]?.winner||null;m.winner=null;if(m.a&&!m.b)m.winner=m.a;else if(m.b&&!m.a)m.winner=m.b;});
+ }
+}
+function chooseWinner(r,i,side){
+ const match=rounds[r][i],chosen=match[side];
+ if(!chosen)return;
+ match.winner=chosen;
+ for(let later=r+1;later<rounds.length;later++)rounds[later].forEach(m=>m.winner=null);
+ propagate(r);renderBracket();queueBracketSave();
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function roundName(r){if(r===rounds.length-1)return "Final";if(r===rounds.length-2)return "Semi-finals";if(r===0)return "Round 1";return "Round "+(r+1);}
+function playerButton(name,r,i,side,winner){
+ if(!name)return '<div class="player empty">— BYE —</div>';
+ const isWinner=winner===name;
+ return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+escapeHtml(name)+(isWinner?' <small>✓ ADVANCES</small>':'')+'</button>';
+}
+function renderBracket(){
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+'</div>'+playerButton(m.a,r,i,"a",m.winner)+playerButton(m.b,r,i,"b",m.winner)+'</div>').join("")+'</div>').join("");
+ $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
+ const champ=rounds[rounds.length-1][0]?.winner;
+ $("champion").classList.toggle("hidden",!champ);
+ $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champ):"";
+}
+$("build").onclick=()=>{
+ const list=namesFromInput(),required=Number($("playerCount").value);
+ if(list.length!==required){$("setupStatus").textContent="You need exactly "+required+" names. Right now you have "+list.length+".";return;}
+ if(new Set(list.map(n=>n.toLowerCase())).size!==list.length){$("setupStatus").textContent="Each player needs a unique name. Check for duplicates.";return;}
+ if(list.some(n=>n.length>40)){$("setupStatus").textContent="Please keep each player name to 40 characters or less.";return;}
+ buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("newTournament").onclick=()=>{$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";window.scrollTo({top:0,behavior:"smooth"});};
+$("print").onclick=()=>window.print();
+$("saveBracket").onclick=saveBracketOnline;
+updateHint();
+</script>
+</body></html>+Number(x.payout_amount||0).toFixed(2)+' <button class="dark" style="padding:4px 8px" onclick="deleteTournamentBonus('+Number(x.id)+')">DELETE</button></div>').join(""):'<span class="hint">No tournament bonus buys recorded yet.</span>';}
+async function addTournamentBonus(){const session_key=localStorage.getItem("slotbuddy_kick_session")||"",key=$("adminKey").value.trim();if(!session_key&&!key){$("bonusBuyStatus").textContent="Sign in with Kick on SlotBuddy first.";return;}const caller_name=$("buyPlayer").value.trim(),bonus_name=$("buyGame").value.trim(),spin_amount=$("buySpin").value,payout_amount=$("buyPayout").value,bonus_type=$("buyType").value;if(!caller_name||!bonus_name||spin_amount===""||payout_amount===""){$("bonusBuyStatus").textContent="Enter player, game, spin amount, and payout.";return;}$("bonusBuyStatus").textContent="Saving bonus buy…";try{const r=await fetch(CONTROL_URL+"?action=bonus-add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,caller_name,bonus_name,bonus_type,spin_amount,payout_amount,tournament_name:$("liveEventName").value||$("eventName").value||"Tournament"})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Couldn't save the bonus buy.");$("bonusBuyStatus").textContent="Bonus buy saved!";$("buyGame").value="";$("buySpin").value="";$("buyPayout").value="";await refreshLivePlayers();}catch(e){$("bonusBuyStatus").textContent=e.message;}}
+async function deleteTournamentBonus(id){const session_key=localStorage.getItem("slotbuddy_kick_session")||"",key=$("adminKey").value.trim();if(!session_key&&!key){$("bonusBuyStatus").textContent="Sign in with Kick on SlotBuddy first.";return;}try{const r=await fetch(CONTROL_URL+"?action=bonus-delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,id})});const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||"Couldn't delete the bonus buy.");$("bonusBuyStatus").textContent="Bonus buy deleted.";await refreshLivePlayers();}catch(e){$("bonusBuyStatus").textContent=e.message;}}
+$("addTournamentBonus").onclick=addTournamentBonus;
+
+let rounds = [];
+let playerTotal = 4;
+let hasLoadedSavedBracket = false;
+let bracketSaveTimer = null;
+async function saveBracketOnline(){
+ const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return;}
+ if(!rounds.length)return;
+ const payload={name:$("eventName").value.trim()||"Tournament",count:playerTotal,rounds};
+ try{const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});const msg=await res.text();$("setupStatus").textContent=msg;}
+ catch(e){$("setupStatus").textContent="Bracket is on this screen, but the online save failed. Please try Save bracket again.";}
+}
+function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
+function restoreSavedBracket(data){
+ if(!data||!Array.isArray(data.rounds)||!data.rounds.length)return;
+ rounds=data.rounds;playerTotal=Number(data.count)||4;
+ $("eventName").value=data.name||"Chaos Queen Tournament";
+ $("playerCount").value=String(playerTotal);
+ $("bracketTitle").textContent=data.name||"Tournament Bracket";
+ $("bracketInfo").textContent=playerTotal+" players • Saved tournament • Click a name to advance them.";
+ $("tournament").classList.remove("hidden");
+ renderBracket();
+ $("setupStatus").textContent="Your saved tournament bracket has been restored. 💗💙";
+}
+const saved = localStorage.getItem("chaosQueenTournamentDraft");
+if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
+function namesFromInput(){return $("players").value.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);}
+function updateHint(){const count=Number($("playerCount").value),got=namesFromInput().length;$("countHint").textContent="Enter exactly "+count+" player names ("+got+" entered).";localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count,players:$("players").value}));}
+$("playerCount").addEventListener("change",updateHint);$("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
+$("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
+$("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
+function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function buildBracket(list){
+ playerTotal=list.length;const size=playerTotal===6?8:playerTotal;const roundCount=Math.log2(size);
+ rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null})));
+ const shuffled=shuffle(list);
+ if(playerTotal===6){
+  const byeMatches=shuffle([0,1,2,3]).slice(0,2);
+  let cursor=0;
+  rounds[0].forEach((m,i)=>{if(byeMatches.includes(i)){m.a=shuffled[cursor++];m.b=null;m.winner=m.a;}else{m.a=shuffled[cursor++];m.b=shuffled[cursor++];}});
+ }else{
+  const slots=shuffle(shuffled);
+  rounds[0].forEach((m,i)=>{m.a=slots[i*2]||null;m.b=slots[i*2+1]||null;});
+ }
+ propagate(0);renderBracket();
+}
+function propagate(fromRound){
+ for(let r=Math.max(1,fromRound+1);r<rounds.length;r++){
+  const prev=rounds[r-1];
+  rounds[r].forEach((m,i)=>{m.a=prev[i*2]?.winner||null;m.b=prev[i*2+1]?.winner||null;m.winner=null;if(m.a&&!m.b)m.winner=m.a;else if(m.b&&!m.a)m.winner=m.b;});
+ }
+}
+function chooseWinner(r,i,side){
+ const match=rounds[r][i],chosen=match[side];
+ if(!chosen)return;
+ match.winner=chosen;
+ for(let later=r+1;later<rounds.length;later++)rounds[later].forEach(m=>m.winner=null);
+ propagate(r);renderBracket();queueBracketSave();
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function roundName(r){if(r===rounds.length-1)return "Final";if(r===rounds.length-2)return "Semi-finals";if(r===0)return "Round 1";return "Round "+(r+1);}
+function playerButton(name,r,i,side,winner){
+ if(!name)return '<div class="player empty">— BYE —</div>';
+ const isWinner=winner===name;
+ return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+escapeHtml(name)+(isWinner?' <small>✓ ADVANCES</small>':'')+'</button>';
+}
+function renderBracket(){
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+'</div>'+playerButton(m.a,r,i,"a",m.winner)+playerButton(m.b,r,i,"b",m.winner)+'</div>').join("")+'</div>').join("");
+ $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
+ const champ=rounds[rounds.length-1][0]?.winner;
+ $("champion").classList.toggle("hidden",!champ);
+ $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champ):"";
+}
+$("build").onclick=()=>{
+ const list=namesFromInput(),required=Number($("playerCount").value);
+ if(list.length!==required){$("setupStatus").textContent="You need exactly "+required+" names. Right now you have "+list.length+".";return;}
+ if(new Set(list.map(n=>n.toLowerCase())).size!==list.length){$("setupStatus").textContent="Each player needs a unique name. Check for duplicates.";return;}
+ if(list.some(n=>n.length>40)){$("setupStatus").textContent="Please keep each player name to 40 characters or less.";return;}
+ buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("newTournament").onclick=()=>{$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";window.scrollTo({top:0,behavior:"smooth"});};
+$("print").onclick=()=>window.print();
+$("saveBracket").onclick=saveBracketOnline;
+updateHint();
+</script>
+
+<script>
+(()=>{const paint=()=>{document.querySelectorAll('button,.btn,input[type="button"],input[type="submit"]').forEach(b=>{const t=(b.textContent||b.value||"").trim().toUpperCase();b.classList.remove("is-on","is-off");if(/\bON\s*$/.test(t)||b.id==="openEntries"||b.id==="openRound")b.classList.add("is-on");else if(/\bOFF\s*$/.test(t)||b.id==="closeEntries"||b.id==="closeRound")b.classList.add("is-off");});};paint();new MutationObserver(paint).observe(document.documentElement,{subtree:true,childList:true,characterData:true});})();
+</script>
+
+</body></html>+Number(x.m.payout||0).toFixed(2)+'</div></div>').join(""):'<div class="empty-state">No matches have been decided yet. Winners will show up here as you advance players.</div>';
+ winners.innerHTML=html;
+}
+$("currentMatchSelect").addEventListener("change",()=>{selectedMatchKey=$("currentMatchSelect").value;renderTournamentSections();});
+$("saveMatchPayout").addEventListener("click",()=>{
+ if(!canManageTournament)return;
+ const [r,i]=selectedMatchKey.split(":").map(Number),match=rounds[r]?.[i];
+ if(!match){$("matchPayoutStatus").textContent="Choose a match first.";return;}
+ const value=$("matchPayout").value.trim();
+ if(value!==""&&(!Number.isFinite(Number(value))||Number(value)<0)){$("matchPayoutStatus").textContent="Enter a valid payout amount.";return;}
+ match.payout=value===""?"":Number(value).toFixed(2);
+ $("matchPayoutStatus").textContent="Payout saved for "+roundName(r)+", Match "+(i+1)+".";
+ renderBracket();queueBracketSave();
+});
+
 function playerButton(player,r,i,side,winner){
  if(!player)return '<div class="player empty">— BYE —</div>';
  const person=typeof player==="string"?{username:player,game:""}:player;
@@ -353,6 +876,7 @@ function renderBracket(){
  $("champion").classList.toggle("hidden",!champ);
  const champName=champ?(typeof champ==="string"?champ:champ.username):"";
  $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champName)+(typeof champ==="object"&&champ.game?' · '+escapeHtml(champ.game):""):"";
+ renderTournamentSections();
 }
 $("build").onclick=()=>{
  const list=namesFromInput(),required=Number($("playerCount").value);
