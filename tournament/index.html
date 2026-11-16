@@ -61,7 +61,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 #setup{display:block!important}
 #setup[hidden]{display:none!important}
 .entry-player{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 12px;margin:7px 0;background:#0c1329;border:1px solid #45577f;border-radius:12px}
-.entry-player strong{color:#fff}.entry-meta{color:#bcd4f5;font-size:.84rem}.entry-remove{padding:6px 10px;background:#2a3456;color:#fff;border:1px solid #53658e}
+.entry-player strong{color:#fff}.entry-meta{color:#bcd4f5;font-size:.84rem}.entry-actions{display:flex;gap:6px;align-items:center}.entry-remove{padding:6px 10px;background:#2a3456;color:#fff;border:1px solid #53658e}.entry-duplicate{padding:6px 10px;background:#17445a;color:#bcefff;border:1px solid #4d9fbd;font-weight:900}
 @media(max-width:640px){.setup-grid{grid-template-columns:1fr}.entry-player{align-items:flex-start}}
 </style>
 </head>
@@ -374,8 +374,17 @@ function resizeEntryPlayers(){
 function renderEntryPlayers(){
  const list=$("tournamentEntryList");if(!list)return;
  const players=namesFromInput();
- list.innerHTML=players.length?players.map((p,i)=>{const placeholder=isEntryPlaceholder(p);const meta=placeholder?"Waiting for player details":(escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular")+' · Buy-in '+(p.buy!==""&&Number.isFinite(Number(p.buy))?"C$"+Number(p.buy).toFixed(2):"Not set"));return '<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+meta+'</div></div><button class="entry-remove" type="button" data-remove-entry="'+i+'">REMOVE</button></div>';}).join(""):'<span class="hint">No player spots yet.</span>';
+ list.innerHTML=players.length?players.map((p,i)=>{const placeholder=isEntryPlaceholder(p);const meta=placeholder?"Waiting for player details":(escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular")+' · Buy-in '+(p.buy!==""&&Number.isFinite(Number(p.buy))?"C$"+Number(p.buy).toFixed(2):"Not set"));return '<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+meta+'</div></div><div class="entry-actions"><button class="entry-duplicate" type="button" data-duplicate-entry="'+i+'">DUP</button><button class="entry-remove" type="button" data-remove-entry="'+i+'">REMOVE</button></div></div>';}).join(""):'<span class="hint">No player spots yet.</span>';
  list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=()=>{const a=namesFromInput();a.splice(Number(btn.dataset.removeEntry),1);writeEntryPlayers(a);updateHint();});
+ list.querySelectorAll("[data-duplicate-entry]").forEach(btn=>btn.onclick=()=>{
+  const a=namesFromInput(),source=a[Number(btn.dataset.duplicateEntry)];
+  if(!source)return;
+  const slot=a.findIndex(isEntryPlaceholder);
+  if(slot<0){$("setupStatus").textContent="No open player spots. Increase the bracket size before duplicating this player.";return;}
+  a[slot]={...source};
+  writeEntryPlayers(a);updateHint();
+  $("setupStatus").textContent=source.username+" duplicated into another player spot.";
+ });
  if($("addTournamentPlayer"))$("addTournamentPlayer").disabled=players.length>=Number($("playerCount").value)&&!players.some(isEntryPlaceholder);
 }
 function writeEntryPlayers(players){$("players").value=players.map(p=>[p.username,p.game||"",p.buy||"",p.casino||"Rainbet",p.bonusType||"Regular"].join(" | ")).join("\n");}
@@ -392,7 +401,6 @@ $("addTournamentPlayer").onclick=()=>{
  if(!username){$("setupStatus").textContent="Enter a username first.";return;}
  if(!game){$("setupStatus").textContent="Enter the player's game.";return;}
  if(buy===""||!Number.isFinite(Number(buy))||Number(buy)<0){$("setupStatus").textContent="Enter a valid buy-in amount.";return;}
- if(players.some(p=>!isEntryPlaceholder(p)&&p.username.toLowerCase()===username.toLowerCase())){$("setupStatus").textContent="That username is already in the player list.";return;}
  const slot=players.findIndex(isEntryPlaceholder);
  if(slot<0){$("setupStatus").textContent="The bracket is full. Increase the bracket size to add more players.";return;}
  players[slot]={username:username,game:game,buy:Number(buy).toFixed(2),casino:casino,bonusType:bonusType};
