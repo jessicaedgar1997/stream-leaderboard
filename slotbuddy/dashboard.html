@@ -2,6 +2,21 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1023"><title>Organizer Dashboard | SlotBuddy</title>
 <style>
 *{box-sizing:border-box}body{margin:0;min-height:100vh;padding:20px;background:radial-gradient(circle at 15% 10%,#173f70 0,transparent 38%),radial-gradient(circle at 90% 15%,#64205b 0,transparent 34%),#090d1d;color:#f8f9ff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}.wrap{max-width:1000px;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}.brand{font-size:1.15rem;font-weight:950}.brand span{color:#35d5ff}.nav a{color:#eaf2ff;text-decoration:none;border:1px solid #52628c;border-radius:99px;padding:8px 12px;font-size:.82rem;font-weight:800}.panel{background:linear-gradient(145deg,#1b2545f2,#121a33f2);border:1px solid #52628c;border-radius:18px;padding:22px;margin-bottom:16px;box-shadow:0 12px 35px #0004}.muted{color:#b7c2df}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}.stat{padding:16px;border:1px solid #34466f;border-radius:14px;background:#0e1530}.stat strong{display:block;font-size:1.8rem;color:#35d5ff}.btn{border:0;border-radius:999px;padding:10px 16px;font-weight:850;cursor:pointer;color:#090d1d;background:linear-gradient(90deg,#35d5ff,#fff,#ff39b9)}.btn:disabled{opacity:.55;cursor:wait}.tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid #34466f;font-size:.9rem}th{color:#35d5ff}.person{display:flex;align-items:center;gap:10px}.avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#263455}.pill{display:inline-block;border-radius:99px;padding:4px 9px;font-size:.75rem;font-weight:850}.on{background:#123d35;color:#9cf3d5}.off{background:#3a2b36;color:#ffc1d9}.status{min-height:24px;margin-top:12px;color:#b7c2df}.empty{text-align:center;padding:25px;color:#b7c2df}@media(max-width:600px){body{padding:12px}.stats{grid-template-columns:1fr}.panel{padding:16px}}
+
+/* Jessica's site-wide button theme */
+button,.btn,input[type="button"],input[type="submit"]{
+  background:linear-gradient(100deg,#ff39b9 0%,#65dfff 100%)!important;
+  color:#100d20!important;border:1px solid rgba(255,255,255,.22)!important;
+  font-weight:900;box-shadow:0 5px 18px rgba(255,57,185,.16),0 5px 18px rgba(101,223,255,.14);
+  transition:filter .16s ease,transform .16s ease,box-shadow .16s ease;
+}
+button:hover:not(:disabled),.btn:hover,input[type="button"]:hover:not(:disabled),input[type="submit"]:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-1px)}
+button:disabled,input[type="button"]:disabled,input[type="submit"]:disabled{opacity:.48!important;cursor:not-allowed}
+button.is-on,.btn.is-on{background:#ff39b9!important;color:#fff!important;border-color:#ff8bd6!important;box-shadow:0 0 18px #ff39b966!important}
+button.is-off,.btn.is-off{background:#65dfff!important;color:#081526!important;border-color:#a6efff!important;box-shadow:0 0 18px #65dfff55!important}
+#openEntries,#openRound{background:#ff39b9!important;color:#fff!important}
+#closeEntries,#closeRound{background:#65dfff!important;color:#081526!important}
+
 </style></head><body><main class="wrap">
 <header class="top"><div class="brand">⚡ SLOT<span>BUDDY</span> · ORGANIZER</div><div class="nav"><a href="./">Sign-in page</a></div></header>
 <section class="panel"><h1 style="margin:0 0 6px">💗 Sign-in Dashboard 💙</h1><p class="muted" style="margin:0">Private organizer view of Kick accounts that have signed in to SlotBuddy.</p>
@@ -30,4 +45,9 @@ async function load(){
 $("refresh").addEventListener("click",load);$("users").addEventListener("click",async event=>{const button=event.target.closest("[data-signout]");if(!button)return;button.disabled=true;try{await call("dashboard-signout",{kick_user_id:button.dataset.signout});await load();}catch(error){$("status").textContent=error.message;button.disabled=false;}});
 $("staff").addEventListener("click",async event=>{const button=event.target.closest("[data-remove-mod]");if(!button)return;button.disabled=true;try{await call("dashboard-remove-moderator",{kick_user_id:button.dataset.removeMod});await load();}catch(error){$("status").textContent=error.message;button.disabled=false;}});
 load();
-</script></body></html>
+</script>
+<script>
+(()=>{const paint=()=>{document.querySelectorAll('button,.btn,input[type="button"],input[type="submit"]').forEach(b=>{const t=(b.textContent||b.value||"").trim().toUpperCase();b.classList.remove("is-on","is-off");if(/\bON\s*$/.test(t)||b.id==="openEntries"||b.id==="openRound")b.classList.add("is-on");else if(/\bOFF\s*$/.test(t)||b.id==="closeEntries"||b.id==="closeRound")b.classList.add("is-off");});};paint();new MutationObserver(paint).observe(document.documentElement,{subtree:true,childList:true,characterData:true});})();
+</script>
+
+</body></html>
