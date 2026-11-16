@@ -369,8 +369,9 @@ function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=M
 function buildBracket(list){
  playerTotal=list.length;const entries=list.map(p=>typeof p==="string"?{username:p,game:""}:{...p,username:String(p.username||p.name||""),game:String(p.game||""),buy:p.buy==null?"":String(p.buy),casino:String(p.casino||"Rainbet"),bonusType:String(p.bonusType||"Regular")});const size=2**Math.ceil(Math.log2(playerTotal));const roundCount=Math.log2(size);
  rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null,payout:""})));
- const slots=Array(size).fill(null);const positions=shuffle(Array.from({length:size},(_,i)=>i));entries.forEach((entry,i)=>slots[positions[i]]=entry);
- rounds[0].forEach((m,i)=>{m.a=slots[i*2]||null;m.b=slots[i*2+1]||null;if(m.a&&!m.b)m.winner=m.a;else if(m.b&&!m.a)m.winner=m.b;});
+ const byeCount=size-playerTotal,matchOrder=shuffle(Array.from({length:size/2},(_,i)=>i));let cursor=0;
+ const byeMatches=new Set(matchOrder.slice(0,byeCount));
+ rounds[0].forEach((m,i)=>{m.a=entries[cursor++]||null;if(byeMatches.has(i)){m.b=null;m.winner=m.a;}else{m.b=entries[cursor++]||null;}});
  propagate(0);renderBracket();
 }
 function propagate(fromRound){
