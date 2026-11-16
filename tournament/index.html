@@ -292,7 +292,7 @@ async function saveBracketOnline(){
 function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
 function restoreSavedBracket(data){
  if(!data||!Array.isArray(data.rounds)||!data.rounds.length)return;
- rounds=data.rounds.map(round=>round.map(match=>{const normalize=value=>!value?null:(typeof value==="string"?{username:value,game:""}:{username:String(value.username||value.name||""),game:String(value.game||"")});return {a:normalize(match.a),b:normalize(match.b),winner:normalize(match.winner)};}));playerTotal=Number(data.count)||4;
+ rounds=data.rounds.map(round=>round.map(match=>{const normalize=value=>!value?null:(typeof value==="string"?{username:value,game:""}:{username:String(value.username||value.name||""),game:String(value.game||"")});const a=normalize(match.a),b=normalize(match.b),w=normalize(match.winner);const winner=w?(a&&a.username===w.username&&a.game===w.game?a:b&&b.username===w.username&&b.game===w.game?b:w):null;return {a,b,winner};}));playerTotal=Number(data.count)||4;
  $("eventName").value=data.name||"Chaos Queen Tournament";
  $("playerCount").value=String(playerTotal);
  $("bracketTitle").textContent=data.name||"Tournament Bracket";
