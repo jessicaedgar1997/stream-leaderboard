@@ -361,7 +361,33 @@ function restoreSavedBracket(data){
 const saved = localStorage.getItem("chaosQueenTournamentDraft");
 if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
 function namesFromInput(){return $("players").value.split(/\r?\n/).map(line=>{const value=line.trim();if(!value)return null;const parts=value.split(/\s+\|\s+/);return {username:(parts[0]||"").trim(),game:(parts[1]||"").trim(),buy:(parts[2]||"").trim(),casino:(parts[3]||"Rainbet").trim(),bonusType:(parts[4]||"Regular").trim()};}).filter(x=>x&&x.username);}
-function renderEntryPlayers(){const list=$("tournamentEntryList");if(!list)return;const players=namesFromInput();list.innerHTML=players.length?players.map((p,i)=>'<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular")+' · Buy: C
+function renderEntryPlayers(){
+ const list=$("tournamentEntryList");if(!list)return;
+ const players=namesFromInput();
+ list.innerHTML=players.length?players.map((p,i)=>'<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular")+' · Buy-in '+(Number(p.buy)||0).toFixed(2)+'</div></div><button class="entry-remove" type="button" data-remove-entry="'+i+'">REMOVE</button></div>').join(""):'<span class="hint">No players added yet.</span>';
+ list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=()=>{const a=namesFromInput();a.splice(Number(btn.dataset.removeEntry),1);writeEntryPlayers(a);updateHint();});
+ if($("addTournamentPlayer"))$("addTournamentPlayer").disabled=players.length>=Number($("playerCount").value);
+}
+function writeEntryPlayers(players){$("players").value=players.map(p=>[p.username,p.game||"",p.buy||"",p.casino||"Rainbet",p.bonusType||"Regular"].join(" | ")).join("\n");}
+function updateHint(){
+ const count=Number($("playerCount").value),got=namesFromInput().length,open=Math.max(0,count-got);
+ $("countHint").textContent="Add "+count+" players with their slot and buy. They will be shuffled into the bracket.";
+ if($("entryCount"))$("entryCount").textContent=got+" / "+count+" players";
+ if($("entrySpots"))$("entrySpots").textContent=open+" open spots";
+ renderEntryPlayers();
+ localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count:count,players:$("players").value}));
+}
+$("addTournamentPlayer").onclick=()=>{
+ const players=namesFromInput(),limit=Number($("playerCount").value),username=$("entryUsername").value.trim(),game=$("entryGame").value.trim(),buy=$("entryBuy").value,casino=$("entryCasino").value,bonusType=$("entryBonusType").value;
+ if(!username){$("setupStatus").textContent="Enter a username first.";return;}
+ if(!game){$("setupStatus").textContent="Enter the player's game.";return;}
+ if(buy===""||!Number.isFinite(Number(buy))||Number(buy)<0){$("setupStatus").textContent="Enter a valid buy-in amount.";return;}
+ if(players.length>=limit){$("setupStatus").textContent="The bracket is full. Increase the bracket size to add more players.";return;}
+ if(players.some(p=>p.username.toLowerCase()===username.toLowerCase())){$("setupStatus").textContent="That username is already in the player list.";return;}
+ players.push({username:username,game:game,buy:Number(buy).toFixed(2),casino:casino,bonusType:bonusType});
+ writeEntryPlayers(players);$("entryUsername").value="";$("entryBuy").value="";$("entryGame").value="";$("entryUsername").focus();
+ $("setupStatus").textContent=username+" added to the tournament.";updateHint();
+};
 $("playerCount").addEventListener("change",updateHint);$("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
 $("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
 $("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
