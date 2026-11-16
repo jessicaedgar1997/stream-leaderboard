@@ -166,7 +166,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 </section>
 
 <section class="panel hidden" id="tournament">
-<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS: ON</button><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
+<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS: ON</button><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" data-manager-only hidden type="button">🗑️ Clear All</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
 <div class="bracket" id="bracket"></div>
 <div id="champion" class="champion hidden"></div>
 <p class="hint">To advance a player, click their name in the match. You can change a winner any time; later rounds will update.</p>
@@ -342,7 +342,6 @@ $("tournamentCallsToggle").onclick=async()=>{
 async function saveBracketOnline(){
  const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
  if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return;}
- if(!rounds.length)return;
  const payload={name:$("eventName").value.trim()||"Tournament",count:playerTotal,rounds};
  try{const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});const msg=await res.text();$("setupStatus").textContent=msg;}
  catch(e){$("setupStatus").textContent="Bracket is on this screen, but the online save failed. Please try Save bracket again.";}
@@ -540,6 +539,22 @@ $("shuffleBracket").onclick=()=>{
  buildBracket(entries);
  $("setupStatus").textContent="Players shuffled! Each called game stayed with its player. 💗💙";
  queueBracketSave();
+};
+$("clearAllBracket").onclick=async()=>{
+ if(!canManageTournament)return;
+ if(!confirm("Clear the entire tournament bracket, all players, and all match results? This cannot be undone."))return;
+ clearTimeout(bracketSaveTimer);
+ rounds=[];playerTotal=Number($("playerCount").value)||4;selectedMatchKey="";
+ $("players").value="";localStorage.removeItem("chaosQueenTournamentDraft");
+ $("bracket").innerHTML="";$("champion").innerHTML="";$("champion").classList.add("hidden");
+ $("bracketInfo").textContent="Bracket cleared • "+playerTotal+" player spots selected • Ready for a new tournament.";
+ $("tournament").classList.add("hidden");
+ $("currentMatchSelect").innerHTML='<option value="">Build or load a bracket first</option>';
+ $("currentMatchCard").innerHTML='<div class="empty-state">Your current match will appear here once the bracket is ready.</div>';
+ $("tournamentWinners").innerHTML='<div class="empty-state">Winners will appear here as matches are completed.</div>';
+ updateHint();
+ await saveBracketOnline();
+ $("setupStatus").textContent="All tournament players, matches, and results have been cleared. Ready for a fresh bracket.";
 };
 $("newTournament").onclick=()=>{$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";window.scrollTo({top:0,behavior:"smooth"});};
 $("print").onclick=()=>window.print();
