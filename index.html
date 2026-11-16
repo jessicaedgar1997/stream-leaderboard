@@ -30,6 +30,9 @@ button.is-off,.btn.is-off{background:#65dfff!important;color:#081526!important;b
 #openEntries,#openRound{background:#ff39b9!important;color:#fff!important}
 #closeEntries,#closeRound{background:#65dfff!important;color:#081526!important}
 
+
+/* Keep the private giveaway out of the public stream hub. */
+body:not(.slotbuddy-manager) a[href*="giveaway"],body:not(.slotbuddy-manager) .card[href*="giveaway"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 </style>
 </head>
 <body>
@@ -67,6 +70,6 @@ button.is-off,.btn.is-off{background:#65dfff!important;color:#081526!important;b
 </script>
 
 <script>
-(async()=>{const link=document.getElementById("nameWheelNav"),key=localStorage.getItem("slotbuddy_kick_session");if(!key||!link)return;try{const r=await fetch("https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:key})});const d=await r.json();if(d.ok&&(d.user?.role==="owner"||d.user?.role==="moderator"))link.hidden=false;}catch{}})();
+(async()=>{const link=document.getElementById("nameWheelNav"),key=localStorage.getItem("slotbuddy_kick_session");if(!key||!link)return;try{const r=await fetch("https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:key})});const d=await r.json();if(d.ok&&(d.user?.role==="owner"||d.user?.role==="moderator")){document.body.classList.add("slotbuddy-manager");link.hidden=false;}}catch{}})();
 </script>
 </body></html>
