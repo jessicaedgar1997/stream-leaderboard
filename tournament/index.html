@@ -91,7 +91,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <div><div class="hint">Queue status</div><div class="live-status" id="slotQueueStatus">CALLS CLOSED</div></div>
 </div>
 <div class="entrant-list" id="slotQueue"><span class="hint">Loading slot calls…</span></div>
-<p class="hint">Tell chat: <strong>!slot + your game</strong> — one active request per viewer. The queue updates live.</p>
+<p class="hint">Tell chat: <strong>!slot + your game</strong> — one active request per viewer. In tournament mode, they can add <strong>super</strong> or <strong>reg</strong> at the end to set the bonus type. The queue updates live.</p>
 <div class="actions" id="slotCallControls" hidden>
 <button id="nextSlotCall">▶ Call next game</button>
 <button class="pink" id="clearSlotCalls">Clear slot queue</button>
@@ -100,7 +100,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <p class="status" id="slotAdminMessage" role="status"></p>
 <details style="margin-top:12px">
 <summary style="cursor:pointer;color:var(--pink);font-weight:900;padding:8px 0">🤖 BotRix command setup</summary>
-<p class="hint">Create a custom command named <strong>!slot</strong>. Set its response to:</p>
+<p class="hint">Create a custom command named <strong>!slot</strong>. Set its response to the line below. Viewers can type <strong>!slot Gates of Olympus super</strong> or <strong>!slot Sweet Bonanza reg</strong>; without a suffix it defaults to Regular. The game name and bonus type are added automatically to the wheels and tournament tracker when tournament mode is active.</p>
 <pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:12px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=call&amp;key=YOUR_PRIVATE_BOT_KEY&amp;user=$(sender)&amp;game=$(urlencode $(variable))]</pre>
 <p class="hint">Optional second command: <strong>!slots</strong> — response:</p>
 <pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:12px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-queue?action=list]</pre>
@@ -119,7 +119,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <p class="hint">These commands let chat ask BotRix for the latest bracket results. They update as soon as the bracket is saved.</p>
 </details>
 </section>
-<section class="panel" id="tournamentBonusTracker"><h2>🎁 TOURNAMENT BONUS-BUY TRACKER</h2><div id="tournamentBonusAdmin" hidden><p class="hint">Record each player's bonus buy and choose Regular, Super, or Epic.</p><div class="setup-grid"><div class="field"><label for="buyPlayer">Player / Kick username</label><input id="buyPlayer" maxlength="40" placeholder="Player name"></div><div class="field"><label for="buyType">Bonus type</label><select id="buyType"><option value="Regular">Regular</option><option value="Super">Super</option><option value="Epic">Epic</option></select></div></div><div class="setup-grid"><div class="field"><label for="buyGame">Bonus / Game name</label><input id="buyGame" maxlength="100" placeholder="Game name"></div><div class="field"><label for="buySpin">Spin amount ($)</label><input id="buySpin" type="number" min="0" step="0.01" placeholder="2.00"></div></div><div class="field"><label for="buyPayout">Payout ($)</label><input id="buyPayout" type="number" min="0" step="0.01" placeholder="0.00"></div><div class="actions"><button id="addTournamentBonus">ADD BONUS BUY</button></div><p class="status" id="bonusBuyStatus" role="status"></p></div><div id="tournamentBonusList" class="entrant-list"><span class="hint">Loading bonus buys…</span></div></section>
+<section class="panel" id="tournamentBonusTracker"><h2>🎁 TOURNAMENT BONUS-BUY TRACKER</h2><div id="tournamentBonusAdmin" hidden><p class="hint">Tournament-mode <strong>!slot</strong> calls appear here automatically. Add <strong>super</strong> or <strong>reg</strong> at the end of the game name to set the type; calls without a suffix default to Regular. Spin amount and payout start at $0 and can be updated here.</p><div class="setup-grid"><div class="field"><label for="buyPlayer">Player / Kick username</label><input id="buyPlayer" maxlength="40" placeholder="Player name"></div><div class="field"><label for="buyType">Bonus type</label><select id="buyType"><option value="Regular">Regular</option><option value="Super">Super</option><option value="Epic">Epic</option></select></div></div><div class="setup-grid"><div class="field"><label for="buyGame">Bonus / Game name</label><input id="buyGame" maxlength="100" placeholder="Game name"></div><div class="field"><label for="buySpin">Spin amount ($)</label><input id="buySpin" type="number" min="0" step="0.01" placeholder="2.00"></div></div><div class="field"><label for="buyPayout">Payout ($)</label><input id="buyPayout" type="number" min="0" step="0.01" placeholder="0.00"></div><div class="actions"><button id="addTournamentBonus">ADD BONUS BUY</button></div><p class="status" id="bonusBuyStatus" role="status"></p></div><div id="tournamentBonusList" class="entrant-list"><span class="hint">Loading bonus buys…</span></div></section>
 <section class="panel setup" id="setup" hidden>
 <h2>🎮 Set up your tournament</h2>
 <div class="setup-grid">
