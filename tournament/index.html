@@ -52,11 +52,11 @@ button.is-off,.btn.is-off{background:#65dfff!important;color:#081526!important;b
 </div>
 <div class="entrant-list" id="entrantList"><span class="hint">Loading player list…</span></div>
 <p class="hint">Tell chat to type <strong>!join</strong> to enter. They can use <strong>!leave</strong> before entries close.</p>
-<div class="actions"><button id="loadChatPlayers">⬇ Load chat players into bracket</button><button class="dark" id="refreshPlayers">Refresh list</button></div>
-<details class="editor-admin" id="ownerControls" style="margin-top:16px">
+<div class="actions" id="bracketLoadControls" hidden><button id="loadChatPlayers">⬇ Load chat players into bracket</button><button class="dark" id="refreshPlayers">Refresh list</button></div>
+<details class="editor-admin" id="ownerControls" hidden style="margin-top:16px">
 <summary style="cursor:pointer;color:var(--pink);font-weight:900;padding:8px 0">👑 Organizer controls</summary>
 <div class="admin-grid">
-<div class="wide"><label for="adminKey">Organizer access key</label><input id="adminKey" type="password" autocomplete="off" placeholder="Paste your private organizer key"></div>
+<div class="wide" hidden><label for="adminKey">Organizer access key</label><input id="adminKey" type="password" autocomplete="off" placeholder="Paste your private organizer key"></div>
 <div><label for="livePlayerCount">Player limit</label><select id="livePlayerCount"><option value="4">4 Players</option><option value="6">6 Players</option><option value="8">8 Players</option><option value="16">16 Players</option></select></div>
 <div><label for="liveEventName">Tournament name</label><input id="liveEventName" maxlength="60" value="Chaos Queen Tournament"></div>
 </div>
@@ -82,7 +82,7 @@ button.is-off,.btn.is-off{background:#65dfff!important;color:#081526!important;b
 </div>
 <div class="entrant-list" id="slotQueue"><span class="hint">Loading slot calls…</span></div>
 <p class="hint">Tell chat: <strong>!slot + your game</strong> — one active request per viewer. The queue updates live.</p>
-<div class="actions">
+<div class="actions" id="slotCallControls" hidden>
 <button id="nextSlotCall">▶ Call next game</button>
 <button class="pink" id="clearSlotCalls">Clear slot queue</button>
 <button class="dark" id="refreshSlotCalls">Refresh queue</button>
@@ -109,8 +109,8 @@ button.is-off,.btn.is-off{background:#65dfff!important;color:#081526!important;b
 <p class="hint">These commands let chat ask BotRix for the latest bracket results. They update as soon as the bracket is saved.</p>
 </details>
 </section>
-<section class="panel" id="tournamentBonusTracker"><h2>🎁 TOURNAMENT BONUS-BUY TRACKER</h2><p class="hint">Record each player's bonus buy and choose Regular, Super, or Epic.</p><div class="setup-grid"><div class="field"><label for="buyPlayer">Player / Kick username</label><input id="buyPlayer" maxlength="40" placeholder="Player name"></div><div class="field"><label for="buyType">Bonus type</label><select id="buyType"><option value="Regular">Regular</option><option value="Super">Super</option><option value="Epic">Epic</option></select></div></div><div class="setup-grid"><div class="field"><label for="buyGame">Bonus / Game name</label><input id="buyGame" maxlength="100" placeholder="Game name"></div><div class="field"><label for="buySpin">Spin amount ($)</label><input id="buySpin" type="number" min="0" step="0.01" placeholder="2.00"></div></div><div class="field"><label for="buyPayout">Payout ($)</label><input id="buyPayout" type="number" min="0" step="0.01" placeholder="0.00"></div><div class="actions"><button id="addTournamentBonus">ADD BONUS BUY</button></div><p class="status" id="bonusBuyStatus" role="status"></p><div id="tournamentBonusList" class="entrant-list"><span class="hint">Loading bonus buys…</span></div></section>
-<section class="panel setup" id="setup">
+<section class="panel" id="tournamentBonusTracker"><h2>🎁 TOURNAMENT BONUS-BUY TRACKER</h2><div id="tournamentBonusAdmin" hidden><p class="hint">Record each player's bonus buy and choose Regular, Super, or Epic.</p><div class="setup-grid"><div class="field"><label for="buyPlayer">Player / Kick username</label><input id="buyPlayer" maxlength="40" placeholder="Player name"></div><div class="field"><label for="buyType">Bonus type</label><select id="buyType"><option value="Regular">Regular</option><option value="Super">Super</option><option value="Epic">Epic</option></select></div></div><div class="setup-grid"><div class="field"><label for="buyGame">Bonus / Game name</label><input id="buyGame" maxlength="100" placeholder="Game name"></div><div class="field"><label for="buySpin">Spin amount ($)</label><input id="buySpin" type="number" min="0" step="0.01" placeholder="2.00"></div></div><div class="field"><label for="buyPayout">Payout ($)</label><input id="buyPayout" type="number" min="0" step="0.01" placeholder="0.00"></div><div class="actions"><button id="addTournamentBonus">ADD BONUS BUY</button></div><p class="status" id="bonusBuyStatus" role="status"></p></div><div id="tournamentBonusList" class="entrant-list"><span class="hint">Loading bonus buys…</span></div></section>
+<section class="panel setup" id="setup" hidden>
 <h2>🎮 Set up your tournament</h2>
 <div class="setup-grid">
 <div class="field"><label for="eventName">Tournament name</label><input id="eventName" maxlength="60" value="Chaos Queen Tournament" placeholder="Name your tournament"></div>
@@ -122,7 +122,7 @@ button.is-off,.btn.is-off{background:#65dfff!important;color:#081526!important;b
 <p class="status" id="setupStatus" role="status"></p>
 </section>
 <section class="panel hidden" id="tournament">
-<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="print">Print bracket</button><button class="dark" id="saveBracket">Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament">New tournament</button></div></div>
+<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="print">Print bracket</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
 <div class="bracket" id="bracket"></div>
 <div id="champion" class="champion hidden"></div>
 <p class="hint">To advance a player, click their name in the match. You can change a winner any time; later rounds will update.</p>
@@ -141,9 +141,10 @@ const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let livePlayers = [];
 let liveCalls = [];
 let liveState = null;
+let canManageTournament = false;
 async function applyStaffView(){
- const session=localStorage.getItem("slotbuddy_kick_session");if(!session)return;
- try{const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});const d=await r.json();if(d.ok&&(d.user?.role==="owner"||d.user?.role==="moderator"))$("liveAdminMessage").textContent="Signed in as a SlotBuddy manager. Full tournament controls are enabled.";}catch{}
+ const session=localStorage.getItem("slotbuddy_kick_session");if(session){try{const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});const d=await r.json();canManageTournament=!!(d.ok&&(d.user?.role==="owner"||d.user?.role==="moderator"));if(canManageTournament)$("liveAdminMessage").textContent="Signed in as a SlotBuddy manager. Full tournament controls are enabled.";}catch{canManageTournament=false;}}
+ ["ownerControls","bracketLoadControls","slotCallControls","tournamentBonusAdmin","setup"].forEach(id=>{const el=$(id);if(el)el.hidden=!canManageTournament;});document.querySelectorAll("[data-manager-only]").forEach(el=>el.hidden=!canManageTournament);
 }
 
 function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
@@ -155,7 +156,7 @@ async function refreshLivePlayers(){
   if(snapshot.error)throw new Error(snapshot.error);
   const queueResponse=await fetch(QUEUE_URL+"?action=snapshot",{cache:"no-store"});
   const queueSnapshot=queueResponse.ok?await queueResponse.json():{calls:[],active_queue:null};
-  livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;renderTournamentBonuses(snapshot.bonus_entries||[]);
+  livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;renderTournamentBonuses(snapshot.bonus_entries||[]);if(!canManageTournament)$("tournamentBonusList").querySelectorAll("button").forEach(btn=>btn.remove());
   const queueStatus=$("slotQueueStatus");if(queueStatus){queueStatus.textContent=queueSnapshot.active_queue==="cozies"?"COZIES CALLS OPEN":queueSnapshot.active_queue==="bonus_hunt"?"BONUS HUNT CALLS OPEN":"CALLS CLOSED";queueStatus.style.color=queueSnapshot.active_queue?"var(--blue)":"var(--pink)";}
   if(snapshot.bracket&&snapshot.bracket.rounds?.length&&!hasLoadedSavedBracket){restoreSavedBracket(snapshot.bracket);hasLoadedSavedBracket=true;}
  }catch(error){$("liveStatus").textContent="CONNECTION ISSUE";$("entrantList").innerHTML='<span class="hint">Could not load the live player list. Refresh in a moment.</span>';return;}
@@ -167,7 +168,7 @@ async function refreshLivePlayers(){
  $("liveEventName").value=liveState.tournament_name;
  $("slotCallCount").textContent=String(liveCalls.length);
  $("slotQueue").innerHTML=liveCalls.length?liveCalls.map((x,i)=>'<span class="entrant">'+(i+1)+'. <strong>'+safeText(x.game)+'</strong> — '+safeText(x.username)+' <button class="dark remove-slot" data-id="'+x.id+'" style="padding:3px 8px;margin-left:5px">×</button></span>').join(""):'<span class="hint">No game requests yet. Chat can type !slot + their game!</span>';
- $("slotQueue").querySelectorAll(".remove-slot").forEach(btn=>btn.addEventListener("click",()=>adminSlotAction("remove-call",{id:btn.dataset.id})));
+ if(!canManageTournament)$("slotQueue").querySelectorAll("button").forEach(btn=>btn.remove());else $("slotQueue").querySelectorAll(".remove-slot").forEach(btn=>btn.addEventListener("click",()=>adminSlotAction("remove-call",{id:btn.dataset.id})));
 }
 async function adminAction(action,extra={}){
  const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
@@ -329,8 +330,9 @@ function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":
 function roundName(r){if(r===rounds.length-1)return "Final";if(r===rounds.length-2)return "Semi-finals";if(r===0)return "Round 1";return "Round "+(r+1);}
 function playerButton(name,r,i,side,winner){
  if(!name)return '<div class="player empty">— BYE —</div>';
- const isWinner=winner===name;
- return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+escapeHtml(name)+(isWinner?' <small>✓ ADVANCES</small>':'')+'</button>';
+ const isWinner=winner===name;const label=escapeHtml(name)+(isWinner?' <small>✓ ADVANCES</small>':'');
+ if(!canManageTournament)return '<div class="player '+(isWinner?'winner':'')+'">'+label+'</div>';
+ return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+label+'</button>';
 }
 function renderBracket(){
  $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+'</div>'+playerButton(m.a,r,i,"a",m.winner)+playerButton(m.b,r,i,"b",m.winner)+'</div>').join("")+'</div>').join("");
