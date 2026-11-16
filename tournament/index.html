@@ -50,7 +50,7 @@ body:not(.slotbuddy-manager) [role="button"]{display:none!important;visibility:h
 
 /* Giveaway is a private organizer feature: hide its navigation link for viewers. */
 body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
-</style>
+\n#tournamentCallsToggle.calls-on{background:#ff39b9!important;color:#fff!important;border-color:#ff8bd6!important}#tournamentCallsToggle.calls-off{background:#65dfff!important;color:#081526!important;border-color:#a6efff!important}\n</style>
 </head>
 <body><nav class="hub-nav" aria-label="JessicaEdgar1997 main navigation"><a class="hub-brand" href="../">👑 <span>JESSICAEDGAR1997</span></a><div class="hub-links"><a href="../">Home</a><a href="../leaderboard/">Leaderboard</a><a href="../slotbuddy/bonus-hunt.html">Bonus Hunt</a><a href="../slotbuddy/guess-the-balance.html">Guess the Balance</a><a href="../slotbuddy/giveaway.html">Keyword Giveaway</a><a href="../tournament/">Tournament</a><a href="../cozies/">Cozies</a></div></nav>
 <main class="wrap">
@@ -134,7 +134,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 </section>
 <nav class="tourney-nav" aria-label="Tournament sections"><a href="#tournament">🏆 1. Bracket</a><a href="#currentMatchPanel">🎮 2. Current Match</a><a href="#winnersPanel">🥇 3. Winners</a></nav>
 <section class="panel hidden" id="tournament">
-<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
+<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS: ON</button><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
 <div class="bracket" id="bracket"></div>
 <div id="champion" class="champion hidden"></div>
 <p class="hint">To advance a player, click their name in the match. You can change a winner any time; later rounds will update.</p>
@@ -170,7 +170,7 @@ async function refreshLivePlayers(){
   if(snapshot.error)throw new Error(snapshot.error);
   const queueResponse=await fetch(QUEUE_URL+"?action=snapshot",{cache:"no-store"});
   const queueSnapshot=queueResponse.ok?await queueResponse.json():{calls:[],active_queue:null};
-  livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;renderTournamentBonuses(snapshot.bonus_entries||[]);if(!canManageTournament)$("tournamentBonusList").querySelectorAll("button").forEach(btn=>btn.remove());
+  livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;renderTournamentBonuses(snapshot.bonus_entries||[]);updateTournamentCallsToggle();if(!canManageTournament)$("tournamentBonusList").querySelectorAll("button").forEach(btn=>btn.remove());
   const queueStatus=$("slotQueueStatus");if(queueStatus){queueStatus.textContent=queueSnapshot.active_queue==="cozies"?"COZIES CALLS OPEN":queueSnapshot.active_queue==="bonus_hunt"?"BONUS HUNT CALLS OPEN":"CALLS CLOSED";queueStatus.style.color=queueSnapshot.active_queue?"var(--blue)":"var(--pink)";}
   if(snapshot.bracket&&snapshot.bracket.rounds?.length&&!hasLoadedSavedBracket){restoreSavedBracket(snapshot.bracket);hasLoadedSavedBracket=true;}
  }catch(error){$("liveStatus").textContent="CONNECTION ISSUE";$("entrantList").innerHTML='<span class="hint">Could not load the live player list. Refresh in a moment.</span>';return;}
@@ -286,6 +286,27 @@ let playerTotal = 4;
 let hasLoadedSavedBracket = false;
 let bracketSaveTimer = null;
 let selectedMatchKey = "";
+
+function updateTournamentCallsToggle(){
+ const button=$("tournamentCallsToggle");if(!button)return;
+ const enabled=liveState?.slot_calls_enabled!==false;
+ button.textContent=enabled?"📣 TOURNAMENT CALLS: ON":"🔕 TOURNAMENT CALLS: OFF";
+ button.classList.toggle("calls-on",enabled);button.classList.toggle("calls-off",!enabled);
+ button.title=enabled?"Click to stop tournament slot calls":"Click to allow tournament slot calls";
+}
+$("tournamentCallsToggle").onclick=async()=>{
+ if(!canManageTournament)return;
+ const button=$("tournamentCallsToggle"),enabled=liveState?.slot_calls_enabled!==false;
+ button.disabled=true;
+ try{
+  const response=await fetch(CONTROL_URL+"?action=slot-calls-toggle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_key:localStorage.getItem("slotbuddy_kick_session")||"",enabled:!enabled})});
+  const message=await response.text();if(!response.ok)throw new Error(message||"Couldn't update tournament calls.");
+  liveState={...liveState,slot_calls_enabled:!enabled};updateTournamentCallsToggle();
+  $("setupStatus").textContent=message;
+ }catch(error){$("setupStatus").textContent=error.message;}
+ finally{button.disabled=false;}
+};
+
 async function saveBracketOnline(){
  const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
  if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return;}
