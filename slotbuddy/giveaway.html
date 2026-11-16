@@ -33,14 +33,15 @@ body:not(.slotbuddy-manager) [role="button"]{display:none!important;visibility:h
 /* Giveaway is a private organizer feature: hide its navigation link for viewers. */
 body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 
-/* Private giveaway page: only organizers can view it. */
-body:not(.slotbuddy-manager)>*:not(script){display:none!important;visibility:hidden!important}
+/* Keep the private giveaway page from appearing blank to viewers. */
+body:not(.slotbuddy-manager)>.top,body:not(.slotbuddy-manager)>.hero,body:not(.slotbuddy-manager) #giveawayPanel,body:not(.slotbuddy-manager)>.foot{display:none!important;visibility:hidden!important}
+body:not(.slotbuddy-manager) #giveawayAccessMessage{display:block!important;visibility:visible!important;text-align:center;margin:22vh auto 0;max-width:620px;padding:24px;border:1px solid #52628c;border-radius:16px;background:#121a33;color:#f8f9ff;font-weight:800}
 </style></head><body>
 <nav class="hub-nav" aria-label="JessicaEdgar1997 main navigation"><a class="hub-brand" href="../">👑 <span>JESSICAEDGAR1997</span></a><div class="hub-links"><a href="./#login">Sign in with Kick</a><a href="../">Home</a><a href="../leaderboard/">Leaderboard</a><a href="../slotbuddy/bonus-hunt.html">Bonus Hunt</a><a href="../slotbuddy/giveaway.html" aria-current="page">Keyword Giveaway</a><a href="../slotbuddy/guess-the-balance.html">Guess the Balance</a><a href="../tournament/">Tournament</a><a href="../cozies/">Cozies</a></div></nav>
 <header class="top"><div class="brand">⚡ SLOT<span>BUDDY</span></div></header>
 <section class="hero"><div class="eyebrow">JESSICAEDGAR1997 · STREAM TOOLS</div><h1>🎁 KEYWORD GIVEAWAY</h1><p>Pick a keyword, let chat enter, and draw a random winner. One entry per Kick account. 💗💙</p></section>
 <main class="wrap">
-<p class="message" id="giveawayAccessMessage" role="status">Sign in with Kick to view the private giveaway dashboard.</p>
+<p class="message" id="giveawayAccessMessage" role="status">This page is private and only available to Jessica and Corey. Head back to the Stream Hub to browse the public tools.</p>
 <section class="panel" id="giveawayPanel" style="display:none">
   <div class="head"><div><h2>🎁 LIVE CHAT GIVEAWAY</h2><p class="muted">Choose a word for chat to type. One entry per Kick account. Activity and subscriber odds are optional.</p></div><strong id="giveawayStatus" style="color:var(--gold)">No giveaway running</strong></div>
   <div class="fields">
