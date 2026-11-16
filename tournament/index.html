@@ -50,7 +50,10 @@ body:not(.slotbuddy-manager) [role="button"]{display:none!important;visibility:h
 
 /* Giveaway is a private organizer feature: hide its navigation link for viewers. */
 body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
-\n#tournamentCallsToggle.calls-on{background:#ff39b9!important;color:#fff!important;border-color:#ff8bd6!important}#tournamentCallsToggle.calls-off{background:#65dfff!important;color:#081526!important;border-color:#a6efff!important}\n
+
+#tournamentCallsOn{background:#ff39b9!important;color:#fff!important;border-color:#ff8bd6!important}
+#tournamentCallsOff{background:#65dfff!important;color:#081526!important;border-color:#a6efff!important}
+
 
 /* Kick is already connected through SlotBuddy; hide redundant connection UI here. */
 #liveAdminMessage,#connectKick,#testKick,#kickStatus{display:none!important}
@@ -164,13 +167,13 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <p class="hint" id="countHint">Add 8 players with their slot and buy. They will be shuffled into the bracket.</p>
 <textarea id="players" spellcheck="false" hidden aria-hidden="true"></textarea>
 <div class="actions tournament-controls"></div>
-<div class="actions"><button id="build">🎲 Start Tournament</button><button class="dark" id="tournamentCallsToggle" data-manager-only hidden type="button">📣 TOURNAMENT CALLS: ON</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
+<div class="actions"><button id="build">🎲 Start Tournament</button><button id="tournamentCallsOn" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
 <button id="fillDemo" type="button" hidden>Add sample names</button>
 <p class="status" id="setupStatus" role="status"></p>
 </section>
 
 <section class="panel hidden" id="tournament">
-<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" data-manager-only hidden type="button">🧹 Clear Names &amp; Games</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="dark" id="endTournament" data-manager-only hidden type="button">🏁 END TOURNAMENT</button><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
+<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" data-manager-only hidden type="button">🧹 Clear Names &amp; Games</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="dark" id="endTournament" data-manager-only hidden type="button">🏁 END TOURNAMENT</button><button id="tournamentCallsOff" data-manager-only hidden type="button">🔕 CALLS OFF</button><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
 <div class="bracket" id="bracket"></div>
 <div id="champion" class="champion hidden"></div>
 <p class="hint">To advance a player, click their name in the match. You can change a winner any time; later rounds will update.</p>
@@ -346,24 +349,23 @@ let bracketSaveTimer = null;
 let selectedMatchKey = "";
 
 function updateTournamentCallsToggle(){
- const button=$("tournamentCallsToggle");if(!button)return;
  const enabled=liveState?.slot_calls_enabled!==false;
- button.textContent=enabled?"📣 TOURNAMENT CALLS: ON":"🔕 TOURNAMENT CALLS: OFF";
- button.classList.toggle("calls-on",enabled);button.classList.toggle("calls-off",!enabled);
- button.title=enabled?"Click to stop tournament slot calls":"Click to allow tournament slot calls";
+ const on=$("tournamentCallsOn"),off=$("tournamentCallsOff");
+ if(on)on.disabled=enabled;
+ if(off)off.disabled=!enabled;
 }
-$("tournamentCallsToggle").onclick=async()=>{
- if(!canManageTournament)return;
- const button=$("tournamentCallsToggle"),enabled=liveState?.slot_calls_enabled!==false;
+async function setTournamentCalls(enabled,button){
+ if(!canManageTournament||!button)return;
  button.disabled=true;
  try{
-  const response=await fetch(CONTROL_URL+"?action=slot-calls-toggle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_key:localStorage.getItem("slotbuddy_kick_session")||"",enabled:!enabled})});
+  const response=await fetch(CONTROL_URL+"?action=slot-calls-toggle",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_key:localStorage.getItem("slotbuddy_kick_session")||"",enabled})});
   const message=await response.text();if(!response.ok)throw new Error(message||"Couldn't update tournament calls.");
-  liveState={...liveState,slot_calls_enabled:!enabled};updateTournamentCallsToggle();
+  liveState={...liveState,slot_calls_enabled:enabled};updateTournamentCallsToggle();
   $("setupStatus").textContent=message;
- }catch(error){$("setupStatus").textContent=error.message;}
- finally{button.disabled=false;}
-};
+ }catch(error){$("setupStatus").textContent=error.message;button.disabled=false;}
+}
+$("tournamentCallsOn").onclick=()=>setTournamentCalls(true,$("tournamentCallsOn"));
+$("tournamentCallsOff").onclick=()=>setTournamentCalls(false,$("tournamentCallsOff"));
 
 async function saveBracketOnline(){
  const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
