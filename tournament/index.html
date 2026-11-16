@@ -189,6 +189,7 @@ const BONUS_HUNT_URL = SUPABASE_URL + "/functions/v1/slotbuddy-bonus-hunt";
 const QUEUE_URL = SUPABASE_URL + "/functions/v1/slotbuddy-queue";
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let livePlayers = [];
+let rounds = [];
 let liveCalls = [];
 let liveState = null;
 let canManageTournament = false;
