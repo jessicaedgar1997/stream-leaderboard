@@ -51,6 +51,9 @@ body:not(.slotbuddy-manager) [role="button"]{display:none!important;visibility:h
 /* Giveaway is a private organizer feature: hide its navigation link for viewers. */
 body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 \n#tournamentCallsToggle.calls-on{background:#ff39b9!important;color:#fff!important;border-color:#ff8bd6!important}#tournamentCallsToggle.calls-off{background:#65dfff!important;color:#081526!important;border-color:#a6efff!important}\n
+
+/* Kick is already connected through SlotBuddy; hide redundant connection UI here. */
+#liveAdminMessage,#connectKick,#testKick,#kickStatus{display:none!important}
 /* Simplified tournament view: keep the page focused on the bracket, current match, and winners. */
 #chatRegistration,
 #slotCallPanel,
