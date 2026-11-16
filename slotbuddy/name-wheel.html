@@ -16,6 +16,9 @@ body:not(.slotbuddy-manager) input:not(#guessInput),
 body:not(.slotbuddy-manager) select,
 body:not(.slotbuddy-manager) textarea,
 body:not(.slotbuddy-manager) [role="button"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+
+/* Giveaway is a private organizer feature: hide its navigation link for viewers. */
+body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 </style>
 </head>
 <body>
