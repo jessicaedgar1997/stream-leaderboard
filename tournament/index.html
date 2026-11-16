@@ -361,18 +361,26 @@ function restoreSavedBracket(data){
 }
 const saved = localStorage.getItem("chaosQueenTournamentDraft");
 if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
+resizeEntryPlayers();
 function namesFromInput(){return $("players").value.split(/\r?\n/).map(line=>{const value=line.trim();if(!value)return null;const parts=value.split(/\s+\|\s+/);return {username:(parts[0]||"").trim(),game:(parts[1]||"").trim(),buy:(parts[2]||"").trim(),casino:(parts[3]||"Rainbet").trim(),bonusType:(parts[4]||"Regular").trim()};}).filter(x=>x&&x.username);}
+function isEntryPlaceholder(p){return /^Player \d+$/i.test(String(p.username||""))&&!String(p.game||"").trim()&&!String(p.buy||"").trim();}
+function resizeEntryPlayers(){
+ const limit=Number($("playerCount").value)||4,players=namesFromInput();
+ while(players.length>limit){let removeAt=-1;for(let i=players.length-1;i>=0;i--){if(isEntryPlaceholder(players[i])){removeAt=i;break;}}if(removeAt<0)removeAt=players.length-1;players.splice(removeAt,1);}
+ while(players.length<limit)players.push({username:"Player "+(players.length+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
+ writeEntryPlayers(players);
+}
 function renderEntryPlayers(){
  const list=$("tournamentEntryList");if(!list)return;
  const players=namesFromInput();
- list.innerHTML=players.length?players.map((p,i)=>'<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular")+' · Buy-in '+(Number(p.buy)||0).toFixed(2)+'</div></div><button class="entry-remove" type="button" data-remove-entry="'+i+'">REMOVE</button></div>').join(""):'<span class="hint">No players added yet.</span>';
+ list.innerHTML=players.length?players.map((p,i)=>{const placeholder=isEntryPlaceholder(p);const meta=placeholder?"Waiting for player details":(escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular")+' · Buy-in '+(p.buy!==""&&Number.isFinite(Number(p.buy))?"C$"+Number(p.buy).toFixed(2):"Not set"));return '<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+meta+'</div></div><button class="entry-remove" type="button" data-remove-entry="'+i+'">REMOVE</button></div>';}).join(""):'<span class="hint">No player spots yet.</span>';
  list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=()=>{const a=namesFromInput();a.splice(Number(btn.dataset.removeEntry),1);writeEntryPlayers(a);updateHint();});
- if($("addTournamentPlayer"))$("addTournamentPlayer").disabled=players.length>=Number($("playerCount").value);
+ if($("addTournamentPlayer"))$("addTournamentPlayer").disabled=players.length>=Number($("playerCount").value)&&!players.some(isEntryPlaceholder);
 }
 function writeEntryPlayers(players){$("players").value=players.map(p=>[p.username,p.game||"",p.buy||"",p.casino||"Rainbet",p.bonusType||"Regular"].join(" | ")).join("\n");}
 function updateHint(){
- const count=Number($("playerCount").value),got=namesFromInput().length,open=Math.max(0,count-got);
- $("countHint").textContent="Add "+count+" players with their slot and buy. They will be shuffled into the bracket.";
+ const count=Number($("playerCount").value),players=namesFromInput(),got=players.filter(p=>!isEntryPlaceholder(p)).length,open=Math.max(0,count-got);
+ $("countHint").textContent="Fill in all "+count+" player spots with a username, game, and buy-in. They will be shuffled into the bracket.";
  if($("entryCount"))$("entryCount").textContent=got+" / "+count+" players";
  if($("entrySpots"))$("entrySpots").textContent=open+" open spots";
  renderEntryPlayers();
@@ -383,13 +391,15 @@ $("addTournamentPlayer").onclick=()=>{
  if(!username){$("setupStatus").textContent="Enter a username first.";return;}
  if(!game){$("setupStatus").textContent="Enter the player's game.";return;}
  if(buy===""||!Number.isFinite(Number(buy))||Number(buy)<0){$("setupStatus").textContent="Enter a valid buy-in amount.";return;}
- if(players.length>=limit){$("setupStatus").textContent="The bracket is full. Increase the bracket size to add more players.";return;}
- if(players.some(p=>p.username.toLowerCase()===username.toLowerCase())){$("setupStatus").textContent="That username is already in the player list.";return;}
- players.push({username:username,game:game,buy:Number(buy).toFixed(2),casino:casino,bonusType:bonusType});
+ if(players.some(p=>!isEntryPlaceholder(p)&&p.username.toLowerCase()===username.toLowerCase())){$("setupStatus").textContent="That username is already in the player list.";return;}
+ const slot=players.findIndex(isEntryPlaceholder);
+ if(slot<0){$("setupStatus").textContent="The bracket is full. Increase the bracket size to add more players.";return;}
+ players[slot]={username:username,game:game,buy:Number(buy).toFixed(2),casino:casino,bonusType:bonusType};
  writeEntryPlayers(players);$("entryUsername").value="";$("entryBuy").value="";$("entryGame").value="";$("entryUsername").focus();
  $("setupStatus").textContent=username+" added to the tournament.";updateHint();
 };
-$("playerCount").addEventListener("change",updateHint);$("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
+$("playerCount").addEventListener("change",()=>{resizeEntryPlayers();updateHint();});
+$("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
 $("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
 $("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
 function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -490,7 +500,8 @@ function renderBracket(){
 }
 $("build").onclick=()=>{
  const list=namesFromInput(),required=Number($("playerCount").value);
- if(list.length!==required){$("setupStatus").textContent="You need exactly "+required+" names. Right now you have "+list.length+".";return;}
+ if(list.length!==required){$("setupStatus").textContent="You need exactly "+required+" player spots. Right now you have "+list.length+".";return;}
+ if(list.some(isEntryPlaceholder)||list.some(p=>!p.username.trim()||!p.game.trim()||p.buy===""||!Number.isFinite(Number(p.buy)))){$("setupStatus").textContent="Fill in every player spot with a username, game, and valid buy-in before starting.";return;}
  if(new Set(list.map(p=>p.username.toLowerCase())).size!==list.length){$("setupStatus").textContent="Each player needs a unique name. Check for duplicates.";return;}
  if(list.some(p=>p.username.length>40||p.game.length>100)){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
  buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
