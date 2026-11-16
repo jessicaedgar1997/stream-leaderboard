@@ -36,7 +36,7 @@ button.is-off,.btn.is-off{background:#65dfff!important;color:#081526!important;b
 <header class="topbar"><nav class="nav" aria-label="Main navigation">
 <a class="brand" href="./">👑 <span class="pink">JESSICA</span><span class="blue">EDGAR1997</span></a>
 <div class="links">
-<a href="./slotbuddy/#login">Sign in with Kick</a><a href="./">Home</a><a href="./leaderboard/">Leaderboard</a><a href="./slotbuddy/bonus-hunt.html">Bonus Hunt</a><a href="./slotbuddy/giveaway.html">Keyword Giveaway</a><a href="./slotbuddy/guess-the-balance.html">Guess the Balance</a><a href="./tournament/">Tournament</a><a href="./cozies/">Cozies</a>
+<a href="./slotbuddy/#login">Sign in with Kick</a><a href="./">Home</a><a href="./leaderboard/">Leaderboard</a><a href="./slotbuddy/bonus-hunt.html">Bonus Hunt</a><a href="./slotbuddy/giveaway.html">Keyword Giveaway</a><a href="./slotbuddy/guess-the-balance.html">Guess the Balance</a><a href="./tournament/">Tournament</a><a href="./cozies/">Cozies</a><a id="nameWheelNav" href="./slotbuddy/name-wheel.html" hidden>Name Wheel</a>
 </div></nav></header>
 <main class="wrap">
 <section class="hero">
@@ -66,4 +66,7 @@ button.is-off,.btn.is-off{background:#65dfff!important;color:#081526!important;b
 (()=>{const paint=()=>{document.querySelectorAll('button,.btn,input[type="button"],input[type="submit"]').forEach(b=>{const t=(b.textContent||b.value||"").trim().toUpperCase();b.classList.remove("is-on","is-off");if(/\bON\s*$/.test(t)||b.id==="openEntries"||b.id==="openRound")b.classList.add("is-on");else if(/\bOFF\s*$/.test(t)||b.id==="closeEntries"||b.id==="closeRound")b.classList.add("is-off");});};paint();new MutationObserver(paint).observe(document.documentElement,{subtree:true,childList:true,characterData:true});})();
 </script>
 
+<script>
+(async()=>{const link=document.getElementById("nameWheelNav"),key=localStorage.getItem("slotbuddy_kick_session");if(!key||!link)return;try{const r=await fetch("https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:key})});const d=await r.json();if(d.ok&&(d.user?.role==="owner"||d.user?.role==="moderator"))link.hidden=false;}catch{}})();
+</script>
 </body></html>
