@@ -144,7 +144,7 @@ let liveState = null;
 let canManageTournament = false;
 async function applyStaffView(){
  const session=localStorage.getItem("slotbuddy_kick_session");if(session){try{const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});const d=await r.json();canManageTournament=!!(d.ok&&(d.user?.role==="owner"||d.user?.role==="moderator"));if(canManageTournament)$("liveAdminMessage").textContent="Signed in as a SlotBuddy manager. Full tournament controls are enabled.";}catch{canManageTournament=false;}}
- ["ownerControls","bracketLoadControls","slotCallControls","tournamentBonusAdmin","setup"].forEach(id=>{const el=$(id);if(el)el.hidden=!canManageTournament;});document.querySelectorAll("[data-manager-only]").forEach(el=>el.hidden=!canManageTournament);
+ ["ownerControls","bracketLoadControls","slotCallControls","tournamentBonusAdmin","setup"].forEach(id=>{const el=$(id);if(el)el.hidden=!canManageTournament;});document.querySelectorAll("[data-manager-only]").forEach(el=>el.hidden=!canManageTournament);if(canManageTournament)refreshLivePlayers();
 }
 
 function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
