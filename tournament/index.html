@@ -431,32 +431,54 @@ function resizeEntryPlayers(){
 function renderEntryPlayers(){
  const list=$("tournamentEntryList");if(!list)return;
  const players=namesFromInput();
- const entryKey=p=>String(p?.username||"").trim().toLowerCase()+"|"+String(p?.game||"").trim().toLowerCase();
- const isInCurrentBracket=p=>(rounds[0]||[]).some(match=>[match.a,match.b].some(candidate=>candidate&&entryKey(candidate)===entryKey(p)));
- list.innerHTML=players.length?players.map((p,i)=>{const placeholder=isEntryPlaceholder(p),alreadyAdded=bracketAddedEntries.some(x=>entryKey(x)===entryKey(p)),inBracket=isInCurrentBracket(p);const meta=placeholder?"Waiting for player details":(escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular"));const buyControl=placeholder?"":'<label class="entry-buy-edit">Buy-in (C$) <input type="number" min="0" step="0.01" value="'+(p.buy!==""&&p.buy!=null&&Number.isFinite(Number(p.buy))&&Number(p.buy)>0?Number(p.buy).toFixed(2):"")+'" data-buy-entry="'+i+'" aria-label="Buy-in for '+escapeHtml(p.username)+'" style="width:105px;padding:6px;border-radius:8px;border:1px solid #526080;background:#10182a;color:white"></label>';const addButton=placeholder?"":(alreadyAdded&&inBracket?'<button class="entry-duplicate" type="button" disabled>✓ ADDED</button>':'<button class="entry-duplicate" type="button" data-add-bracket-entry="'+i+'">'+(alreadyAdded?'↻ SYNC TO BRACKET':'＋ ADD TO BRACKET')+'</button>');return '<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+meta+'</div>'+buyControl+'</div><div class="entry-actions">'+addButton+'<button class="entry-remove" type="button" data-remove-entry="'+i+'">REMOVE</button></div></div>';}).join(""):'<span class="hint">No player spots yet.</span>';
+ const entryKey=p=>String(p?.username||p?.name||"").trim().toLowerCase()+"|"+String(p?.game||"").trim().toLowerCase();
+ const currentBracketPlayers=()=>((rounds[0]||[]).flatMap(match=>[match.a,match.b]).filter(Boolean));
+ const isInCurrentBracket=p=>currentBracketPlayers().some(candidate=>entryKey(candidate)===entryKey(p));
+ list.innerHTML=players.length?players.map((p,i)=>{const placeholder=isEntryPlaceholder(p),inBracket=isInCurrentBracket(p);const meta=placeholder?"Waiting for player details":(escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular"));const buyControl=placeholder?"":'<label class="entry-buy-edit">Buy-in (C$) <input type="number" min="0" step="0.01" value="'+(p.buy!==""&&p.buy!=null&&Number.isFinite(Number(p.buy))&&Number(p.buy)>0?Number(p.buy).toFixed(2):'')+'" data-buy-entry="'+i+'" aria-label="Buy-in for '+escapeHtml(p.username)+'" style="width:105px;padding:6px;border-radius:8px;border:1px solid #526080;background:#10182a;color:white"></label>';const addButton=placeholder?"":(inBracket?'<button class="entry-duplicate" type="button" disabled>✓ ADDED</button>':'<button class="entry-duplicate" type="button" data-add-bracket-entry="'+i+'">＋ ADD TO BRACKET</button>');return '<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+meta+'</div>'+buyControl+'</div><div class="entry-actions">'+addButton+'<button class="entry-remove" type="button" data-remove-entry="'+i+'">REMOVE</button></div></div>';}).join(""):'<span class="hint">No player spots yet.</span>';
  list.querySelectorAll("[data-add-bracket-entry]").forEach(btn=>btn.onclick=async()=>{
+   btn.disabled=true;
    const index=Number(btn.dataset.addBracketEntry),player=namesFromInput()[index];
-   if(!player||isEntryPlaceholder(player))return;
-   const key=entryKey(player);
-   const alreadyAdded=bracketAddedEntries.some(x=>entryKey(x)===key);
-   if(alreadyAdded&&isInCurrentBracket(player)){$("setupStatus").textContent=player.username+" is already in the bracket.";return;}
-   const limit=Number($("playerCount").value)||4;
-   if(bracketAddedEntries.length>=limit){$("setupStatus").textContent="The bracket is full ("+limit+" players).";return;}
-   if(!player.username.trim()||!player.game.trim()){$("setupStatus").textContent="Enter both a player name and game before adding them.";return;}
-   if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"&&bracketAddedEntries.some(p=>p.game.trim().toLowerCase()===player.game.trim().toLowerCase())){$("setupStatus").textContent="Duplicate games are turned OFF. Turn DUP ON to allow this game.";return;}
-   if(player.username.length>40||player.game.length>100){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
-   if(!alreadyAdded)bracketAddedEntries.push({...player});
-   localStorage.setItem("slotbuddyBracketAddedEntries",JSON.stringify(bracketAddedEntries));
-   buildBracket(bracketAddedEntries);
-   playerTotal=bracketAddedEntries.length;
-   $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
-   $("bracketInfo").textContent=playerTotal+" of "+limit+" player spots • Add players directly to this bracket as you go.";
-   $("tournament").classList.remove("hidden");
-   tournamentIsActive=true;;
-   renderEntryPlayers();
-   const saved=await saveBracketOnline();
-   if(saved)$("setupStatus").textContent=player.username+" added and saved to the shared bracket ("+playerTotal+"/"+limit+").";
-   else $("setupStatus").textContent+=" Refresh/sign in before adding more so the other devices stay in sync.";
+   try{
+    if(!player||isEntryPlaceholder(player))throw new Error("Enter both a player name and game before adding them.");
+    if(!player.username.trim()||!player.game.trim())throw new Error("Enter both a player name and game before adding them.");
+    if(player.username.length>40||player.game.length>100)throw new Error("Keep player names to 40 characters and game names to 100 characters or less.");
+    const existing=currentBracketPlayers();
+    if(existing.some(p=>entryKey(p)===entryKey(player))){
+      $("setupStatus").textContent=player.username+" is already in the bracket.";
+      renderEntryPlayers();return;
+    }
+    const limit=Number($("playerCount").value)||4;
+    if(existing.length>=limit)throw new Error("The bracket is full ("+limit+" players).");
+    if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"&&existing.some(p=>String(p.game||"").trim().toLowerCase()===player.game.trim().toLowerCase()))throw new Error("Duplicate games are turned OFF. Turn DUP ON to allow this game.");
+    if(!rounds.length||!rounds[0]?.length)buildBracket(existing);
+    const slots=(rounds[0]||[]).flatMap((match,index)=>[{match,index,side:"a"},{match,index,side:"b"}]);
+    const openSlot=slots.find(slot=>!slot.match[slot.side]);
+    if(!openSlot){
+      const capacity=2**Math.ceil(Math.log2(Math.max(2,existing.length+1)));
+      if(capacity>limit)throw new Error("The bracket layout has no open player spot. Increase the player limit or clear the bracket layout first.");
+      buildBracket([...existing,{...player}]);
+    }else{
+      openSlot.match[openSlot.side]={...player};
+      openSlot.match.winner=null;
+      propagate(0);
+      renderBracket();
+    }
+    const updatedPlayers=currentBracketPlayers();
+    bracketAddedEntries=updatedPlayers.map(p=>({...p}));
+    localStorage.setItem("slotbuddyBracketAddedEntries",JSON.stringify(bracketAddedEntries));
+    playerTotal=updatedPlayers.length;
+    $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
+    $("bracketInfo").textContent=playerTotal+" of "+limit+" player spots • Add players directly to this bracket as you go.";
+    $("tournament").classList.remove("hidden");
+    tournamentIsActive=true;
+    renderEntryPlayers();
+    const saved=await saveBracketOnline();
+    if(saved)$("setupStatus").textContent=player.username+" added and saved to the shared bracket ("+playerTotal+"/"+limit+").";
+    else $("setupStatus").textContent+=" Refresh/sign in before adding more so the other devices stay in sync.";
+   }catch(error){
+    $("setupStatus").textContent=error.message||"Couldn't add this player to the bracket.";
+    btn.disabled=false;
+   }
   });
   list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=async()=>{
   const a=namesFromInput(),index=Number(btn.dataset.removeEntry),player=a[index];if(!player)return;
