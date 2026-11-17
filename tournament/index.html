@@ -576,7 +576,20 @@ async function sendTournamentChatMessage(content){
   return true;
  }catch(error){$("setupStatus").textContent="Tournament chat announcement failed: "+(error.message||"Reconnect Kick and try again.");return false;}
 }
-async function announceTournamentRound(r){
+async function tournamentMoney(value){
+ const n=Number(value);
+ return value!==""&&value!=null&&Number.isFinite(n)?"$"+n.toFixed(2):"not entered";
+}
+function tournamentPlayerResultLine(player,payout){
+ const buy=player&&typeof player==="object"?player.buy:"";
+ const buyNumber=Number(buy),payoutNumber=Number(payout);
+ const buyText=tournamentMoney(buy);
+ const payoutText=tournamentMoney(payout);
+ const multiplier=buy!==""&&buy!=null&&Number.isFinite(buyNumber)&&buyNumber>0&&payout!==""&&payout!=null&&Number.isFinite(payoutNumber)
+  ?(payoutNumber/buyNumber).toFixed(2)+"x":"N/A";
+ return playerLabel(player)+" — Buy: "+buyText+" | Payout: "+payoutText+" | "+multiplier;
+}
+function announceTournamentRound(r){
  if(!rounds[r])return;
  const state=getTournamentChatState();
  for(let i=0;i<rounds[r].length;i++){
@@ -584,7 +597,7 @@ async function announceTournamentRound(r){
   if(match.a&&match.b){
    const key=r+":"+i+":"+tournamentPlayerIdentity(match.a)+":"+tournamentPlayerIdentity(match.b);
    if(state.matches[key])continue;
-   const message="🏆 "+roundName(r).toUpperCase()+" MATCH "+(i+1)+": "+playerLabel(match.a)+" vs "+playerLabel(match.b)+"!";
+   const message="🏆 "+roundName(r).toUpperCase()+" MATCH "+(i+1)+": "+tournamentPlayerResultLine(match.a,"")+" VS "+tournamentPlayerResultLine(match.b,"")+"!";
    if(await sendTournamentChatMessage(message)){state.matches[key]=true;saveTournamentChatState();}
   }else if(match.a&&match.winner===match.a){
    const key="bye:"+r+":"+i+":"+tournamentPlayerIdentity(match.a);
@@ -600,7 +613,12 @@ async function announceTournamentWinner(r,i){
  const winner=tournamentPlayerIdentity(match.winner),loser=tournamentPlayerIdentity(match.winner===match.a?match.b:match.a);
  const key=r+":"+i+":"+winner+":"+loser;
  if(state.winners[key])return;
- const isFinal=r===rounds.length-1;const message=isFinal?"🏆 TOURNAMENT CHAMPION: "+playerLabel(match.winner)+" wins the FINAL against "+playerLabel(match.winner===match.a?match.b:match.a)+"! 💗💙":"🏆 "+roundName(r).toUpperCase()+" WINNER — "+playerLabel(match.winner)+" defeats "+playerLabel(match.winner===match.a?match.b:match.a)+" and advances!";
+ const aLine=tournamentPlayerResultLine(match.a,match.aPayout);
+ const bLine=tournamentPlayerResultLine(match.b,match.bPayout);
+ const winnerLine=match.winner===match.a?aLine:bLine;
+ const loserLine=match.winner===match.a?bLine:aLine;
+ const isFinal=r===rounds.length-1;
+ const message=(isFinal?"🏆 TOURNAMENT CHAMPION: ":"🏆 "+roundName(r).toUpperCase()+" WINNER: ")+winnerLine+" defeats "+loserLine+(isFinal?" and wins the tournament! 💗💙":" and advances!");
  if(await sendTournamentChatMessage(message)){state.winners[key]=true;saveTournamentChatState();}
 }
 function buildBracket(list){
