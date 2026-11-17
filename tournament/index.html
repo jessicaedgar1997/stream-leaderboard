@@ -873,7 +873,7 @@ function addQueuedCallsToNextBracket(calls){
  }
  if(!added.length)return 0;
  const combined=current.concat(added);
- const supported=[4,6,8,10,12,14,16,32];
+ const supported=[4,8,12,16,32];
  const currentLimit=Number($("playerCount").value)||4;
  const capacity=supported.find(n=>n>=Math.max(currentLimit,combined.length))||32;
  $("playerCount").value=String(capacity);
