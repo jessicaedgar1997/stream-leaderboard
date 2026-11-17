@@ -275,18 +275,13 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   const queueResponse=await fetch(QUEUE_URL+"?action=snapshot",{cache:"no-store"});
   const queueSnapshot=queueResponse.ok?await queueResponse.json():{calls:[],active_queue:null};
   livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;
-  if($("playerCount")&&snapshot.state?.max_players){
-   // Keep the shared bracket size in sync, but never copy chat entries into the organizer's player list.
-   if(Number($("playerCount").value)!==Number(snapshot.state.max_players)){
-    $("playerCount").value=String(snapshot.state.max_players);
-    resizeEntryPlayers();
-   }
-  }
+  // Keep the organizer's selected bracket size from the saved page draft.
+  // The live chat-entry limit is separate and must not overwrite the bracket size.
   renderTournamentBonuses(snapshot.bonus_entries||[]);updateTournamentCallsToggle();if(!canManageTournament)$("tournamentBonusList").querySelectorAll("button").forEach(btn=>btn.remove());
   const queueStatus=$("slotQueueStatus");if(queueStatus){queueStatus.textContent=queueSnapshot.active_queue==="cozies"?"COZIES CALLS OPEN":queueSnapshot.active_queue==="bonus_hunt"?"BONUS HUNT CALLS OPEN":"CALLS CLOSED";queueStatus.style.color=queueSnapshot.active_queue?"var(--blue)":"var(--pink)";}
   if(snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
    restoreSavedBracket(snapshot.bracket);hasLoadedSavedBracket=true;
-   const targetSize=Number(snapshot.state?.max_players)||Number($("playerCount").value)||4;
+   const targetSize=Number($("playerCount").value)||Number(snapshot.bracket.count)||Number(snapshot.state?.max_players)||4;
    const savedSize=Number(snapshot.bracket.count)||((snapshot.bracket.rounds?.[0]?.length||0)*2);
    if(savedSize&&savedSize!==targetSize){
     const bracketPlayers=(snapshot.bracket.rounds?.[0]||[]).flatMap(match=>[match.a,match.b]).filter(Boolean).map(p=>typeof p==="string"?{username:p,game:""}:{...p,username:String(p.username||p.name||""),game:String(p.game||"")});
@@ -463,7 +458,7 @@ async function saveBracketOnline(){
 function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
 function restoreSavedBracket(data){
  if(!data)return;
- const savedCapacity=Number(liveState?.max_players)||Number(data.count)||Number($("playerCount").value)||4;
+ const savedCapacity=Number($("playerCount").value)||Number(data.count)||Number(liveState?.max_players)||4;
  playerTotal=(data.rounds?.[0]||[]).flatMap(match=>[match.a,match.b]).filter(Boolean).length;
  if(Array.isArray(data.rounds)&&data.rounds.length){
   rounds=data.rounds.map(round=>round.map(match=>{const normalize=value=>{if(!value)return null;if(typeof value==="string")return {username:value,game:""};const rawName=value.username??value.name??value.display_name??"";const username=typeof rawName==="string"?rawName:(rawName&&typeof rawName==="object"?(rawName.username||rawName.name||rawName.display_name||rawName.slug||""):"");return {...value,username:String(username),game:String(value.game||"")};};const a=normalize(match.a),b=normalize(match.b),w=normalize(match.winner);const winner=w?(a&&a.username===w.username&&a.game===w.game?a:b&&b.username===w.username&&b.game===w.game?b:w):null;return {a,b,winner,payout:match.payout==null?"":String(match.payout),aPayout:match.aPayout==null?"":String(match.aPayout),bPayout:match.bPayout==null?"":String(match.bPayout),directAdvance:!!match.directAdvance};}));
