@@ -193,6 +193,7 @@ const QUEUE_URL = SUPABASE_URL + "/functions/v1/slotbuddy-queue";
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let livePlayers = [];
 let rounds = [];
+let tournamentIsActive = false;
 let liveCalls = [];
 let liveState = null;
 let canManageTournament = false;
@@ -383,7 +384,9 @@ function restoreSavedBracket(data){
  $("bracketTitle").textContent=data.name||"Tournament Bracket";
  $("bracketInfo").textContent=playerTotal+" players • Saved tournament • Click a name to advance them.";
  $("tournament").classList.remove("hidden");
+ tournamentIsActive = true;
  renderBracket();
+ updateStartEndButton();
  $("setupStatus").textContent="Your saved tournament bracket has been restored. 💗💙";
 }
 const saved = localStorage.getItem("chaosQueenTournamentDraft");
@@ -581,8 +584,8 @@ $("build").onclick=()=>{
 };
 const originalStartTournament=$("build").onclick;
 function updateStartEndButton(){
- const active=rounds.length>0&&!$("tournament").classList.contains("hidden");
- $("build").textContent=active?"🏁 End Tournament":"🎲 Start Tournament";
+ const active=tournamentIsActive;
+ $("build").textContent=active?"🏁 END TOURNAMENT":"🎲 START TOURNAMENT";
  $("build").classList.toggle("dark",active);$("build").classList.toggle("pink",!active);
 }
 async function endTournamentNow(){
@@ -596,6 +599,7 @@ async function endTournamentNow(){
   if(!response.ok)throw new Error(message||"Could not end the tournament.");
   liveState={...liveState,is_open:false,slot_calls_enabled:false};
   updateTournamentCallsToggle();
+  tournamentIsActive=false;
   $("tournament").classList.add("hidden");
   $("setupStatus").textContent="🏁 Tournament ended! Your bracket and results are saved. Slot calls are OFF. Use Clear players / new tournament when you're ready to start another.";
   updateStartEndButton();
@@ -604,9 +608,9 @@ async function endTournamentNow(){
  finally{$("build").disabled=false;}
 }
 $("build").onclick=async()=>{
- const active=rounds.length>0&&!$("tournament").classList.contains("hidden");
- if(active){await endTournamentNow();return;}
+ if(tournamentIsActive){await endTournamentNow();return;}
  originalStartTournament();
+ if(rounds.length>0&&!$("tournament").classList.contains("hidden"))tournamentIsActive=true;
  updateStartEndButton();
 };
 updateStartEndButton();
@@ -639,7 +643,7 @@ $("clearAllBracket").onclick=async()=>{
  await saveBracketOnline();
  $("setupStatus").textContent="Player names, games, buy-ins, and match results cleared. The bracket and all "+count+" spots are still in place.";
 };
-$("newTournament").onclick=()=>{$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";updateStartEndButton();window.scrollTo({top:0,behavior:"smooth"});};
+$("newTournament").onclick=()=>{tournamentIsActive=false;$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";updateStartEndButton();window.scrollTo({top:0,behavior:"smooth"});};
 $("print").onclick=()=>window.print();
 $("saveBracket").onclick=saveBracketOnline;
 updateHint();
