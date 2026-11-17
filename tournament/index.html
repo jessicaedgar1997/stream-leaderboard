@@ -191,7 +191,7 @@ let lastRemoteTournamentEntryKeys = new Set();
 let canManageTournament = false;
 async function applyStaffView(){
  const session=localStorage.getItem("slotbuddy_kick_session");if(session){try{const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});const d=await r.json();canManageTournament=!!(d.ok&&(d.user?.role==="owner"||d.user?.role==="moderator"));if(canManageTournament)$("liveAdminMessage").textContent="Signed in as a SlotBuddy manager. Full tournament controls are enabled.";}catch{canManageTournament=false;}}
- ["ownerControls","bracketLoadControls","slotCallControls","tournamentBonusAdmin","setup"].forEach(id=>{const el=$(id);if(el)el.hidden=!canManageTournament;});document.querySelectorAll("[data-manager-only]").forEach(el=>el.hidden=!canManageTournament);if(canManageTournament)refreshLivePlayers();
+ ["ownerControls","bracketLoadControls","slotCallControls","tournamentBonusAdmin","setup"].forEach(id=>{const el=$(id);if(el)el.hidden=!canManageTournament;});document.querySelectorAll("[data-manager-only]").forEach(el=>el.hidden=!canManageTournament);if(canManageTournament)await refreshLivePlayers();
 }
 
 function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
@@ -716,14 +716,16 @@ $("clearAllBracket").onclick=async()=>{
    return;
   }
   clearTimeout(bracketSaveTimer);
-  const count=Math.max(2,Number($("playerCount").value)||playerTotal||4);
+  const count=Math.max(2,Number($("playerCount").value)||((rounds[0]?.length||0)*2)||playerTotal||4);
   const emptyPlayers=Array.from({length:count},(_,i)=>({username:"",game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
   writeEntryPlayers(emptyPlayers);
   bracketAddedEntries=[];
   localStorage.removeItem("slotbuddyBracketAddedEntries");
   localStorage.removeItem("chaosQueenTournamentDraft");
   playerTotal=count;
-  rounds=rounds.map(round=>round.map(match=>({...match,a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
+  const bracketSize=2**Math.ceil(Math.log2(count));
+  rounds=Array.from({length:Math.log2(bracketSize)},(_,round)=>Array.from({length:bracketSize/Math.pow(2,round+1)},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
+  playerTotal=count;
   $("matchPayoutA").value="";
   $("matchPayoutB").value="";
   $("matchPayoutStatus").textContent="";
