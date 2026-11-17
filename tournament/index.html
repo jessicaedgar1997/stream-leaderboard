@@ -222,6 +222,8 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
     $("playerCount").value=String(snapshot.state.max_players);
     resizeEntryPlayers();
    }
+   // Always merge server entries, even when this browser has a local draft.
+   // This lets Jessica and Corey see each other's accepted !slot entries live.
    const current=namesFromInput(),incoming=snapshot.slot_entries||[];
    const entryKey=entry=>[String(entry.caller_name||entry.username||"").trim().toLowerCase(),String(entry.game_name||entry.game||"").trim().toLowerCase(),String(entry.bonus_type||entry.bonusType||"Regular")].join("|");
    const incomingKeys=new Set(incoming.map(entryKey));
