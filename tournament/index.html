@@ -524,9 +524,10 @@ function renderEntryPlayers(){
    btn.disabled=true;
    const index=Number(btn.dataset.addBracketEntry),player=namesFromInput()[index];
    try{
+    $("setupStatus").textContent="Adding player and game to the bracket…";
     if(!player||isEntryPlaceholder(player))throw new Error("Enter both a player name and game before adding them.");
     if(!player.username.trim()||!player.game.trim())throw new Error("Enter both a player name and game before adding them.");
-    if(!Number.isFinite(Number(player.buy))||Number(player.buy)<=0)throw new Error("Enter a buy-in greater than C$0 before adding this player to the bracket.");
+    // Buy-in is optional; a player and game are enough to enter the bracket.
     if(player.username.length>40||player.game.length>100)throw new Error("Keep player names to 40 characters and game names to 100 characters or less.");
     const existing=currentBracketPlayers();
     if(existing.some(p=>entryKey(p)===entryKey(player))){
