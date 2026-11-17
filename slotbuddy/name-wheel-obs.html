@@ -7,10 +7,17 @@
 :root{--pink:#ff39b9;--blue:#65dfff;--white:#fff;--muted:#dce8ff}
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden;font-family:system-ui,sans-serif;color:var(--white)}
-/* Transparent autumn leaf animation for OBS; the canvas stays transparent. */
-.fall-leaves{position:fixed;inset:0;z-index:5;overflow:hidden;pointer-events:none;contain:strict}
-.stage{position:relative;z-index:1}
-#status{z-index:2}
+/* Full animated autumn forest backdrop, with wheels layered clearly above it. */
+.autumn-bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:linear-gradient(180deg,#11182c 0%,#3b2634 48%,#713d2b 100%)}
+.autumn-bg:before{content:"";position:absolute;width:55vw;height:55vw;max-width:680px;max-height:680px;min-width:300px;min-height:300px;left:50%;top:34%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#ffd58a 0%,#f5a34c 22%,#cf673c 44%,#8a3c35 63%,transparent 72%);filter:blur(2px);opacity:.72;animation:autumnSun 12s ease-in-out infinite alternate}
+.autumn-bg:after{content:"";position:absolute;inset:36% -5% 0;background:linear-gradient(180deg,transparent 0%,#241d29aa 40%,#171b27 100%),radial-gradient(ellipse at 15% 90%,#452a24 0 24%,transparent 25%),radial-gradient(ellipse at 78% 100%,#39251f 0 30%,transparent 31%),linear-gradient(164deg,transparent 0 48%,#332326 49% 62%,transparent 63%),linear-gradient(195deg,transparent 0 51%,#4a2c25 52% 68%,transparent 69%);animation:autumnHills 18s ease-in-out infinite alternate}
+.autumn-glow{position:fixed;inset:0;z-index:1;pointer-events:none;background:linear-gradient(110deg,#f7a34c0a,#ffcf7a18 48%,#c34b2c12);animation:autumnGlow 9s ease-in-out infinite alternate}
+@keyframes autumnSun{from{transform:translate(-50%,-47%) scale(.96);opacity:.58}to{transform:translate(-50%,-53%) scale(1.06);opacity:.82}}
+@keyframes autumnHills{from{transform:translateX(-1.5%)}to{transform:translateX(1.5%)}}
+@keyframes autumnGlow{from{opacity:.35}to{opacity:.9}}
+.fall-leaves{position:fixed;inset:0;z-index:2;overflow:hidden;pointer-events:none;contain:strict}
+.stage{position:relative;z-index:3}
+#status{z-index:4}
 .fall-leaf{display:block;position:absolute;top:-12vh;left:var(--x);font-size:var(--size);opacity:0;color:#e99a42;filter:drop-shadow(0 2px 5px #0009);animation:autumnFall var(--duration) linear var(--delay) infinite;will-change:transform}
 .fall-leaf:nth-child(3n){color:#bd4c24}.fall-leaf:nth-child(3n+1){color:#e6b34b}.fall-leaf:nth-child(3n+2){color:#a84b25}
 @keyframes autumnFall{0%{opacity:0;transform:translate3d(0,-8vh,0) rotate(0deg)}8%{opacity:.72}50%{transform:translate3d(var(--drift),55vh,0) rotate(360deg)}92%{opacity:.6}100%{opacity:0;transform:translate3d(calc(var(--drift) * -0.45),112vh,0) rotate(720deg)}}
@@ -30,6 +37,7 @@ canvas{display:block;width:100%;height:100%;animation:wheelGlow 2.8s ease-in-out
 </style>
 </head>
 <body>
+<div class="autumn-bg" aria-hidden="true"></div><div class="autumn-glow" aria-hidden="true"></div>
 <div class="fall-leaves" id="fallLeaves" aria-hidden="true"></div>
 <div class="winner-pop" id="winnerPop"><div class="winner-pop-box"><div class="winner-pop-title">🎉 WINNER! 🎉</div><div class="winner-pop-name" id="winnerPopName"></div><div class="winner-pop-wheel" id="winnerPopWheel">Wheel 1 · Names</div></div></div>
 <main class="stage">
