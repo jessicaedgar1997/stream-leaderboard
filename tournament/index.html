@@ -636,18 +636,10 @@ $("saveMatchPayout").addEventListener("click",()=>{
 
 function tournamentSlotLabel(player){
  if(!player)return "";
- const username=typeof player==="string"?player:(player.username??player.name??player.display_name??"");
- const key=String(username||"").toLowerCase();
- let slot=0;
- for(const match of (rounds[0]||[])){
-  for(const candidate of [match.a,match.b]){
-   slot++;
-   if(!candidate)continue;
-   const candidateName=typeof candidate==="string"?candidate:(candidate.username??candidate.name??candidate.display_name??"");
-   if(String(candidateName||"").toLowerCase()===key)return "Player "+slot;
-  }
- }
- return "Player";
+ if(typeof player==="string")return player;
+ const username=String(player.username??player.name??player.display_name??"").trim();
+ const game=String(player.game??"").trim();
+ return username+(game?" · "+game:"");
 }
 function playerButton(player,r,i,side,winner){
  if(!player){if(r===0){const slotNumber=i*2+(side==="a"?1:2);return '<div class="player empty">Player '+slotNumber+'</div>';}return '<div class="player empty" aria-hidden="true"></div>';}
