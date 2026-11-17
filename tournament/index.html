@@ -722,7 +722,7 @@ $("playerCount").addEventListener("change",async()=>{
 });
 $("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
 $("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
-$("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
+$("clearNames").onclick=()=>{clearSavedTournamentEntries();};
 function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function tournamentPlayerIdentity(player){
  if(!player)return "BYE";
