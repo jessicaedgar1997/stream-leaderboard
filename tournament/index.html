@@ -373,6 +373,17 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
     }
    }
   }
+  // Keep a freshly cleared tournament at four players after refresh, instead of reviving an older bracket size.
+  if(localStorage.getItem("slotbuddyTournamentFreshStart")==="true"){
+   const savedSlotEntries=Array.isArray(snapshot.slot_entries)?snapshot.slot_entries:[];
+   const bracketHasPlayers=(snapshot.bracket?.rounds||[]).some(round=>round.some(match=>match.a||match.b));
+   if(!bracketHasPlayers&&!savedSlotEntries.length){
+    $("playerCount").value="4";
+    writeEntryPlayers(Array.from({length:4},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"})));
+    bracketAddedEntries=[];playerTotal=0;buildBracket([],4);updateHint();
+    if(canManageTournament)await saveBracketOnline();
+   }
+  }
   // Merge the saved organizer entries after restoring the bracket so the bracket snapshot cannot overwrite the player list.
   if(canManageTournament&&Array.isArray(snapshot.slot_entries)){
    const restoredCount=mergeSavedTournamentEntries(snapshot.slot_entries);
@@ -697,6 +708,7 @@ function updateHint(){
 $("allowDuplicateGames").onclick=()=>{const on=$("allowDuplicateGames").getAttribute("aria-pressed")!=="true";$("allowDuplicateGames").setAttribute("aria-pressed",String(on));$("allowDuplicateGames").textContent="DUP: "+(on?"ON":"OFF");$("allowDuplicateGames").classList.toggle("pink",on);$("setupStatus").textContent=on?"Duplicate games are allowed.":"Duplicate games are blocked.";localStorage.setItem("chaosQueenTournamentDuplicateGames",String(on));};
 const savedDup=localStorage.getItem("chaosQueenTournamentDuplicateGames")==="true";$("allowDuplicateGames").setAttribute("aria-pressed",String(savedDup));$("allowDuplicateGames").textContent="DUP: "+(savedDup?"ON":"OFF");$("allowDuplicateGames").classList.toggle("pink",savedDup);
 $("playerCount").addEventListener("change",async()=>{
+ localStorage.removeItem("slotbuddyTournamentFreshStart");
  const size=Number($("playerCount").value)||4;
  // Use the current entry list as the source of truth. Never resurrect names from an older bracket still held in memory.
  const existing=namesFromInput().filter(p=>!isEntryPlaceholder(p)).map(p=>({...p}));
@@ -1071,6 +1083,7 @@ $("clearAllBracket").onclick=async()=>{
 $("newTournament").onclick=async()=>{
  localStorage.removeItem("slotbuddyTournamentChatAnnouncements");tournamentChatState=null;tournamentIsActive=false;
  bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");
+ localStorage.setItem("slotbuddyTournamentFreshStart","true");
  clearTimeout(bracketSaveTimer);
  $("playerCount").value="4";$("livePlayerCount").value="4";
  writeEntryPlayers(Array.from({length:4},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"})));
