@@ -42,7 +42,7 @@ button.is-off,.btn.is-off{background:#65dfff!important;color:#081526!important;b
 
 
 /* Public-view lock: only the Guess the Balance entry button remains available. */
-body:not(.slotbuddy-manager) button:not(#submitGuess),
+body:not(.slotbuddy-manager) button:not(#submitGuess):not(#clearAllBracket),
 body:not(.slotbuddy-manager) input:not(#guessInput),
 body:not(.slotbuddy-manager) select,
 body:not(.slotbuddy-manager) textarea,
@@ -162,7 +162,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 </section>
 
 <section class="panel hidden" id="tournament">
-<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" data-manager-only hidden type="button">🧹 Clear Names &amp; Games</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
+<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" type="button">🧹 Clear Names &amp; Games</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
 <div class="bracket" id="bracket"></div>
 <div id="champion" class="champion hidden"></div>
 <p class="hint">To advance a player, click their name in the match. You can change a winner any time; later rounds will update.</p>
@@ -701,6 +701,7 @@ $("shuffleBracket").onclick=()=>{
  queueBracketSave();
 };
 $("clearAllBracket").addEventListener("click",async()=>{
+ $("setupStatus").textContent="Checking SlotBuddy manager access…";
  if(!canManageTournament)await applyStaffView();
  if(!canManageTournament){$("setupStatus").textContent="Manager access could not be verified. Please sign in to SlotBuddy again, then retry Clear Names & Games.";return;}
  if(!confirm("Clear player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same."))return;
