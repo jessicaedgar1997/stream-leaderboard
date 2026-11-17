@@ -404,6 +404,8 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
  $("slotCallCount").textContent=String(liveCalls.length);
  $("slotQueue").innerHTML=liveCalls.length?liveCalls.map((x,i)=>'<span class="entrant">'+(i+1)+'. <strong>'+safeText(x.game)+'</strong> — '+safeText(x.username)+' <button class="dark remove-slot" data-id="'+x.id+'" style="padding:3px 8px;margin-left:5px">×</button></span>').join(""):'<span class="hint">No game requests yet. Chat can type !slot + their game!</span>';
  if(!canManageTournament)$("slotQueue").querySelectorAll("button").forEach(btn=>btn.remove());else $("slotQueue").querySelectorAll(".remove-slot").forEach(btn=>btn.addEventListener("click",()=>adminSlotAction("remove-call",{id:btn.dataset.id})));
+ // Refresh the entry names and player/open-spot counters after every live snapshot.
+ updateHint();
 }
 async function adminAction(action,extra={}){
  const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
