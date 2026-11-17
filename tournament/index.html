@@ -403,6 +403,9 @@ function namesFromInput(){return $("players").value.split(/\r?\n/).map((line,ind
 function isEntryPlaceholder(p){return /^Player \d+$/i.test(String(p.username||""))&&!String(p.game||"").trim()&&!String(p.buy||"").trim();}
 function resizeEntryPlayers(){
  const limit=Number($("playerCount").value)||4,players=namesFromInput();
+ const hasPlayerOne=players.some(p=>String(p.username||"").trim().toLowerCase()==="player 1");
+ const hasLaterPlaceholder=players.some(p=>/^Player [2-9]\d*$/i.test(String(p.username||""))&&isEntryPlaceholder(p));
+ if(!hasPlayerOne&&hasLaterPlaceholder&&players.length<limit){players.unshift({username:"Player 1",game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});}
  while(players.length>limit){let removeAt=-1;for(let i=players.length-1;i>=0;i--){if(isEntryPlaceholder(players[i])){removeAt=i;break;}}if(removeAt<0)removeAt=players.length-1;players.splice(removeAt,1);}
  while(players.length<limit)players.push({username:"Player "+(players.length+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
  writeEntryPlayers(players);
