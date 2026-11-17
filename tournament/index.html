@@ -726,7 +726,7 @@ function buildBracket(list,requestedSize){
  while(matches>1){matches=Math.ceil(matches/2);roundSizes.push(matches);}
  rounds=roundSizes.map(count=>Array.from({length:count},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:"",directAdvance:false})));
  let cursor=0;
- rounds[0].forEach(match=>{match.a=entries[cursor++]||null;match.b=entries[cursor++]||null;if(match.a&&!match.b){match.directAdvance=true;match.winner=match.a;}});
+ rounds[0].forEach(match=>{match.a=entries[cursor++]||null;match.b=entries[cursor++]||null;match.directAdvance=false;match.winner=null;});
  propagate(0);renderBracket();
 }
 function propagate(fromRound){
@@ -735,9 +735,9 @@ function propagate(fromRound){
   rounds[r].forEach((m,i)=>{
    const nextA=prev[i*2]?.winner||null,nextB=prev[i*2+1]?.winner||null;
    const changed=JSON.stringify(m.a)!==JSON.stringify(nextA)||JSON.stringify(m.b)!==JSON.stringify(nextB);
-   m.a=nextA;m.b=nextB;m.directAdvance=!!((nextA&&!nextB)||(!nextA&&nextB));
+   m.a=nextA;m.b=nextB;
    if(changed){m.winner=null;m.payout="";m.aPayout="";m.bPayout="";}
-   if(m.directAdvance)m.winner=nextA||nextB||null;
+   // Do not auto-advance byes; only explicit winner selection or saved payouts advance players.
    else if(!nextA&&!nextB)m.winner=null;
   });
  }
@@ -854,7 +854,7 @@ async function saveBracketMatchPayout(r,i,button){
  if(match.winner){announceTournamentWinner(r,i);if(rounds[r+1])announceTournamentRound(r+1);}
 }
 function renderBracket(){
- $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+(r===0&&m.a&&!m.b&&m.winner===m.a?' · AUTO ADVANCE':'')+'</div>'+playerButton(m.a,r,i,"a",m.winner,m.aPayout)+playerButton(m.b,r,i,"b",m.winner,m.bPayout)+(canManageTournament&&m.a&&m.b?'<div class="bracket-payout-editor"><label>'+escapeHtml(playerLabel(m.a))+' payout ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(m.aPayout==null?"":escapeHtml(m.aPayout))+'" data-bracket-payout="a" data-round="'+r+'" data-match="'+i+'"></label><label>'+escapeHtml(playerLabel(m.b))+' payout ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(m.bPayout==null?"":escapeHtml(m.bPayout))+'" data-bracket-payout="b" data-round="'+r+'" data-match="'+i+'"></label></div><button type="button" class="dark bracket-payout-save" data-save-bracket-payout data-round="'+r+'" data-match="'+i+'">SAVE PAYOUTS</button>':'')+'</div>').join("")+'</div>').join("");
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+''+'</div>'+playerButton(m.a,r,i,"a",m.winner,m.aPayout)+playerButton(m.b,r,i,"b",m.winner,m.bPayout)+(canManageTournament&&m.a&&m.b?'<div class="bracket-payout-editor"><label>'+escapeHtml(playerLabel(m.a))+' payout ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(m.aPayout==null?"":escapeHtml(m.aPayout))+'" data-bracket-payout="a" data-round="'+r+'" data-match="'+i+'"></label><label>'+escapeHtml(playerLabel(m.b))+' payout ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(m.bPayout==null?"":escapeHtml(m.bPayout))+'" data-bracket-payout="b" data-round="'+r+'" data-match="'+i+'"></label></div><button type="button" class="dark bracket-payout-save" data-save-bracket-payout data-round="'+r+'" data-match="'+i+'">SAVE PAYOUTS</button>':'')+'</div>').join("")+'</div>').join("");
  $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
  $("bracket").querySelectorAll("[data-save-bracket-payout]").forEach(btn=>btn.addEventListener("click",()=>saveBracketMatchPayout(Number(btn.dataset.round),Number(btn.dataset.match),btn)));
  const champ=rounds[rounds.length-1][0]?.winner;
