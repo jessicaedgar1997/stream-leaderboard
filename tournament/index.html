@@ -475,15 +475,23 @@ $("addTournamentPlayer").onclick=()=>{
  writeEntryPlayers(players);$("entryUsername").value="";$("entryBuy").value="";$("entryGame").value="";$("entryUsername").focus();
  $("setupStatus").textContent=username+" added to the tournament.";updateHint();
 };
-$("playerCount").addEventListener("change",()=>{
+$("playerCount").addEventListener("change",async()=>{
+ const size=Number($("playerCount").value)||4;
+ const previous=Number(liveState?.max_players)||4;
  resizeEntryPlayers();updateHint();
+ await adminAction("size",{value:size});
+ if(!$("liveAdminMessage").textContent.startsWith("Tournament size set to "+size+" players.")){
+  $("playerCount").value=String(previous);resizeEntryPlayers();updateHint();
+  $("setupStatus").textContent="Bracket size was not saved online. Please try again.";
+  return;
+ }
  if(rounds.length){
   const nextPlayers=namesFromInput();
   buildBracket(nextPlayers);
   playerTotal=nextPlayers.length;
   $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
   $("bracketInfo").textContent=playerTotal+" player spots • Bracket resized • Shuffle players or choose winners below.";
-  $("setupStatus").textContent="Bracket updated to "+playerTotal+" player spots. Fill any new spots before starting the tournament.";
+  $("setupStatus").textContent="Bracket updated and saved to "+size+" player spots.";
   queueBracketSave();
  }
 });
