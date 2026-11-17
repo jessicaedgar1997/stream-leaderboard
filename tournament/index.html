@@ -175,6 +175,8 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const $ = id => document.getElementById(id);
+window.addEventListener("error",event=>{const el=document.getElementById("managerAccessStatus");if(el&&el.textContent.startsWith("Checking your saved"))el.textContent="Tournament page script error: "+(event.message||"unknown JavaScript error")+". Your saved entries are safe.";});
+window.addEventListener("unhandledrejection",event=>{const el=document.getElementById("managerAccessStatus");if(el&&el.textContent.startsWith("Checking your saved"))el.textContent="Tournament page startup failed: "+(event.reason?.message||String(event.reason||"unknown error"))+". Your saved entries are safe.";});
 const SUPABASE_URL = "https://xbogfbyysrjttyfvzluh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_rU0twvbtzrYlKqqbuNPD6g_B38iNXt5";
 const CONTROL_URL = SUPABASE_URL + "/functions/v1/tournament-join";
@@ -204,8 +206,15 @@ async function applyStaffView(){
   showAccess("Manager sign-in not found on this page. Your saved Tournament entries are safe. The page cannot show organizer controls until it can read the saved SlotBuddy session.");
  }else{
   try{
-   const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});
-   const d=await r.json();
+   showAccess("Saved sign-in found. Contacting SlotBuddy to verify manager access…");
+   const controller=new AbortController();
+   const timeout=setTimeout(()=>controller.abort(),12000);
+   let r,d;
+   try{
+    r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session}),signal:controller.signal,cache:"no-store"});
+    showAccess("SlotBuddy responded. Checking your account permissions…");
+    d=await r.json();
+   }finally{clearTimeout(timeout);}
    canManageTournament=!!(r.ok&&d.ok&&(d.user?.role==="owner"||d.user?.role==="moderator"));
    if(canManageTournament){
     document.body.classList.add("slotbuddy-manager");
@@ -218,8 +227,9 @@ async function applyStaffView(){
    }
   }catch(error){
    document.body.classList.remove("slotbuddy-manager");
-   if(status)status.textContent="Couldn't verify the saved SlotBuddy sign-in: "+(error?.message||"connection error")+". Your saved entries have not been changed.";
-   showAccess("Could not verify the saved SlotBuddy session: "+(error?.message||"connection error")+". Your saved entries are safe.");
+   const detail=error?.name==="AbortError"?"The manager check timed out after 12 seconds":(error?.message||"connection error");
+   if(status)status.textContent="Couldn't verify the saved SlotBuddy sign-in: "+detail+". Your saved entries have not been changed.";
+   showAccess("Could not finish checking the saved SlotBuddy session: "+detail+". Your saved entries are safe. You do not need to sign in again.");
   }
  }
  ["ownerControls","bracketLoadControls","slotCallControls","tournamentBonusAdmin","setup"].forEach(id=>{const el=$(id);if(el)el.hidden=!canManageTournament;});
