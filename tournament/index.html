@@ -81,27 +81,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <div class="entrant-list" id="entrantList"><span class="hint">Loading player list…</span></div>
 <p class="hint">Tell chat to type <strong>!join</strong> to enter. They can use <strong>!leave</strong> before entries close.</p>
 <div class="actions" id="bracketLoadControls" hidden><button id="loadChatPlayers">⬇ Load chat players into bracket</button><button class="dark" id="refreshPlayers">Refresh list</button></div>
-<details class="editor-admin" id="ownerControls" hidden style="margin-top:16px">
-<summary style="cursor:pointer;color:var(--pink);font-weight:900;padding:8px 0">👑 Organizer controls</summary>
-<div class="admin-grid">
-<div class="wide" hidden><label for="adminKey">Organizer access key</label><input id="adminKey" type="password" autocomplete="off" placeholder="Paste your private organizer key"></div>
-<div><label for="livePlayerCount">Player limit</label><select id="livePlayerCount"><option value="4">4 Players</option><option value="8">8 Players</option><option value="12">12 Players</option><option value="16">16 Players</option><option value="32">32 Players</option></select></div>
-<div><label for="liveEntriesPerPerson">Entries per person (1–10)</label><input id="liveEntriesPerPerson" type="number" min="1" max="10" step="1" value="1" inputmode="numeric"></div>
-<div><label for="liveEventName">Tournament name</label><input id="liveEventName" maxlength="60" value="Chaos Queen Tournament"></div>
-</div>
-<div class="actions">
-<button id="saveLiveSettings">Save tournament settings</button>
-<button class="pink" id="closeEntries">Close entries</button>
-<button class="dark" id="openEntries">Open entries</button>
-<button class="dark" id="clearEntries">Clear players / new tournament</button>
-</div>
-<p class="status" id="liveAdminMessage" role="status"></p>
-<div class="actions">
-<button id="connectKick" class="pink" type="button">🔗 Connect Kick chat</button>
-<button id="testKick" class="dark" type="button" disabled>💬 Send test message</button>
-</div>
-<p class="status" id="kickStatus" role="status">Kick chat is not connected yet.</p>
-</details>
+
 </section>
 <section class="panel" id="slotCallPanel">
 <h2>🎰 LIVE SLOT-CALL QUEUE</h2>
@@ -160,6 +140,28 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <div class="actions"><button id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="restoreSavedEntries" data-manager-only hidden type="button">↩ RESTORE SAVED PLAYERS</button><button class="dark" id="clearSavedEntries" data-manager-only hidden type="button">🧹 CLEAR SAVED PLAYERS</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
 <button id="fillDemo" type="button" hidden>Add sample names</button>
 <p class="status" id="setupStatus" role="status"></p>
+
+<details class="editor-admin" id="ownerControls" hidden style="margin-top:16px">
+<summary style="cursor:pointer;color:var(--pink);font-weight:900;padding:8px 0">👑 Organizer controls</summary>
+<div class="admin-grid">
+<div class="wide" hidden><label for="adminKey">Organizer access key</label><input id="adminKey" type="password" autocomplete="off" placeholder="Paste your private organizer key"></div>
+<div><label for="livePlayerCount">Player limit</label><select id="livePlayerCount"><option value="4">4 Players</option><option value="8">8 Players</option><option value="12">12 Players</option><option value="16">16 Players</option><option value="32">32 Players</option></select></div>
+<div><label for="liveEntriesPerPerson">Entries per person (1–10)</label><input id="liveEntriesPerPerson" type="number" min="1" max="10" step="1" value="1" inputmode="numeric"></div>
+<div><label for="liveEventName">Tournament name</label><input id="liveEventName" maxlength="60" value="Chaos Queen Tournament"></div>
+</div>
+<div class="actions">
+<button id="saveLiveSettings">Save tournament settings</button>
+<button class="pink" id="closeEntries">Close entries</button>
+<button class="dark" id="openEntries">Open entries</button>
+<button class="dark" id="clearEntries">Clear players / new tournament</button>
+</div>
+<p class="status" id="liveAdminMessage" role="status"></p>
+<div class="actions">
+<button id="connectKick" class="pink" type="button">🔗 Connect Kick chat</button>
+<button id="testKick" class="dark" type="button" disabled>💬 Send test message</button>
+</div>
+<p class="status" id="kickStatus" role="status">Kick chat is not connected yet.</p>
+</details>
 </section>
 
 <section class="panel" id="tournament">
