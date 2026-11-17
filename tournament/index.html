@@ -408,7 +408,7 @@ function restoreSavedBracket(data){
  }
  $("eventName").value=data.name||"Chaos Queen Tournament";
  $("playerCount").value=String(playerTotal);
- const savedEntries=(rounds[0]||[]).flatMap(match=>[match.a,match.b]).filter(Boolean).map(p=>({username:typeof p==="string"?p:(p.username||p.name||p.display_name||""),game:p.game||"",buy:p.buy==null?"":String(p.buy),casino:p.casino||"Rainbet",bonusType:p.bonusType||"Regular"}));
+ const savedEntries=(rounds[0]||[]).flatMap(match=>[match.a,match.b]).map((p,index)=>p?({username:typeof p==="string"?p:(p.username||p.name||p.display_name||""),game:p.game||"",buy:p.buy==null?"":String(p.buy),casino:p.casino||"Rainbet",bonusType:p.bonusType||"Regular"}):({username:"Player "+(index+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
  if(savedEntries.length)writeEntryPlayers(savedEntries);
  $("bracketTitle").textContent=data.name||"Tournament Bracket";
  $("bracketInfo").textContent=playerTotal+" players • Saved tournament • Click a name to advance them.";
@@ -454,11 +454,8 @@ function renderEntryPlayers(){
      if(candidateName===removedName&&candidateGame===removedGame){match[side]=null;removedFromBracket=true;}
     }
     const winner=match.winner,winnerName=String(winner?.username||winner?.name||winner||"").trim().toLowerCase(),winnerGame=String(winner?.game||"").trim().toLowerCase();
-    if(winnerName===removedName&&winnerGame===removedGame){match.winner=null;match.payout="";match.aPayout="";match.bPayout="";removedWinnerRound=Math.max(removedWinnerRound,r);removedFromBracket=true;}
+    if(winnerName===removedName&&winnerGame===removedGame){match.winner=null;match.payout="";match.aPayout="";match.bPayout="";removedFromBracket=true;}
    }));
-   if(removedWinnerRound>=0){
-    for(let r=removedWinnerRound+1;r<rounds.length;r++)rounds[r].forEach(match=>{match.a=null;match.b=null;match.winner=null;match.payout="";match.aPayout="";match.bPayout="";});
-   }
    if(removedFromBracket)renderBracket();
   }
   a[index]={...a[index],username:"",game:"",buy:""};writeEntryPlayers(a);resizeEntryPlayers();updateHint();
