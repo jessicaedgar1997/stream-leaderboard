@@ -252,7 +252,8 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
      buildBracket(bracketPlayers,targetSize);
      playerTotal=bracketPlayers.length;
      $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
-     $("bracketInfo").textContent=playerTotal+" of "+targetSize+" player spots • Bracket resized to match Tournament settings.";
+     const byeSlots=Math.max(0,2**Math.ceil(Math.log2(Math.max(2,targetSize)))-targetSize);
+      $("bracketInfo").textContent=targetSize+"-player tournament • "+byeSlots+" first-round "+(byeSlots===1?"bye":"byes")+" • "+playerTotal+" entered.";
      $("setupStatus").textContent="Saved bracket resized from "+savedSize+" to "+targetSize+" player spots. Existing players were kept.";
      if(canManageTournament)queueBracketSave();
     }else{
@@ -425,10 +426,13 @@ function restoreSavedBracket(data){
  }
  $("eventName").value=data.name||"Chaos Queen Tournament";
  $("playerCount").value=String(savedCapacity);
- const savedEntries=(rounds[0]||[]).flatMap(match=>[match.a,match.b]).map((p,index)=>p?({username:typeof p==="string"?p:(p.username||p.name||p.display_name||""),game:p.game||"",buy:p.buy==null?"":String(p.buy),casino:p.casino||"Rainbet",bonusType:p.bonusType||"Regular"}):({username:"Player "+(index+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
+ const savedEntries=(rounds[0]||[]).flatMap(match=>[match.a,match.b]).filter(Boolean).map(p=>({username:typeof p==="string"?p:(p.username||p.name||p.display_name||""),game:p.game||"",buy:p.buy==null?"":String(p.buy),casino:p.casino||"Rainbet",bonusType:p.bonusType||"Regular"}));
  if(savedEntries.length)writeEntryPlayers(savedEntries);
  $("bracketTitle").textContent=data.name||"Tournament Bracket";
- $("bracketInfo").textContent=playerTotal+" players • Saved tournament • Click a name to advance them.";
+ const displaySize=Number($("playerCount").value)||savedCapacity;
+ const bracketSlots=2**Math.ceil(Math.log2(Math.max(2,displaySize)));
+ const byeSlots=Math.max(0,bracketSlots-displaySize);
+ $("bracketInfo").textContent=displaySize+"-player tournament • "+byeSlots+" first-round "+(byeSlots===1?"bye":"byes")+" • "+playerTotal+" entered. Click a name to advance them.";
  $("tournament").classList.remove("hidden");
  tournamentIsActive = true;
  renderBracket();
@@ -563,7 +567,8 @@ $("playerCount").addEventListener("change",async()=>{
   buildBracket(nextPlayers,size);
   playerTotal=nextPlayers.length;
   $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
-  $("bracketInfo").textContent=playerTotal+" of "+size+" player spots • Bracket resized.";
+  const byeSlots=Math.max(0,2**Math.ceil(Math.log2(Math.max(2,size)))-size);
+   $("bracketInfo").textContent=size+"-player tournament • "+byeSlots+" first-round "+(byeSlots===1?"bye":"byes")+" • "+playerTotal+" entered.";
   $("setupStatus").textContent="Bracket layout updated to "+size+" player spots. Existing match results were reset; your manually added players were kept.";
   queueBracketSave();
  }
@@ -771,7 +776,7 @@ $("build").onclick=()=>{
  if(list.some(p=>!p.username.trim()||!p.game.trim())){$("setupStatus").textContent="Every added player needs a username and game.";return;}
  if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"){const gameNames=list.map(p=>p.game.trim().toLowerCase());if(new Set(gameNames).size!==gameNames.length){$("setupStatus").textContent="Duplicate games are turned OFF. Each player must have a different game, or turn DUP ON.";return;}}
  if(list.some(p=>p.username.length>40||p.game.length>100)){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
- buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=list.length+" of "+required+" player spots • Single elimination • Use Shuffle Players to reshuffle."; getTournamentChatState();announceTournamentRound(0); $("tournament").classList.remove("hidden");$("setupStatus").textContent="All added players are in the bracket. Press SHUFFLE PLAYERS whenever you're ready!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+ buildBracket(list,required);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";const byeSlots=Math.max(0,2**Math.ceil(Math.log2(Math.max(2,required)))-required);$("bracketInfo").textContent=required+"-player tournament • "+byeSlots+" first-round "+(byeSlots===1?"bye":"byes")+" • "+list.length+" entered. Single elimination. getTournamentChatState();announceTournamentRound(0); $("tournament").classList.remove("hidden");$("setupStatus").textContent="All added players are in the bracket. Press SHUFFLE PLAYERS whenever you're ready!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
 };
 function addQueuedCallsToNextBracket(calls){
  const current=namesFromInput().filter(p=>!isEntryPlaceholder(p));
