@@ -11,10 +11,10 @@
 body{position:relative;isolation:isolate;background:radial-gradient(ellipse at 12% 5%,#71401f55 0,transparent 38%),radial-gradient(ellipse at 90% 12%,#8a3d2350 0,transparent 34%),radial-gradient(circle at 10% 0%,#173f70 0,transparent 34%),radial-gradient(circle at 95% 12%,#64205b 0,transparent 32%),var(--bg)}
 .wrap{position:relative;z-index:1}
 .fall-leaves{position:fixed;inset:0;z-index:10;overflow:hidden;pointer-events:none;contain:strict}
-.fall-leaf{position:absolute;top:-12vh;left:var(--x);font-size:var(--size);opacity:0;color:#e99a42;filter:drop-shadow(0 2px 4px #0008);animation:autumnFall var(--duration) linear var(--delay) infinite;will-change:transform}
+.fall-leaf{display:block;position:absolute;top:-12vh;left:var(--x);font-size:var(--size);opacity:0;color:#e99a42;filter:drop-shadow(0 2px 4px #0008);animation:autumnFall var(--duration) linear var(--delay) infinite;will-change:transform}
 .fall-leaf:nth-child(3n){color:#bd4c24}.fall-leaf:nth-child(3n+1){color:#e6b34b}.fall-leaf:nth-child(3n+2){color:#a84b25}
 @keyframes autumnFall{0%{opacity:0;transform:translate3d(0,-8vh,0) rotate(0deg)}8%{opacity:.62}50%{transform:translate3d(var(--drift),55vh,0) rotate(360deg)}92%{opacity:.5}100%{opacity:0;transform:translate3d(calc(var(--drift) * -0.45),112vh,0) rotate(720deg)}}
-@media(prefers-reduced-motion:reduce){.fall-leaf{animation:none;display:none}}
+@media(prefers-reduced-motion:reduce){.fall-leaf{animation-duration:45s;}}
 
 button,.btn,input[type="button"],input[type="submit"]{background:linear-gradient(100deg,#ff39b9 0%,#65dfff 100%);color:#100d20;border:1px solid rgba(255,255,255,.22);font-weight:900;box-shadow:0 5px 18px rgba(255,57,185,.16),0 5px 18px rgba(101,223,255,.14);transition:filter .16s ease,transform .16s ease}button:hover:not(:disabled),.btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
 @media(max-width:1050px){.wheel-layout{grid-template-columns:1fr}.wheel-area{width:min(100%,460px)}.editor textarea{min-height:160px}}
