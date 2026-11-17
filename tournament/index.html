@@ -156,7 +156,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <p class="hint" id="countHint">Add players from the slot-call queue, then press ADD TO BRACKET beside each name.</p>
 <textarea id="players" spellcheck="false" hidden aria-hidden="true"></textarea>
 <div class="actions tournament-controls"></div>
-<div class="actions"><button id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
+<div class="actions"><button id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="restoreSavedEntries" data-manager-only hidden type="button">↩ RESTORE SAVED PLAYERS</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
 <button id="fillDemo" type="button" hidden>Add sample names</button>
 <p class="status" id="setupStatus" role="status"></p>
 </section>
@@ -196,6 +196,30 @@ async function applyStaffView(){
  ["ownerControls","bracketLoadControls","slotCallControls","tournamentBonusAdmin","setup"].forEach(id=>{const el=$(id);if(el)el.hidden=!canManageTournament;});document.querySelectorAll("[data-manager-only]").forEach(el=>el.hidden=!canManageTournament);if(canManageTournament)await refreshLivePlayers();
 }
 
+async function restoreSavedTournamentEntries(){
+ const status=$("setupStatus");status.textContent="Loading saved Tournament entries…";
+ try{
+  const response=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});
+  if(!response.ok)throw new Error("Could not load saved entries");
+  const snapshot=await response.json();if(snapshot.error)throw new Error(snapshot.error);
+  const saved=Array.isArray(snapshot.slot_entries)?snapshot.slot_entries:[];
+  if(!saved.length)throw new Error("No saved Tournament entries were returned.");
+  const current=namesFromInput().filter(p=>!isEntryPlaceholder(p));
+  const key=p=>String(p.username||"").trim().toLowerCase()+"|"+String(p.game||"").trim().toLowerCase();
+  const seen=new Set(current.map(key));
+  let added=0;
+  saved.forEach(entry=>{
+   const p={username:String(entry.caller_name||entry.username||"").trim(),game:String(entry.game_name||entry.game||"").trim(),buy:entry.buy_amount!=null&&Number(entry.buy_amount)>0?String(entry.buy_amount):"",casino:String(entry.casino||"Rainbet"),bonusType:String(entry.bonus_type||entry.bonusType||"Regular")};
+   if(!p.username||!p.game||seen.has(key(p)))return;
+   current.push(p);seen.add(key(p));added++;
+  });
+  if(!added){status.textContent="Those saved entries are already on your player list.";return;}
+  writeEntryPlayers(current);
+  updateHint();
+  status.textContent=added+" saved Tournament players restored to your list. Add buy-ins before adding anyone to the bracket. 💗💙";
+ }catch(error){status.textContent="Could not restore players: "+error.message;}
+}
+$("restoreSavedEntries")?.addEventListener("click",restoreSavedTournamentEntries);
 function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 async function refreshLivePlayers(syncEntries=false,syncBracket=false){
  if(syncEntries)hasLoadedTournamentEntries=false;
