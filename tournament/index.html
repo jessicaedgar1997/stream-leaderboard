@@ -404,24 +404,16 @@ function namesFromInput(){return $("players").value.split(/\r?\n/).map((line,ind
 function isEntryPlaceholder(p){return /^Player \d+$/i.test(String(p.username||""))&&!String(p.game||"").trim()&&!String(p.buy||"").trim();}
 function resizeEntryPlayers(){
  const limit=Number($("playerCount").value)||4,players=namesFromInput();
- // Restore a missing numbered placeholder in its original position without moving filled player entries.
- for(let n=1;n<=limit&&players.length<limit;n++){
-  const label="Player "+n;
-  const hasNumberedPlaceholder=players.some(p=>String(p.username||"").trim().toLowerCase()===label.toLowerCase()&&isEntryPlaceholder(p));
-  const hasLaterNumberedPlaceholder=players.some(p=>{const match=String(p.username||"").trim().match(/^Player (\\d+)$/i);return match&&Number(match[1])>n&&isEntryPlaceholder(p);});
-  if(!hasNumberedPlaceholder&&hasLaterNumberedPlaceholder){
-   players.splice(Math.min(n-1,players.length),0,{username:label,game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
-  }
- }
  while(players.length>limit){let removeAt=-1;for(let i=players.length-1;i>=0;i--){if(isEntryPlaceholder(players[i])){removeAt=i;break;}}if(removeAt<0)removeAt=players.length-1;players.splice(removeAt,1);}
- while(players.length<limit)players.push({username:"Player "+(players.length+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
+ while(players.length<limit)players.push({username:"",game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
+ players.forEach((p,index)=>{if(isEntryPlaceholder(p))p.username="Player "+(index+1);});
  writeEntryPlayers(players);
 }
 function renderEntryPlayers(){
  const list=$("tournamentEntryList");if(!list)return;
  const players=namesFromInput();
  list.innerHTML=players.length?players.map((p,i)=>{const placeholder=isEntryPlaceholder(p);const meta=placeholder?"Waiting for player details":(escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular"));const buyControl=placeholder?"":'<label class="entry-buy-edit">Buy-in (C$) <input type="number" min="0" step="0.01" value="'+(p.buy!==""&&Number.isFinite(Number(p.buy))?Number(p.buy).toFixed(2):"0.00")+'" data-buy-entry="'+i+'" aria-label="Buy-in for '+escapeHtml(p.username)+'" style="width:105px;padding:6px;border-radius:8px;border:1px solid #526080;background:#10182a;color:white"></label>';return '<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+meta+'</div>'+buyControl+'</div><div class="entry-actions"><button class="entry-remove" type="button" data-remove-entry="'+i+'">REMOVE</button></div></div>';}).join(""):'<span class="hint">No player spots yet.</span>';
- list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=()=>{const a=namesFromInput(),index=Number(btn.dataset.removeEntry);if(!a[index])return;a[index]={...a[index],username:"Player "+(index+1),game:"",buy:""};writeEntryPlayers(a);updateHint();$("setupStatus").textContent="Player "+(index+1)+" removed. That bracket spot is still open.";});
+ list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=()=>{const a=namesFromInput(),index=Number(btn.dataset.removeEntry);if(!a[index])return;a[index]={...a[index],username:"",game:"",buy:""};writeEntryPlayers(a);resizeEntryPlayers();updateHint();$("setupStatus").textContent="Player "+(index+1)+" removed. That bracket spot is still open.";});
  list.querySelectorAll("[data-buy-entry]").forEach(input=>input.onchange=()=>{const a=namesFromInput(),index=Number(input.dataset.buyEntry),value=input.value;if(!Number.isFinite(Number(value))||Number(value)<0){input.value=Number(a[index]?.buy||0).toFixed(2);return;}if(a[index])a[index].buy=Number(value).toFixed(2);writeEntryPlayers(a);updateHint();});
  if($("addTournamentPlayer"))$("addTournamentPlayer").disabled=players.length>=Number($("playerCount").value)&&!players.some(isEntryPlaceholder);
 }
