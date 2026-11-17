@@ -234,9 +234,22 @@ async function applyStaffView(){
  }
  ["ownerControls","bracketLoadControls","slotCallControls","tournamentBonusAdmin","setup"].forEach(id=>{const el=$(id);if(el)el.hidden=!canManageTournament;});
  document.querySelectorAll("[data-manager-only]").forEach(el=>el.hidden=!canManageTournament);
- if(canManageTournament){await refreshLivePlayers();await restoreSavedTournamentEntries();}
+ if(canManageTournament){await refreshLivePlayers();}
 }
 
+function mergeSavedTournamentEntries(saved){
+ if(!Array.isArray(saved)||!saved.length)return 0;
+ const current=namesFromInput().filter(p=>!isEntryPlaceholder(p));
+ const key=p=>String(p.username||"").trim().toLowerCase()+"|"+String(p.game||"").trim().toLowerCase();
+ const seen=new Set(current.map(key));let added=0;
+ saved.forEach(entry=>{
+  const p={username:String(entry.caller_name||entry.username||"").trim(),game:String(entry.game_name||entry.game||"").trim(),buy:entry.buy_amount!=null&&Number(entry.buy_amount)>0?String(entry.buy_amount):"",casino:String(entry.casino||"Rainbet"),bonusType:String(entry.bonus_type||entry.bonusType||"Regular")};
+  if(!p.username||!p.game||seen.has(key(p)))return;
+  current.push(p);seen.add(key(p));added++;
+ });
+ if(added){writeEntryPlayers(current);updateHint();}
+ return added;
+}
 async function restoreSavedTournamentEntries(){
  const status=$("setupStatus");status.textContent="Loading saved Tournament entries…";
  try{
@@ -245,19 +258,8 @@ async function restoreSavedTournamentEntries(){
   const snapshot=await response.json();if(snapshot.error)throw new Error(snapshot.error);
   const saved=Array.isArray(snapshot.slot_entries)?snapshot.slot_entries:[];
   if(!saved.length)throw new Error("No saved Tournament entries were returned.");
-  const current=namesFromInput().filter(p=>!isEntryPlaceholder(p));
-  const key=p=>String(p.username||"").trim().toLowerCase()+"|"+String(p.game||"").trim().toLowerCase();
-  const seen=new Set(current.map(key));
-  let added=0;
-  saved.forEach(entry=>{
-   const p={username:String(entry.caller_name||entry.username||"").trim(),game:String(entry.game_name||entry.game||"").trim(),buy:entry.buy_amount!=null&&Number(entry.buy_amount)>0?String(entry.buy_amount):"",casino:String(entry.casino||"Rainbet"),bonusType:String(entry.bonus_type||entry.bonusType||"Regular")};
-   if(!p.username||!p.game||seen.has(key(p)))return;
-   current.push(p);seen.add(key(p));added++;
-  });
-  if(!added){status.textContent="Those saved entries are already on your player list.";return;}
-  writeEntryPlayers(current);
-  updateHint();
-  status.textContent=added+" saved Tournament players restored to your list. Add buy-ins before adding anyone to the bracket. 💗💙";
+  const added=mergeSavedTournamentEntries(saved);
+  status.textContent=added?added+" saved Tournament players restored to your list. Add buy-ins before adding anyone to the bracket. 💗💙":"Those saved entries are already on your player list.";
  }catch(error){status.textContent="Could not restore players: "+error.message;}
 }
 $("restoreSavedEntries")?.addEventListener("click",restoreSavedTournamentEntries);
@@ -300,6 +302,11 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
      $("setupStatus").textContent="The saved bracket has "+bracketPlayers.length+" players, more than the "+targetSize+"-player Tournament limit. No bracket players were removed.";
     }
    }
+  }
+  // Merge the saved organizer entries after restoring the bracket so the bracket snapshot cannot overwrite the player list.
+  if(canManageTournament&&Array.isArray(snapshot.slot_entries)){
+   const restoredCount=mergeSavedTournamentEntries(snapshot.slot_entries);
+   if(restoredCount)$("setupStatus").textContent=restoredCount+" saved Tournament players restored to your list. Add buy-ins before adding anyone to the bracket. 💗💙";
   }
  }catch(error){$("liveStatus").textContent="CONNECTION ISSUE";$("entrantList").innerHTML='<span class="hint">Could not load the live player list. Refresh in a moment.</span>';return;}
  $("liveCount").textContent=livePlayers.length+" / "+liveState.max_players;
