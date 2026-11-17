@@ -806,7 +806,7 @@ function playerButton(player,r,i,side,winner,payout){
  return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+label+'</button>';
 }
 function renderBracket(){
- $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>({m,i})).filter(({m})=>r!==0||(!m.directAdvance&&!(m.a&&!m.b&&m.winner===m.a))).map(({m,i})=>'<div class="match"><div class="match-label">Match '+(i+1)+'</div>'+playerButton(m.a,r,i,"a",m.winner,m.aPayout)+playerButton(m.b,r,i,"b",m.winner,m.bPayout)+'</div>').join("")+'</div>').join("");
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+(r===0&&m.a&&!m.b&&m.winner===m.a?' · AUTO ADVANCE':'')+'</div>'+playerButton(m.a,r,i,"a",m.winner,m.aPayout)+playerButton(m.b,r,i,"b",m.winner,m.bPayout)+'</div>').join("")+'</div>').join("");
  $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
  const champ=rounds[rounds.length-1][0]?.winner;
  $("champion").classList.toggle("hidden",!champ);
