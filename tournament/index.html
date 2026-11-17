@@ -167,13 +167,13 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <p class="hint" id="countHint">Add 8 players with their slot and buy. They will be shuffled into the bracket.</p>
 <textarea id="players" spellcheck="false" hidden aria-hidden="true"></textarea>
 <div class="actions tournament-controls"></div>
-<div class="actions"><button id="build">🎲 Start Tournament</button><button id="tournamentCallsOn" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
+<div class="actions"><button id="build">🎲 Start Tournament</button><button class="dark" id="endTournament" data-manager-only hidden type="button">🏁 End Tournament</button><button id="tournamentCallsOn" data-manager-only hidden type="button">📣 CALLS ON</button><button id="tournamentCallsOff" data-manager-only hidden type="button">🔕 CALLS OFF</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
 <button id="fillDemo" type="button" hidden>Add sample names</button>
 <p class="status" id="setupStatus" role="status"></p>
 </section>
 
 <section class="panel hidden" id="tournament">
-<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" data-manager-only hidden type="button">🧹 Clear Names &amp; Games</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="dark" id="endTournament" data-manager-only hidden type="button">🏁 END TOURNAMENT</button><button id="tournamentCallsOff" data-manager-only hidden type="button">🔕 CALLS OFF</button><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
+<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" data-manager-only hidden type="button">🧹 Clear Names &amp; Games</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
 <div class="bracket" id="bracket"></div>
 <div id="champion" class="champion hidden"></div>
 <p class="hint">To advance a player, click their name in the match. You can change a winner any time; later rounds will update.</p>
@@ -626,6 +626,7 @@ updateHint();
 <script>
 document.getElementById("endTournament")?.addEventListener("click",async()=>{
  if(!canManageTournament)return;
+ if(!rounds.length){document.getElementById("setupStatus").textContent="Start the tournament before ending it.";return;}
  const button=document.getElementById("endTournament");
  if(!confirm("End this tournament now? The bracket and results will be saved, and new tournament slot calls will be turned OFF."))return;
  button.disabled=true;
