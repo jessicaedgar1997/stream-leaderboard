@@ -156,7 +156,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <p class="hint" id="countHint">Add players from the slot-call queue, then press ADD TO BRACKET beside each name.</p>
 <textarea id="players" spellcheck="false" hidden aria-hidden="true"></textarea>
 <div class="actions tournament-controls"></div>
-<div class="actions"><button id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="restoreSavedEntries" data-manager-only hidden type="button">↩ RESTORE SAVED PLAYERS</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
+<div class="actions"><button id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="restoreSavedEntries" data-manager-only hidden type="button">↩ RESTORE SAVED PLAYERS</button><button class="dark" id="clearSavedEntries" data-manager-only hidden type="button">🧹 CLEAR SAVED PLAYERS</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
 <button id="fillDemo" type="button" hidden>Add sample names</button>
 <p class="status" id="setupStatus" role="status"></p>
 </section>
@@ -264,6 +264,36 @@ async function restoreSavedTournamentEntries(){
  }catch(error){status.textContent="Could not restore players: "+error.message;}
 }
 $("restoreSavedEntries")?.addEventListener("click",restoreSavedTournamentEntries);
+async function clearSavedTournamentEntries(){
+ const status=$("setupStatus"),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!session_key){status.textContent="Sign in with Kick first to clear saved Tournament players.";return;}
+ if(!confirm("Remove all saved Tournament player names from RESTORE SAVED PLAYERS? This will not clear the active bracket, tournament settings, or bonus-buy history."))return;
+ const button=$("clearSavedEntries");if(button)button.disabled=true;
+ status.textContent="Loading saved Tournament players…";
+ try{
+  const response=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});
+  if(!response.ok)throw new Error("Could not load saved players.");
+  const snapshot=await response.json();if(snapshot.error)throw new Error(snapshot.error);
+  const saved=Array.isArray(snapshot.slot_entries)?snapshot.slot_entries:[];
+  if(!saved.length){status.textContent="There are no saved Tournament players to clear.";return;}
+  let removed=0,failed=0;
+  for(const entry of saved){
+   const caller_name=String(entry.caller_name||entry.username||"").trim();
+   const game_name=String(entry.game_name||entry.game||"").trim();
+   if(!caller_name||!game_name)continue;
+   const result=await fetch(CONTROL_URL+"?action=slot-entry-delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_key,caller_name,game_name,bonus_type:String(entry.bonus_type||entry.bonusType||"Regular")})});
+   if(result.ok)removed++;else failed++;
+  }
+  if(failed)throw new Error(removed+" saved names removed; "+failed+" could not be removed. Please retry.");
+  writeEntryPlayers([]);
+  bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");
+  localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count:Number($("playerCount").value)||4,players:""}));
+  status.textContent=removed+" saved Tournament player names removed. You can start fresh! 💗💙";
+  await refreshLivePlayers(true,false);
+ }catch(error){status.textContent="Could not clear saved players: "+error.message;}
+ finally{if(button)button.disabled=false;}
+}
+$("clearSavedEntries")?.addEventListener("click",clearSavedTournamentEntries);
 function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 async function refreshLivePlayers(syncEntries=false,syncBracket=false){
  const requestVersion=tournamentSnapshotVersion;
@@ -973,7 +1003,7 @@ $("clearAllBracket").onclick=async()=>{
   button.disabled=false;
  }
 };
-$("newTournament").onclick=()=>{localStorage.removeItem("slotbuddyTournamentChatAnnouncements");tournamentChatState=null;tournamentIsActive=false;bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");renderEntryPlayers();$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Add players one at a time; each one appears in the bracket immediately.";;window.scrollTo({top:0,behavior:"smooth"});};
+$("newTournament").onclick=async()=>{localStorage.removeItem("slotbuddyTournamentChatAnnouncements");tournamentChatState=null;tournamentIsActive=false;bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");$("playerCount").value="4";$("livePlayerCount").value="4";resizeEntryPlayers();updateHint();localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count:4,players:""}));await adminAction("size",{value:4});renderEntryPlayers();$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for a new 4-player tournament. You can change the player count before adding players. 💗💙";window.scrollTo({top:0,behavior:"smooth"});};
 $("print").onclick=()=>window.print();
 $("saveBracket").onclick=saveBracketOnline;
 updateHint();
