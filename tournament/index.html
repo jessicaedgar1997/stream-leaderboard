@@ -770,4 +770,39 @@ updateHint();
 
 
 <script>if("scrollRestoration" in history)history.scrollRestoration="manual";window.addEventListener("pageshow",()=>window.scrollTo(0,0));</script>
+<script id="slotbuddy-clear-capture-fix">
+document.addEventListener("click",async function(event){
+ const button=event.target.closest&&event.target.closest("#clearAllBracket");
+ if(!button)return;
+ event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+ const status=document.getElementById("setupStatus");
+ const show=message=>{if(status)status.textContent=message;};
+ button.disabled=true;show("Clear button received the click. Checking manager access…");
+ try{
+  if(!window.confirm("Clear player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same.")){show("Clear cancelled. Nothing was changed.");return;}
+  const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+  if(!session_key){show("Manager session is missing. Sign in with Kick again, then retry.");return;}
+  const base="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/";
+  const login=await fetch(base+"slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key})});
+  const auth=await login.json();
+  if(!login.ok||!auth.ok||!auth.user||!["owner","moderator"].includes(auth.user.role)){show("Manager access could not be verified. Sign in with Kick again, then retry.");return;}
+  const root=document.getElementById("bracket");
+  const visibleRounds=[...(root?root.querySelectorAll(":scope > .round"):[])];
+  const shape=visibleRounds.length?visibleRounds.map(round=>Math.max(1,round.querySelectorAll(".match").length)):[4,2,1];
+  const blankRounds=shape.map(matches=>Array.from({length:matches},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
+  const count=Math.max(1,Number(document.getElementById("playerCount")?.value)||1);
+  const name=document.getElementById("eventName")?.value?.trim()||document.getElementById("bracketTitle")?.textContent?.trim()||"Chaos Queen Tournament";
+  show("Clearing names and games and saving the empty bracket…");
+  const response=await fetch(base+"tournament-join?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:"",session_key,data:{name,count,rounds:blankRounds}})});
+  const result=await response.text();
+  if(!response.ok)throw new Error(result||"The online save was rejected.");
+  localStorage.removeItem("slotbuddyBracketAddedEntries");
+  localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name,count,players:""}));
+  const players=document.getElementById("players");if(players)players.value="";
+  show("Names, games, winners, and payouts cleared and saved. Reloading the empty bracket…");
+  setTimeout(()=>window.location.reload(),900);
+ }catch(error){show("Clear failed: "+(error&&error.message?error.message:"Please refresh and try again."));}
+ finally{button.disabled=false;}
+},true);
+</script>
 </body></html>
