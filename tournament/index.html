@@ -279,8 +279,10 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   // The live chat-entry limit is separate and must not overwrite the bracket size.
   renderTournamentBonuses(snapshot.bonus_entries||[]);updateTournamentCallsToggle();if(!canManageTournament)$("tournamentBonusList").querySelectorAll("button").forEach(btn=>btn.remove());
   const queueStatus=$("slotQueueStatus");if(queueStatus){queueStatus.textContent=queueSnapshot.active_queue==="cozies"?"COZIES CALLS OPEN":queueSnapshot.active_queue==="bonus_hunt"?"BONUS HUNT CALLS OPEN":"CALLS CLOSED";queueStatus.style.color=queueSnapshot.active_queue?"var(--blue)":"var(--pink)";}
-  if(snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
-   restoreSavedBracket(snapshot.bracket);hasLoadedSavedBracket=true;
+  const remoteBracketUpdatedAt=snapshot.bracket_updated_at||null;
+  const remoteBracketChanged=remoteBracketUpdatedAt!==lastRemoteBracketUpdatedAt;
+  if(snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
+   restoreSavedBracket(snapshot.bracket);hasLoadedSavedBracket=true;lastRemoteBracketUpdatedAt=remoteBracketUpdatedAt;
    const targetSize=Number($("playerCount").value)||Number(snapshot.bracket.count)||Number(snapshot.state?.max_players)||4;
    const savedSize=Number(snapshot.bracket.count)||((snapshot.bracket.rounds?.[0]?.length||0)*2);
    if(savedSize&&savedSize!==targetSize){
@@ -391,6 +393,8 @@ $("testKick").onclick=async()=>{
 refreshKickStatus();
 applyStaffView();refreshLivePlayers();
 sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"slot_calls"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"cozies_queue"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"bonus_hunt_queue"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"stream_call_settings"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"tournament_slot_entries"},()=>refreshLivePlayers(true,false)).on("postgres_changes",{event:"*",schema:"public",table:"tournament_bonus_entries"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"tournament_bracket_state"},()=>refreshLivePlayers(false,true)).subscribe((status,error)=>{if(status==="SUBSCRIBED")console.info("Tournament live sync connected");else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED")console.warn("Tournament live sync status:",status,error||"");});
+// Poll as a fallback when Supabase Realtime is unavailable or delayed. Only a changed server timestamp replaces the local bracket.
+setInterval(async()=>{if(document.visibilityState!=="visible"||tournamentSyncPollBusy)return;tournamentSyncPollBusy=true;try{const response=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});if(response.ok){const snapshot=await response.json();if(snapshot.bracket&&snapshot.bracket_updated_at&&(snapshot.bracket_updated_at!==lastRemoteBracketUpdatedAt||!hasLoadedSavedBracket))await refreshLivePlayers(false,true);}}catch(error){console.warn("Tournament sync check failed:",error);}finally{tournamentSyncPollBusy=false;}},4000);
 function renderTournamentBonuses(items){
  const list=$("tournamentBonusList");if(!list)return;
  list.innerHTML=items.length?items.map(x=>"<div class='entrant' style='border-radius:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap'><strong>"+safeText(x.caller_name)+"</strong> · "+safeText(x.bonus_type||"Regular")+" · "+safeText(x.bonus_name)+" · Spin "+Number(x.spin_amount||0).toFixed(2)+" · Paid "+Number(x.payout_amount||0).toFixed(2)+" <button class='dark' style='padding:4px 8px' onclick='deleteTournamentBonus("+Number(x.id)+")'>DELETE</button></div>").join(""):"<span class='hint'>No tournament bonus buys recorded yet.</span>";
@@ -420,6 +424,8 @@ async function deleteTournamentBonus(id){
 $("addTournamentBonus").onclick=addTournamentBonus;
 let playerTotal = 4;
 let hasLoadedSavedBracket = false;
+let lastRemoteBracketUpdatedAt = null;
+let tournamentSyncPollBusy = false;
 let bracketSaveTimer = null;
 let selectedMatchKey = "";
 
