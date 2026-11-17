@@ -400,7 +400,7 @@ $("tournamentCallsToggle").onclick=()=>setTournamentCalls(liveState?.slot_calls_
 async function saveBracketOnline(){
  const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
  if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return false;}
- const payload={name:$("eventName").value.trim()||"Tournament",count:playerTotal,rounds};
+ const payload={name:$("eventName").value.trim()||"Tournament",count:Number($("playerCount").value)||4,player_count:playerTotal,rounds};
  try{
   const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});
   const msg=await res.text();
@@ -415,7 +415,8 @@ async function saveBracketOnline(){
 function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
 function restoreSavedBracket(data){
  if(!data)return;
- playerTotal=Number(data.count)||4;
+ const savedCapacity=Number(liveState?.max_players)||Number(data.count)||Number($("playerCount").value)||4;
+ playerTotal=(data.rounds?.[0]||[]).flatMap(match=>[match.a,match.b]).filter(Boolean).length;
  if(Array.isArray(data.rounds)&&data.rounds.length){
   rounds=data.rounds.map(round=>round.map(match=>{const normalize=value=>{if(!value)return null;if(typeof value==="string")return {username:value,game:""};const rawName=value.username??value.name??value.display_name??"";const username=typeof rawName==="string"?rawName:(rawName&&typeof rawName==="object"?(rawName.username||rawName.name||rawName.display_name||rawName.slug||""):"");return {...value,username:String(username),game:String(value.game||"")};};const a=normalize(match.a),b=normalize(match.b),w=normalize(match.winner);const winner=w?(a&&a.username===w.username&&a.game===w.game?a:b&&b.username===w.username&&b.game===w.game?b:w):null;return {a,b,winner,payout:match.payout==null?"":String(match.payout),aPayout:match.aPayout==null?"":String(match.aPayout),bPayout:match.bPayout==null?"":String(match.bPayout)};}));
  }else{
@@ -423,7 +424,7 @@ function restoreSavedBracket(data){
   rounds=Array.from({length:Math.log2(size)},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null,payout:""})));
  }
  $("eventName").value=data.name||"Chaos Queen Tournament";
- $("playerCount").value=String(playerTotal);
+ $("playerCount").value=String(savedCapacity);
  const savedEntries=(rounds[0]||[]).flatMap(match=>[match.a,match.b]).map((p,index)=>p?({username:typeof p==="string"?p:(p.username||p.name||p.display_name||""),game:p.game||"",buy:p.buy==null?"":String(p.buy),casino:p.casino||"Rainbet",bonusType:p.bonusType||"Regular"}):({username:"Player "+(index+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
  if(savedEntries.length)writeEntryPlayers(savedEntries);
  $("bracketTitle").textContent=data.name||"Tournament Bracket";
