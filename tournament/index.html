@@ -381,10 +381,18 @@ $("tournamentCallsToggle").onclick=()=>setTournamentCalls(liveState?.slot_calls_
 
 async function saveBracketOnline(){
  const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
- if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return;}
+ if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return false;}
  const payload={name:$("eventName").value.trim()||"Tournament",count:playerTotal,rounds};
- try{const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});const msg=await res.text();$("setupStatus").textContent=msg;}
- catch(e){$("setupStatus").textContent="Bracket is on this screen, but the online save failed. Please try Save bracket again.";}
+ try{
+  const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});
+  const msg=await res.text();
+  if(!res.ok)throw new Error(msg||"The online bracket save was rejected.");
+  $("setupStatus").textContent=msg;
+  return true;
+ }catch(e){
+  $("setupStatus").textContent="The game is on this screen, but it did NOT save online: "+(e.message||"Please sign in again and retry.");
+  return false;
+ }
 }
 function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
 function restoreSavedBracket(data){
@@ -425,7 +433,7 @@ function renderEntryPlayers(){
  const players=namesFromInput();
  const entryKey=p=>String(p?.username||"").trim().toLowerCase()+"|"+String(p?.game||"").trim().toLowerCase();
  list.innerHTML=players.length?players.map((p,i)=>{const placeholder=isEntryPlaceholder(p),alreadyAdded=bracketAddedEntries.some(x=>entryKey(x)===entryKey(p));const meta=placeholder?"Waiting for player details":(escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular"));const buyControl=placeholder?"":'<label class="entry-buy-edit">Buy-in (C$) <input type="number" min="0" step="0.01" value="'+(p.buy!==""&&p.buy!=null&&Number.isFinite(Number(p.buy))&&Number(p.buy)>0?Number(p.buy).toFixed(2):"")+'" data-buy-entry="'+i+'" aria-label="Buy-in for '+escapeHtml(p.username)+'" style="width:105px;padding:6px;border-radius:8px;border:1px solid #526080;background:#10182a;color:white"></label>';return '<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+meta+'</div>'+buyControl+'</div><div class="entry-actions">'+(placeholder?'':(alreadyAdded?'<button class="entry-duplicate" type="button" disabled>✓ ADDED</button>':'<button class="entry-duplicate" type="button" data-add-bracket-entry="'+i+'">＋ ADD TO BRACKET</button>'))+'<button class="entry-remove" type="button" data-remove-entry="'+i+'">REMOVE</button></div></div>';}).join(""):'<span class="hint">No player spots yet.</span>';
- list.querySelectorAll("[data-add-bracket-entry]").forEach(btn=>btn.onclick=()=>{
+ list.querySelectorAll("[data-add-bracket-entry]").forEach(btn=>btn.onclick=async()=>{
    const index=Number(btn.dataset.addBracketEntry),player=namesFromInput()[index];
    if(!player||isEntryPlaceholder(player))return;
    const key=entryKey(player);
@@ -444,9 +452,10 @@ function renderEntryPlayers(){
    $("tournament").classList.remove("hidden");
    tournamentIsActive=true;
    updateStartEndButton();
-   $("setupStatus").textContent=player.username+" added directly to the bracket ("+playerTotal+"/"+limit+").";
-   queueBracketSave();
    renderEntryPlayers();
+   const saved=await saveBracketOnline();
+   if(saved)$("setupStatus").textContent=player.username+" added and saved to the shared bracket ("+playerTotal+"/"+limit+").";
+   else $("setupStatus").textContent+=" Refresh/sign in before adding more so the other devices stay in sync.";
   });
   list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=async()=>{
   const a=namesFromInput(),index=Number(btn.dataset.removeEntry),player=a[index];if(!player)return;
@@ -516,7 +525,7 @@ $("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playe
 $("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
 function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function buildBracket(list){
- playerTotal=list.length;const entries=list.map(p=>typeof p==="string"?{username:p,game:""}:{...p,username:String(p.username||p.name||""),game:String(p.game||""),buy:p.buy==null?"":String(p.buy),casino:String(p.casino||"Rainbet"),bonusType:String(p.bonusType||"Regular")});const size=2**Math.ceil(Math.log2(playerTotal));const roundCount=Math.log2(size);
+ playerTotal=list.length;const entries=list.map(p=>typeof p==="string"?{username:p,game:""}:{...p,username:String(p.username||p.name||""),game:String(p.game||""),buy:p.buy==null?"":String(p.buy),casino:String(p.casino||"Rainbet"),bonusType:String(p.bonusType||"Regular")});const size=2**Math.ceil(Math.log2(Math.max(2,playerTotal)));const roundCount=Math.log2(size);
  rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null,payout:""})));
  const byeCount=size-playerTotal,matchOrder=shuffle(Array.from({length:size/2},(_,i)=>i));let cursor=0;
  const byeMatches=new Set(matchOrder.slice(0,byeCount));
