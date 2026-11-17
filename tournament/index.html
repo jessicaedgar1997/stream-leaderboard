@@ -235,7 +235,8 @@ async function applyStaffView(){
  }
  ["ownerControls","bracketLoadControls","slotCallControls","tournamentBonusAdmin","setup"].forEach(id=>{const el=$(id);if(el)el.hidden=!canManageTournament;});
  document.querySelectorAll("[data-manager-only]").forEach(el=>el.hidden=!canManageTournament);
- // The page starts its shared-data refresh separately; do not block manager verification on a second copy.
+ // Manager verification can finish after the first public snapshot. Reload once access is known so saved entries are merged with the correct permissions.
+ if(canManageTournament)await refreshLivePlayers(true,false);
 }
 
 function mergeSavedTournamentEntries(saved){
@@ -361,7 +362,11 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   // Merge the saved organizer entries after restoring the bracket so the bracket snapshot cannot overwrite the player list.
   if(canManageTournament&&Array.isArray(snapshot.slot_entries)){
    const restoredCount=mergeSavedTournamentEntries(snapshot.slot_entries);
-   if(restoredCount)$("setupStatus").textContent=restoredCount+" saved Tournament players restored to your list. Add buy-ins before adding anyone to the bracket. 💗💙";
+   if(restoredCount){
+    $("setupStatus").textContent=restoredCount+" saved Tournament players restored to your list. Add buy-ins before adding anyone to the bracket. 💗💙";
+   }else if($("setupStatus").textContent.startsWith("Manager access recognized. Loading your saved Tournament entries…")){
+    $("setupStatus").textContent=snapshot.slot_entries.length?"Your saved Tournament entries are already on the player list.":"No saved Tournament entries are waiting to be restored. Add players from the slot-call queue when ready.";
+   }
   }
  }catch(error){$("liveStatus").textContent="CONNECTION ISSUE";$("entrantList").innerHTML='<span class="hint">Could not load the live player list. Refresh in a moment.</span>';return;}
  $("liveCount").textContent=livePlayers.length+" / "+liveState.max_players;
