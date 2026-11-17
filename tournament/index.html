@@ -196,6 +196,7 @@ let rounds = [];
 let tournamentIsActive = false;
 let liveCalls = [];
 let liveState = null;
+let hasLoadedTournamentEntries = false;
 let canManageTournament = false;
 async function applyStaffView(){
  const session=localStorage.getItem("slotbuddy_kick_session");if(session){try{const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});const d=await r.json();canManageTournament=!!(d.ok&&(d.user?.role==="owner"||d.user?.role==="moderator"));if(canManageTournament)$("liveAdminMessage").textContent="Signed in as a SlotBuddy manager. Full tournament controls are enabled.";}catch{canManageTournament=false;}}
@@ -212,13 +213,13 @@ async function refreshLivePlayers(){
   const queueResponse=await fetch(QUEUE_URL+"?action=snapshot",{cache:"no-store"});
   const queueSnapshot=queueResponse.ok?await queueResponse.json():{calls:[],active_queue:null};
   livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;
-  if($("playerCount")&&snapshot.state?.max_players&&!rounds.length){
+  if($("playerCount")&&snapshot.state?.max_players&&!hasLoadedTournamentEntries){
    const hasLocalDraft=!!localStorage.getItem("chaosQueenTournamentDraft");
    if(!hasLocalDraft){
     $("playerCount").value=String(snapshot.state.max_players);
     resizeEntryPlayers();
    }
-   const current=namesFromInput(),incoming=hasLocalDraft?[]:(snapshot.slot_entries||[]);
+   const current=namesFromInput(),incoming=snapshot.slot_entries||[];
    for(const entry of incoming){
     const exists=current.some(p=>p.username.toLowerCase()===String(entry.caller_name||"").toLowerCase()&&p.game.toLowerCase()===String(entry.game_name||"").toLowerCase());
     if(exists)continue;
@@ -231,7 +232,7 @@ async function refreshLivePlayers(){
    const capacity=supported.find(n=>n>=needed)||32;
    $("playerCount").value=String(capacity);
    while(current.length<capacity)current.push({username:"Player "+(current.length+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
-   writeEntryPlayers(current);updateHint();
+   writeEntryPlayers(current);updateHint();hasLoadedTournamentEntries=true;
   }
   renderTournamentBonuses(snapshot.bonus_entries||[]);updateTournamentCallsToggle();if(!canManageTournament)$("tournamentBonusList").querySelectorAll("button").forEach(btn=>btn.remove());
   const queueStatus=$("slotQueueStatus");if(queueStatus){queueStatus.textContent=queueSnapshot.active_queue==="cozies"?"COZIES CALLS OPEN":queueSnapshot.active_queue==="bonus_hunt"?"BONUS HUNT CALLS OPEN":"CALLS CLOSED";queueStatus.style.color=queueSnapshot.active_queue?"var(--blue)":"var(--pink)";}
