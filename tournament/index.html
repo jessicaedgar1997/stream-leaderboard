@@ -147,18 +147,8 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 </div>
 <div class="setup-grid">
  <div class="field"><label>Duplicate games</label><button id="allowDuplicateGames" class="dark" type="button" aria-pressed="false">DUP: OFF</button><p class="hint">OFF = each player must choose a different game. ON = the same game can be used more than once.</p></div>
- <div class="field"><label for="entriesPerPerson">Entries allowed per person</label><select id="entriesPerPerson"><option value="1">1 entry</option><option value="2">2 entries</option><option value="3">3 entries</option><option value="4">4 entries</option><option value="5">5 entries</option><option value="6">6 entries</option><option value="7">7 entries</option><option value="8">8 entries</option><option value="9">9 entries</option><option value="10">10 entries</option><option value="11">11 entries</option><option value="12">12 entries</option><option value="13">13 entries</option><option value="14">14 entries</option><option value="15">15 entries</option><option value="16">16 entries</option><option value="17">17 entries</option><option value="18">18 entries</option><option value="19">19 entries</option><option value="20">20 entries</option><option value="21">21 entries</option><option value="22">22 entries</option><option value="23">23 entries</option><option value="24">24 entries</option><option value="25">25 entries</option><option value="26">26 entries</option><option value="27">27 entries</option><option value="28">28 entries</option><option value="29">29 entries</option><option value="30">30 entries</option><option value="31">31 entries</option><option value="32">32 entries</option></select><p class="hint">Controls how many bracket spots the same username can take.</p></div>
 </div>
-<div class="setup-grid">
- <div class="field"><label for="entryUsername">Username</label><input id="entryUsername" maxlength="40" placeholder="Kick username"></div>
- <div class="field"><label for="entryBuy">Buy-in (C$)</label><input id="entryBuy" type="number" min="0" step="0.01" placeholder="0.00"></div>
 </div>
-<div class="setup-grid">
- <div class="field"><label for="entryCasino">Casino</label><select id="entryCasino"><option value="Rainbet">🌧️ Rainbet</option><option value="Stake">Stake</option></select></div>
- <div class="field"><label for="entryBonusType">Bonus type</label><select id="entryBonusType"><option value="Super">Super</option><option value="Regular">Regular</option></select></div>
-</div>
-<div class="field"><label for="entryGame">Game</label><input id="entryGame" maxlength="100" placeholder="Slot / game name"></div>
-<div class="actions"><button id="addTournamentPlayer" type="button">＋ Add Player</button></div>
 <div class="entrant-list" id="tournamentEntryList"><span class="hint">No players added yet.</span></div>
 <div class="setup-grid" style="margin-top:14px">
  <div><div class="hint">Players</div><div class="live-count" id="entryCount">0 / 8 players</div></div>
@@ -444,9 +434,6 @@ function renderEntryPlayers(){
    const limit=Number($("playerCount").value)||4;
    if(bracketAddedEntries.length>=limit){$("setupStatus").textContent="The bracket is full ("+limit+" players).";return;}
    if(!player.username.trim()||!player.game.trim()){$("setupStatus").textContent="Enter both a player name and game before adding them.";return;}
-   const entryLimit=Number($("entriesPerPerson").value)||1;
-   const sameName=bracketAddedEntries.filter(p=>p.username.trim().toLowerCase()===player.username.trim().toLowerCase()).length;
-   if(sameName>=entryLimit){$("setupStatus").textContent=player.username+" has reached the limit of "+entryLimit+" entr"+(entryLimit===1?"y":"ies")+".";return;}
    if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"&&bracketAddedEntries.some(p=>p.game.trim().toLowerCase()===player.game.trim().toLowerCase())){$("setupStatus").textContent="Duplicate games are turned OFF. Turn DUP ON to allow this game.";return;}
    if(player.username.length>40||player.game.length>100){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
    bracketAddedEntries.push({...player});
@@ -505,23 +492,6 @@ function updateHint(){
 }
 $("allowDuplicateGames").onclick=()=>{const on=$("allowDuplicateGames").getAttribute("aria-pressed")!=="true";$("allowDuplicateGames").setAttribute("aria-pressed",String(on));$("allowDuplicateGames").textContent="DUP: "+(on?"ON":"OFF");$("allowDuplicateGames").classList.toggle("pink",on);$("setupStatus").textContent=on?"Duplicate games are allowed.":"Duplicate games are blocked.";localStorage.setItem("chaosQueenTournamentDuplicateGames",String(on));};
 const savedDup=localStorage.getItem("chaosQueenTournamentDuplicateGames")==="true";$("allowDuplicateGames").setAttribute("aria-pressed",String(savedDup));$("allowDuplicateGames").textContent="DUP: "+(savedDup?"ON":"OFF");$("allowDuplicateGames").classList.toggle("pink",savedDup);
-const savedEntryLimit=localStorage.getItem("chaosQueenTournamentEntriesPerPerson");if(savedEntryLimit)$("entriesPerPerson").value=savedEntryLimit;
-$("entriesPerPerson").addEventListener("change",()=>localStorage.setItem("chaosQueenTournamentEntriesPerPerson",$("entriesPerPerson").value));
-$("addTournamentPlayer").onclick=()=>{
- const players=namesFromInput(),limit=Number($("playerCount").value),username=$("entryUsername").value.trim(),game=$("entryGame").value.trim(),buy=$("entryBuy").value,casino=$("entryCasino").value,bonusType=$("entryBonusType").value;
- if(!username){$("setupStatus").textContent="Enter a username first.";return;}
- if(!game){$("setupStatus").textContent="Enter the player's game.";return;}
- if(buy===""||!Number.isFinite(Number(buy))||Number(buy)<0){$("setupStatus").textContent="Enter a valid buy-in amount.";return;}
- const sameName=players.filter(p=>!isEntryPlaceholder(p)&&p.username.toLowerCase()===username.toLowerCase()).length;
- const entryLimit=Number($("entriesPerPerson").value)||1;
- if(sameName>=entryLimit){$("setupStatus").textContent=username+" has reached the limit of "+entryLimit+" entr"+(entryLimit===1?"y":"ies")+".";return;}
- if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"&&players.some(p=>!isEntryPlaceholder(p)&&p.game.trim().toLowerCase()===game.toLowerCase())){$("setupStatus").textContent="That game is already entered. Turn DUP ON to allow duplicate games.";return;}
- const slot=players.findIndex(isEntryPlaceholder);
- if(slot<0){$("setupStatus").textContent="The bracket is full. Increase the bracket size to add more players.";return;}
- players[slot]={username:username,game:game,buy:Number(buy).toFixed(2),casino:casino,bonusType:bonusType};
- writeEntryPlayers(players);$("entryUsername").value="";$("entryBuy").value="";$("entryGame").value="";$("entryUsername").focus();
- $("setupStatus").textContent=username+" added to the tournament.";updateHint();
-};
 $("playerCount").addEventListener("change",async()=>{
  const size=Number($("playerCount").value)||4;
  const previous=Number(liveState?.max_players)||4;
