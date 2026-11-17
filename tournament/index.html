@@ -658,7 +658,7 @@ $("build").onclick=()=>{
  const entryLimit=Number($("entriesPerPerson").value)||1;
  const usernameCounts={};list.forEach(p=>{const k=p.username.toLowerCase();usernameCounts[k]=(usernameCounts[k]||0)+1;});
  const overLimit=Object.entries(usernameCounts).find(([,count])=>count>entryLimit);
- if(overLimit){$("setupStatus").textContent=overLimit[0]+" has more than the allowed "+entryLimit+" entr"+(entryLimit===1?"y":"ies already added.";return;}
+ if(overLimit){$("setupStatus").textContent=overLimit[0]+" has more than the allowed "+entryLimit+" entr"+(entryLimit===1?"y":"ies")+" already added.";return;}
  if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"){const gameNames=list.map(p=>p.game.trim().toLowerCase());if(new Set(gameNames).size!==gameNames.length){$("setupStatus").textContent="Duplicate games are turned OFF. Each player must have a different game, or turn DUP ON.";return;}}
  if(list.some(p=>p.username.length>40||p.game.length>100)){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
  buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=list.length+" of "+required+" player spots • Single elimination • Use Shuffle Players to reshuffle."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="All added players are in the bracket. Press SHUFFLE PLAYERS whenever you're ready!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
