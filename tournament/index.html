@@ -392,9 +392,20 @@ $("testKick").onclick=async()=>{
 };
 refreshKickStatus();
 applyStaffView();refreshLivePlayers();
-sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"slot_calls"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"cozies_queue"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"bonus_hunt_queue"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"stream_call_settings"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"tournament_slot_entries"},()=>refreshLivePlayers(true,false)).on("postgres_changes",{event:"*",schema:"public",table:"tournament_bonus_entries"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"tournament_bracket_state"},()=>refreshLivePlayers(false,true)).subscribe((status,error)=>{if(status==="SUBSCRIBED")console.info("Tournament live sync connected");else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED")console.warn("Tournament live sync status:",status,error||"");});
-// Poll as a fallback when Supabase Realtime is unavailable or delayed. Only a changed server timestamp replaces the local bracket.
-setInterval(async()=>{if(document.visibilityState!=="visible"||tournamentSyncPollBusy)return;tournamentSyncPollBusy=true;try{const response=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});if(response.ok){const snapshot=await response.json();if(snapshot.bracket&&snapshot.bracket_updated_at&&(snapshot.bracket_updated_at!==lastRemoteBracketUpdatedAt||!hasLoadedSavedBracket))await refreshLivePlayers(false,true);}}catch(error){console.warn("Tournament sync check failed:",error);}finally{tournamentSyncPollBusy=false;}},4000);
+// Listen to every published public-table change so shared Tournament data is not missed.
+sbClient.channel("tournament-live-list")
+ .on("postgres_changes",{event:"*",schema:"public"},(payload)=>{
+  const table=payload?.table||"";
+  refreshLivePlayers(table==="tournament_slot_entries",table==="tournament_bracket_state");
+ })
+ .subscribe((status,error)=>{
+  if(status==="SUBSCRIBED"){
+   console.info("Tournament live sync connected");
+   refreshLivePlayers(false,true);
+  }else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
+   console.warn("Tournament live sync status:",status,error||"");
+  }
+ });
 function renderTournamentBonuses(items){
  const list=$("tournamentBonusList");if(!list)return;
  list.innerHTML=items.length?items.map(x=>"<div class='entrant' style='border-radius:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap'><strong>"+safeText(x.caller_name)+"</strong> · "+safeText(x.bonus_type||"Regular")+" · "+safeText(x.bonus_name)+" · Spin "+Number(x.spin_amount||0).toFixed(2)+" · Paid "+Number(x.payout_amount||0).toFixed(2)+" <button class='dark' style='padding:4px 8px' onclick='deleteTournamentBonus("+Number(x.id)+")'>DELETE</button></div>").join(""):"<span class='hint'>No tournament bonus buys recorded yet.</span>";
