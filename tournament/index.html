@@ -626,13 +626,13 @@ function buildBracket(list){
  rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null,payout:""})));
  const byeCount=size-playerTotal,matchOrder=shuffle(Array.from({length:size/2},(_,i)=>i));let cursor=0;
  const byeMatches=new Set(matchOrder.slice(0,byeCount));
- rounds[0].forEach((m,i)=>{m.a=entries[cursor++]||null;if(byeMatches.has(i)){m.b=null;m.winner=playerTotal>1?m.a:null;}else{m.b=entries[cursor++]||null;}});
+ rounds[0].forEach((m,i)=>{m.a=entries[cursor++]||null;if(byeMatches.has(i)){m.b=null;m.winner=null;}else{m.b=entries[cursor++]||null;}});
  propagate(0);renderBracket();
 }
 function propagate(fromRound){
  for(let r=Math.max(1,fromRound+1);r<rounds.length;r++){
   const prev=rounds[r-1];
-  rounds[r].forEach((m,i)=>{const nextA=prev[i*2]?.winner||null,nextB=prev[i*2+1]?.winner||null;const changed=JSON.stringify(m.a)!==JSON.stringify(nextA)||JSON.stringify(m.b)!==JSON.stringify(nextB);m.a=nextA;m.b=nextB;if(changed){m.winner=null;m.payout="";}if(m.a&&!m.b)m.winner=m.a;else if(m.b&&!m.a)m.winner=m.b;});
+  rounds[r].forEach((m,i)=>{const nextA=prev[i*2]?.winner||null,nextB=prev[i*2+1]?.winner||null;const changed=JSON.stringify(m.a)!==JSON.stringify(nextA)||JSON.stringify(m.b)!==JSON.stringify(nextB);m.a=nextA;m.b=nextB;if(changed){m.winner=null;m.payout="";}});
  }
 }
 function chooseWinner(r,i,side){
