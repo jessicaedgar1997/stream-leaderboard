@@ -1008,6 +1008,17 @@ document.addEventListener("click",async function(event){
 #siteAutumnLeaves .site-autumn-leaf:nth-child(3n+2){color:#a84b25}
 @keyframes siteAutumnFall{0%{opacity:0;transform:translate3d(0,-12vh,0) rotate(0deg) scale(.75)}8%{opacity:.92}22%{transform:translate3d(var(--d1),18vh,0) rotate(155deg) scale(1)}43%{transform:translate3d(var(--d2),42vh,0) rotate(390deg) scale(.9)}65%{transform:translate3d(var(--d3),67vh,0) rotate(590deg) scale(1.08)}84%{opacity:.9;transform:translate3d(var(--d4),91vh,0) rotate(810deg) scale(.92)}100%{opacity:0;transform:translate3d(var(--d5),116vh,0) rotate(1080deg) scale(.72)}}
 @media(prefers-reduced-motion:reduce){#siteAutumnLeaves .site-autumn-leaf{animation-duration:45s}}
+
+/* Keep every label and number inside the tournament brackets black and readable. */
+.bracket,.bracket *{color:#000!important}
+.bracket .match{background:#f5f7fb!important;border-color:#aebbd0!important;box-shadow:none!important}
+.bracket .match-label{color:#000!important}
+.bracket .round h3{color:#000!important}
+.bracket .player,.bracket .player.empty:not(:empty){background:#e7edf7!important;border-color:#aebbd0!important;color:#000!important}
+.bracket .player.winner{background:#fce7f3!important;border-color:var(--pink)!important;color:#000!important}
+.bracket .player small{color:#000!important}
+.bracket .bracket-payout-editor label{color:#000!important}
+.bracket .bracket-payout-save{background:#e7edf7!important;border:1px solid #aebbd0!important;color:#000!important}
 </style>
 <div id="siteAutumnLeaves" aria-hidden="true"></div>
 <script id="site-autumn-leaves-script">
