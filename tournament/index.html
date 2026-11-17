@@ -223,8 +223,13 @@ async function refreshLivePlayers(){
     if(exists)continue;
     const slot=current.findIndex(isEntryPlaceholder);
     const player={username:entry.caller_name,game:entry.game_name,buy:Number(entry.buy_amount||0).toFixed(2),casino:entry.casino||"Rainbet",bonusType:entry.bonus_type||"Regular"};
-    if(slot>=0)current[slot]=player;else if(current.length<Number($("playerCount").value))current.push(player);
+    if(slot>=0)current[slot]=player;else current.push(player);
    }
+   const supported=[4,6,8,10,12,14,16,32];
+   const needed=Math.max(current.length,Number($("playerCount").value)||4);
+   const capacity=supported.find(n=>n>=needed)||32;
+   $("playerCount").value=String(capacity);
+   while(current.length<capacity)current.push({username:"Player "+(current.length+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
    writeEntryPlayers(current);updateHint();
   }
   renderTournamentBonuses(snapshot.bonus_entries||[]);updateTournamentCallsToggle();if(!canManageTournament)$("tournamentBonusList").querySelectorAll("button").forEach(btn=>btn.remove());
@@ -261,6 +266,8 @@ $("loadChatPlayers").onclick=async()=>{
  $("setup").scrollIntoView({behavior:"smooth",block:"start"});
 };
 $("refreshPlayers").onclick=refreshLivePlayers;
+// Automatically sync Kick !slot entries into the tournament player fields.
+setInterval(()=>{if(!document.hidden)refreshLivePlayers();},5000);
 async function adminSlotAction(action,extra={}){
  const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
  if(!session_key){$("slotAdminMessage").textContent="Sign in with Kick on SlotBuddy first.";return;}
