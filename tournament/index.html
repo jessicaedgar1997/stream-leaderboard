@@ -982,21 +982,7 @@ function renderBracket(){
   renderBracket();queueBracketSave();
   $("setupStatus").textContent=playerLabel(player)+" buy amount and payout updated and saved.";
  }));
- $("bracket").querySelectorAll("[data-edit-player]").forEach(btn=>btn.addEventListener("click",()=>{
-   const selector='[data-player-editor="'+btn.dataset.editPlayer+'"][data-round="'+btn.dataset.round+'"][data-match="'+btn.dataset.match+'"]';
-   const editor=$("bracket").querySelector(selector);if(editor)editor.hidden=!editor.hidden;
-  }));
-  $("bracket").querySelectorAll("[data-save-player-edit]").forEach(btn=>btn.addEventListener("click",()=>{
-   const r=Number(btn.dataset.round),i=Number(btn.dataset.match),side=btn.dataset.savePlayerEdit,player=rounds[r]?.[i]?.[side];
-   const selector='[data-player-editor="'+side+'"][data-round="'+r+'"][data-match="'+i+'"]';
-   const editor=$("bracket").querySelector(selector);if(!player||!editor)return;
-   const buy=editor.querySelector("[data-player-buy]").value.trim(),payout=editor.querySelector("[data-player-payout]").value.trim();
-   if([buy,payout].some(value=>value!==""&&(!Number.isFinite(Number(value))||Number(value)<0))){$("setupStatus").textContent="Enter valid amounts of $0 or more for this player.";return;}
-   player.buy=buy===""?"":Number(buy).toFixed(2);
-   player.payout=payout===""?"":Number(payout).toFixed(2);
-   renderBracket();queueBracketSave();
-   $("setupStatus").textContent=playerLabel(player)+" buy amount and payout updated and saved.";
-  }));
+
   $("bracket").querySelectorAll("[data-save-bracket-payout]").forEach(btn=>btn.addEventListener("click",()=>saveBracketMatchPayout(Number(btn.dataset.round),Number(btn.dataset.match),btn)));
  const champ=rounds[rounds.length-1][0]?.winner;
  $("champion").classList.toggle("hidden",!champ);
