@@ -625,8 +625,8 @@ function tournamentSlotLabel(player){
  let slot=0;
  for(const match of (rounds[0]||[])){
   for(const candidate of [match.a,match.b]){
-   if(!candidate)continue;
    slot++;
+   if(!candidate)continue;
    const candidateName=typeof candidate==="string"?candidate:(candidate.username??candidate.name??candidate.display_name??"");
    if(String(candidateName||"").toLowerCase()===key)return "Player "+slot;
   }
