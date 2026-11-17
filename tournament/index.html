@@ -216,14 +216,12 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   const queueResponse=await fetch(QUEUE_URL+"?action=snapshot",{cache:"no-store"});
   const queueSnapshot=queueResponse.ok?await queueResponse.json():{calls:[],active_queue:null};
   livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;
-  if($("playerCount")&&snapshot.state?.max_players&&(!hasLoadedTournamentEntries||syncEntries)){
-   const hasLocalDraft=!!localStorage.getItem("chaosQueenTournamentDraft");
-   if(!hasLocalDraft){
+  if($("playerCount")&&snapshot.state?.max_players){
+   // Shared database size is authoritative on every device, including over stale local drafts.
+   if(Number($("playerCount").value)!==Number(snapshot.state.max_players)){
     $("playerCount").value=String(snapshot.state.max_players);
     resizeEntryPlayers();
    }
-   // Always merge server entries, even when this browser has a local draft.
-   // This lets Jessica and Corey see each other's accepted !slot entries live.
    const current=namesFromInput(),incoming=snapshot.slot_entries||[];
    const entryKey=entry=>[String(entry.caller_name||entry.username||"").trim().toLowerCase(),String(entry.game_name||entry.game||"").trim().toLowerCase(),String(entry.bonus_type||entry.bonusType||"Regular")].join("|");
    const incomingKeys=new Set(incoming.map(entryKey));
@@ -241,11 +239,14 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
     const slot=current.findIndex(isEntryPlaceholder);
     if(slot>=0)current[slot]=player;else current.push(player);
    }
-   const supported=[4,6,8,10,12,14,16,32];
-   const needed=Math.max(current.length,Number($("playerCount").value)||4);
-   const capacity=supported.find(n=>n>=needed)||32;
-   $("playerCount").value=String(capacity);
+   const capacity=Number(snapshot.state.max_players)||4;
    while(current.length<capacity)current.push({username:"Player "+(current.length+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
+   while(current.length>capacity){
+    let removeAt=-1;
+    for(let i=current.length-1;i>=0;i--){if(isEntryPlaceholder(current[i])){removeAt=i;break;}}
+    if(removeAt<0)break;
+    current.splice(removeAt,1);
+   }
    writeEntryPlayers(current);updateHint();lastRemoteTournamentEntryKeys=incomingKeys;hasLoadedTournamentEntries=true;
   }
   renderTournamentBonuses(snapshot.bonus_entries||[]);updateTournamentCallsToggle();if(!canManageTournament)$("tournamentBonusList").querySelectorAll("button").forEach(btn=>btn.remove());
