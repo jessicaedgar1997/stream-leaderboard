@@ -288,7 +288,18 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   const remoteBracketUpdatedAt=snapshot.bracket_updated_at||null;
   const remoteBracketChanged=remoteBracketUpdatedAt!==lastRemoteBracketUpdatedAt;
   if(!bracketClearInProgress&&snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
-   restoreSavedBracket(snapshot.bracket);hasLoadedSavedBracket=true;lastRemoteBracketUpdatedAt=remoteBracketUpdatedAt;
+   let localBracketCache=null;try{localBracketCache=JSON.parse(localStorage.getItem("slotbuddyTournamentBracketCache")||"null");}catch(e){}
+   const localSavedAt=Number(localBracketCache?._localSavedAt)||0;
+   const remoteSavedAt=Date.parse(remoteBracketUpdatedAt||"")||0;
+   if(localBracketCache&&Array.isArray(localBracketCache.rounds)&&localBracketCache.rounds.length&&localSavedAt>remoteSavedAt){
+    restoreSavedBracket(localBracketCache);
+    if(canManageTournament)queueBracketSave();
+    $("setupStatus").textContent="Your newest bracket changes were restored from this device and are syncing online. 💗💙";
+   }else{
+    restoreSavedBracket(snapshot.bracket);
+    cacheTournamentBracket(snapshot.bracket,false);
+   }
+   hasLoadedSavedBracket=true;lastRemoteBracketUpdatedAt=remoteBracketUpdatedAt;
    const targetSize=Number($("playerCount").value)||Number(snapshot.bracket.count)||Number(snapshot.state?.max_players)||4;
    const savedSize=Number(snapshot.bracket.count)||((snapshot.bracket.rounds?.[0]?.length||0)*2);
    if(savedSize&&savedSize!==targetSize){
@@ -465,12 +476,15 @@ async function setTournamentCalls(enabled,button){
 }
 $("tournamentCallsToggle").onclick=()=>setTournamentCalls(liveState?.slot_calls_enabled===false,$("tournamentCallsToggle"));
 
+function cacheTournamentBracket(payload,localEdit=true){
+ try{localStorage.setItem("slotbuddyTournamentBracketCache",JSON.stringify({...payload,_localSavedAt:localEdit?Date.now():0}));}catch(e){}
+}
 async function saveBracketOnline(){
- const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
- if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return false;}
  const payload={name:$("eventName").value.trim()||"Tournament",count:Number($("playerCount").value)||4,player_count:playerTotal,rounds};
- // Keep a local copy so this browser can paint the last saved bracket immediately on the next visit.
- try{localStorage.setItem("slotbuddyTournamentBracketCache",JSON.stringify(payload));}catch(e){}
+ // Save locally before checking login so a refresh never wipes the bracket on this device.
+ cacheTournamentBracket(payload,true);
+ const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!key&&!session_key){$("setupStatus").textContent="Bracket saved on this device. Sign in with Kick to sync it online.";return false;}
  try{
   const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});
   const msg=await res.text();
@@ -482,7 +496,11 @@ async function saveBracketOnline(){
   return false;
  }
 }
-function queueBracketSave(){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);}
+function queueBracketSave(){
+ const payload={name:$("eventName").value.trim()||"Tournament",count:Number($("playerCount").value)||4,player_count:playerTotal,rounds};
+ cacheTournamentBracket(payload,true);
+ clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);
+}
 function restoreSavedBracket(data){
  if(!data)return;
  const savedCapacity=Number($("playerCount").value)||Number(data.count)||Number(liveState?.max_players)||4;
@@ -505,7 +523,6 @@ function restoreSavedBracket(data){
  renderBracket();
  
  $("setupStatus").textContent="Your saved tournament bracket has been restored. 💗💙";
- try{localStorage.setItem("slotbuddyTournamentBracketCache",JSON.stringify(data));}catch(e){}
 }
 const saved = localStorage.getItem("chaosQueenTournamentDraft");
 if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
