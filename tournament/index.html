@@ -458,7 +458,7 @@ function renderEntryPlayers(){
    }));
    if(removedFromBracket)renderBracket();
   }
-  a[index]={...a[index],username:"",game:"",buy:""};writeEntryPlayers(a);resizeEntryPlayers();updateHint();
+  a[index]={...a[index],username:"Player "+(index+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"};writeEntryPlayers(a);resizeEntryPlayers();updateHint();
   if(removedFromBracket)await saveBracketOnline();
   $("setupStatus").textContent="Player "+(index+1)+" removed. The saved bracket is being updated on both pages.";
  });
