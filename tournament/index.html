@@ -140,7 +140,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <section class="panel" id="tournamentBonusTracker"><h2>🎁 TOURNAMENT BONUS-BUY TRACKER</h2><div id="tournamentBonusAdmin" hidden><p class="hint">Tournament-mode <strong>!slot</strong> calls appear here automatically. Add <strong>super</strong> or <strong>reg</strong> at the end of the game name to set the type; calls without a suffix default to Regular. Spin amount and payout are set to $0 automatically.</p><div class="setup-grid"><div class="field"><label for="buyPlayer">Player / Kick username</label><input id="buyPlayer" maxlength="40" placeholder="Player name"></div><div class="field"><label for="buyType">Bonus type</label><select id="buyType"><option value="Regular">Regular</option><option value="Super">Super</option><option value="Epic">Epic</option></select></div></div><div class="setup-grid"><div class="field"><label for="buyGame">Bonus / Game name</label><input id="buyGame" maxlength="100" placeholder="Game name"></div><div class="field"><label for="buySpin">Spin amount ($)</label><input id="buySpin" type="number" min="0" step="0.01" placeholder="2.00"></div></div><div class="field"><label for="buyPayout">Payout ($)</label><input id="buyPayout" type="number" min="0" step="0.01" placeholder="0.00"></div><div class="actions"><button id="addTournamentBonus">ADD BONUS BUY</button></div><p class="status" id="bonusBuyStatus" role="status"></p></div><div id="tournamentBonusList" class="entrant-list"><span class="hint">Loading bonus buys…</span></div></section>
 <section class="panel setup" id="setup" hidden>
 <h2>🏆 Tournament player entry</h2>
-<p class="hint">Add each player with their buy-in, casino, and game. Your pink-and-blue bracket stays the same.</p>
+<p class="hint">Players from the slot-call queue can be added straight into the bracket. Edit buy-ins on the player list when needed.</p>
 <div class="setup-grid">
  <div class="field"><label for="eventName">Tournament name</label><input id="eventName" maxlength="60" value="Chaos Queen Tournament" placeholder="Name your tournament"></div>
  <div class="field"><label for="playerCount">Bracket size</label><select id="playerCount"><option value="4">4 Players</option><option value="6">6 Players</option><option value="8">8 Players</option><option value="10">10 Players</option><option value="12">12 Players</option><option value="14">14 Players</option><option value="16">16 Players</option><option value="32">32 Players</option></select></div>
@@ -153,7 +153,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
  <div><div class="hint">Players</div><div class="live-count" id="entryCount">0 / 8 players</div></div>
  <div><div class="hint">Open spots</div><div class="live-status" id="entrySpots">8 open spots</div></div>
 </div>
-<p class="hint" id="countHint">Add 8 players with their slot and buy. They will be shuffled into the bracket.</p>
+<p class="hint" id="countHint">Add players from the slot-call queue, then press ADD TO BRACKET beside each name.</p>
 <textarea id="players" spellcheck="false" hidden aria-hidden="true"></textarea>
 <div class="actions tournament-controls"></div>
 <div class="actions"><button id="build" type="button">🎲 Start Tournament</button><button id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
