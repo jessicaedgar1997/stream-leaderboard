@@ -213,11 +213,12 @@ async function refreshLivePlayers(){
   const queueSnapshot=queueResponse.ok?await queueResponse.json():{calls:[],active_queue:null};
   livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;
   if($("playerCount")&&snapshot.state?.max_players&&!rounds.length){
-   if(!localStorage.getItem("chaosQueenTournamentDraft")){
+   const hasLocalDraft=!!localStorage.getItem("chaosQueenTournamentDraft");
+   if(!hasLocalDraft){
     $("playerCount").value=String(snapshot.state.max_players);
     resizeEntryPlayers();
    }
-   const current=namesFromInput(),incoming=snapshot.slot_entries||[];
+   const current=namesFromInput(),incoming=hasLocalDraft?[]:(snapshot.slot_entries||[]);
    for(const entry of incoming){
     const exists=current.some(p=>p.username.toLowerCase()===String(entry.caller_name||"").toLowerCase()&&p.game.toLowerCase()===String(entry.game_name||"").toLowerCase());
     if(exists)continue;
@@ -414,7 +415,7 @@ function renderEntryPlayers(){
  const list=$("tournamentEntryList");if(!list)return;
  const players=namesFromInput();
  list.innerHTML=players.length?players.map((p,i)=>{const placeholder=isEntryPlaceholder(p);const meta=placeholder?"Waiting for player details":(escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular"));const buyControl=placeholder?"":'<label class="entry-buy-edit">Buy-in (C$) <input type="number" min="0" step="0.01" value="'+(p.buy!==""&&Number.isFinite(Number(p.buy))?Number(p.buy).toFixed(2):"0.00")+'" data-buy-entry="'+i+'" aria-label="Buy-in for '+escapeHtml(p.username)+'" style="width:105px;padding:6px;border-radius:8px;border:1px solid #526080;background:#10182a;color:white"></label>';return '<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+meta+'</div>'+buyControl+'</div><div class="entry-actions"><button class="entry-remove" type="button" data-remove-entry="'+i+'">REMOVE</button></div></div>';}).join(""):'<span class="hint">No player spots yet.</span>';
- list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=()=>{const a=namesFromInput(),index=Number(btn.dataset.removeEntry);if(!a[index])return;a[index]={...a[index],username:"Player "+(index+1),game:"",buy:""};writeEntryPlayers(a);updateHint();});
+ list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=()=>{const a=namesFromInput(),index=Number(btn.dataset.removeEntry);if(!a[index])return;a[index]={...a[index],username:"Player "+(index+1),game:"",buy:""};writeEntryPlayers(a);updateHint();$("setupStatus").textContent="Player "+(index+1)+" removed. That bracket spot is still open.";});
  list.querySelectorAll("[data-buy-entry]").forEach(input=>input.onchange=()=>{const a=namesFromInput(),index=Number(input.dataset.buyEntry),value=input.value;if(!Number.isFinite(Number(value))||Number(value)<0){input.value=Number(a[index]?.buy||0).toFixed(2);return;}if(a[index])a[index].buy=Number(value).toFixed(2);writeEntryPlayers(a);updateHint();});
  if($("addTournamentPlayer"))$("addTournamentPlayer").disabled=players.length>=Number($("playerCount").value)&&!players.some(isEntryPlaceholder);
 }
