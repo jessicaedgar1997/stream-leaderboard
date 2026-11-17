@@ -611,7 +611,7 @@ async function announceTournamentWinner(r,i){
  const match=rounds[r]?.[i];if(!match?.winner||!match.a||!match.b)return;
  const state=getTournamentChatState();
  const winner=tournamentPlayerIdentity(match.winner),loser=tournamentPlayerIdentity(match.winner===match.a?match.b:match.a);
- const key=r+":"+i+":"+winner+":"+loser;
+ const key=r+":"+i+":"+winner+":"+loser+":"+String(match.aPayout??"")+":"+String(match.bPayout??"");
  if(state.winners[key])return;
  const aLine=tournamentPlayerResultLine(match.a,match.aPayout);
  const bLine=tournamentPlayerResultLine(match.b,match.bPayout);
