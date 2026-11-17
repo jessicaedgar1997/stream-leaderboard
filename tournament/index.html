@@ -426,7 +426,7 @@ function renderEntryPlayers(){
     const limit=Number($("playerCount").value)||4;
     if(existing.length>=limit)throw new Error("The bracket is full ("+limit+" players).");
     if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"&&existing.some(p=>String(p.game||"").trim().toLowerCase()===player.game.trim().toLowerCase()))throw new Error("Duplicate games are turned OFF. Turn DUP ON to allow this game.");
-    if(!rounds.length||!rounds[0]?.length)buildBracket(existing);
+    if(!rounds.length||!rounds[0]?.length)buildBracket(existing,limit);
     const slots=(rounds[0]||[]).flatMap((match,index)=>[{match,index,side:"a"},{match,index,side:"b"}]);
     const openSlot=slots.find(slot=>!slot.match[slot.side]);
     if(!openSlot){
@@ -504,6 +504,26 @@ $("playerCount").addEventListener("change",async()=>{
  const previous=Number(liveState?.max_players)||4;
  resizeEntryPlayers();updateHint();
  await adminAction("size",{value:size});
+ if(!$("liveAdminMessage").textContent.startsWith("Tournament size set to "+size+" players.")){
+  $("playerCount").value=String(previous);resizeEntryPlayers();updateHint();
+  $("setupStatus").textContent="Bracket size was not saved online. Please try again.";
+  return;
+ }
+ if(rounds.length){
+  const nextPlayers=[...bracketAddedEntries];
+  if(nextPlayers.length>size){
+   $("playerCount").value=String(previous);resizeEntryPlayers();updateHint();
+   $("setupStatus").textContent="You already added "+nextPlayers.length+" players. Remove players before reducing the bracket size.";
+   return;
+  }
+  buildBracket(nextPlayers,size);
+  playerTotal=nextPlayers.length;
+  $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
+  $("bracketInfo").textContent=playerTotal+" of "+size+" player spots • Bracket resized.";
+  $("setupStatus").textContent="Bracket layout updated to "+size+" player spots. Existing match results were reset; your manually added players were kept.";
+  queueBracketSave();
+ }
+});
  if(!$("liveAdminMessage").textContent.startsWith("Tournament size set to "+size+" players.")){
   $("playerCount").value=String(previous);resizeEntryPlayers();updateHint();
   $("setupStatus").textContent="Bracket size was not saved online. Please try again.";
@@ -595,9 +615,9 @@ async function announceTournamentWinner(r,i){
  const message=(isFinal?"🏆 TOURNAMENT CHAMPION: ":"🏆 "+roundName(r).toUpperCase()+" WINNER: ")+winnerLine+" defeats "+loserLine+(isFinal?" and wins the tournament! 💗💙":" and advances!");
  if(await sendTournamentChatMessage(message)){state.winners[key]=true;saveTournamentChatState();}
 }
-function buildBracket(list){
- playerTotal=list.length;const entries=list.map(p=>typeof p==="string"?{username:p,game:""}:{...p,username:String(p.username||p.name||""),game:String(p.game||""),buy:p.buy==null?"":String(p.buy),casino:String(p.casino||"Rainbet"),bonusType:String(p.bonusType||"Regular")});const size=2**Math.ceil(Math.log2(Math.max(2,playerTotal)));const roundCount=Math.log2(size);
- rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null,payout:""})));
+function buildBracket(list,requestedSize){
+ playerTotal=list.length;const entries=list.map(p=>typeof p==="string"?{username:p,game:""}:{...p,username:String(p.username||p.name||""),game:String(p.game||""),buy:p.buy==null?"":String(p.buy),casino:String(p.casino||"Rainbet"),bonusType:String(p.bonusType||"Regular")});const minimum=2**Math.ceil(Math.log2(Math.max(2,playerTotal)));const requested=Number(requestedSize)||minimum;const size=Math.max(minimum,2**Math.ceil(Math.log2(Math.max(2,requested))));const roundCount=Math.log2(size);
+ rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
  const byeCount=size-playerTotal,matchOrder=shuffle(Array.from({length:size/2},(_,i)=>i));let cursor=0;
  const byeMatches=new Set(matchOrder.slice(0,byeCount));
  rounds[0].forEach((m,i)=>{m.a=entries[cursor++]||null;if(byeMatches.has(i)){m.b=null;m.winner=null;}else{m.b=entries[cursor++]||null;}});
