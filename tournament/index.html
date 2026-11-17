@@ -652,7 +652,7 @@ function playerButton(player,r,i,side,winner){
  $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champName)+(typeof champ==="object"&&champ.game?' · '+escapeHtml(champ.game):""):"";
  renderTournamentSections();
 }
-$("build").onclick=()=>{
+if($("build"))$("build").onclick=()=>{
  const required=Number($("playerCount").value)||4;
  const list=bracketAddedEntries.length?[...bracketAddedEntries]:namesFromInput().filter(p=>!isEntryPlaceholder(p));
  if(list.length<2){$("setupStatus").textContent="Add at least 2 players to the bracket one at a time before starting.";return;}
@@ -751,7 +751,7 @@ updateHint();
  $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champName)+(typeof champ==="object"&&champ.game?' · '+escapeHtml(champ.game):""):"";
  renderTournamentSections();
 }
-$("build").onclick=()=>{
+if($("build"))$("build").onclick=()=>{
  const required=Number($("playerCount").value)||4;
  const list=bracketAddedEntries.length?[...bracketAddedEntries]:namesFromInput().filter(p=>!isEntryPlaceholder(p));
  if(list.length<2){$("setupStatus").textContent="Add at least 2 players to the bracket one at a time before starting.";return;}
@@ -854,7 +854,7 @@ function renderBracket(){
  $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champName)+(typeof champ==="object"&&champ.game?' · '+escapeHtml(champ.game):""):"";
  renderTournamentSections();
 }
-$("build").onclick=()=>{
+if($("build"))$("build").onclick=()=>{
  const required=Number($("playerCount").value)||4;
  const list=bracketAddedEntries.length?[...bracketAddedEntries]:namesFromInput().filter(p=>!isEntryPlaceholder(p));
  if(list.length<2){$("setupStatus").textContent="Add at least 2 players to the bracket one at a time before starting.";return;}
