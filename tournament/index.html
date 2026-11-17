@@ -461,6 +461,14 @@ $("saveLiveSettings").onclick=async()=>{
  if(!$("liveAdminMessage").textContent.startsWith("Tournament entry limit set"))return;
 
 };
+$("liveEntriesPerPerson").addEventListener("change",async()=>{
+ const limit=Number($("liveEntriesPerPerson").value);
+ if(!Number.isInteger(limit)||limit<1||limit>10)return;
+ await adminAction("entry-limit",{value:limit});
+ if($("liveAdminMessage").textContent.startsWith("Tournament entry limit set")){
+  $("liveAdminMessage").textContent="Tournament entry limit saved: "+limit+" per person. 💗💙";
+ }
+});
 $("closeEntries").onclick=()=>adminAction("close");
 $("openEntries").onclick=()=>adminAction("open");
 $("clearEntries").onclick=()=>{adminAction("clear");};
