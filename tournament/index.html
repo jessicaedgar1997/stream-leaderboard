@@ -197,6 +197,7 @@ let tournamentIsActive = false;
 let liveCalls = [];
 let liveState = null;
 let hasLoadedTournamentEntries = false;
+let lastRemoteTournamentEntryKeys = new Set();
 let canManageTournament = false;
 async function applyStaffView(){
  const session=localStorage.getItem("slotbuddy_kick_session");if(session){try{const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});const d=await r.json();canManageTournament=!!(d.ok&&(d.user?.role==="owner"||d.user?.role==="moderator"));if(canManageTournament)$("liveAdminMessage").textContent="Signed in as a SlotBuddy manager. Full tournament controls are enabled.";}catch{canManageTournament=false;}}
@@ -204,7 +205,9 @@ async function applyStaffView(){
 }
 
 function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
-async function refreshLivePlayers(){
+async function refreshLivePlayers(syncEntries=false,syncBracket=false){
+ if(syncEntries)hasLoadedTournamentEntries=false;
+ if(syncBracket)hasLoadedSavedBracket=false;
  try{
   const response=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});
   if(!response.ok)throw new Error("Snapshot unavailable");
@@ -213,18 +216,27 @@ async function refreshLivePlayers(){
   const queueResponse=await fetch(QUEUE_URL+"?action=snapshot",{cache:"no-store"});
   const queueSnapshot=queueResponse.ok?await queueResponse.json():{calls:[],active_queue:null};
   livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;
-  if($("playerCount")&&snapshot.state?.max_players&&!hasLoadedTournamentEntries){
+  if($("playerCount")&&snapshot.state?.max_players&&(!hasLoadedTournamentEntries||syncEntries)){
    const hasLocalDraft=!!localStorage.getItem("chaosQueenTournamentDraft");
    if(!hasLocalDraft){
     $("playerCount").value=String(snapshot.state.max_players);
     resizeEntryPlayers();
    }
    const current=namesFromInput(),incoming=snapshot.slot_entries||[];
+   const entryKey=entry=>[String(entry.caller_name||entry.username||"").trim().toLowerCase(),String(entry.game_name||entry.game||"").trim().toLowerCase(),String(entry.bonus_type||entry.bonusType||"Regular")].join("|");
+   const incomingKeys=new Set(incoming.map(entryKey));
+   for(const oldKey of lastRemoteTournamentEntryKeys){
+    if(!incomingKeys.has(oldKey)){
+     const staleIndex=current.findIndex(player=>[String(player.username||"").trim().toLowerCase(),String(player.game||"").trim().toLowerCase(),String(player.bonusType||"Regular")].join("|")===oldKey);
+     if(staleIndex>=0)current[staleIndex]={...current[staleIndex],username:"",game:"",buy:""};
+    }
+   }
    for(const entry of incoming){
-    const exists=current.some(p=>p.username.toLowerCase()===String(entry.caller_name||"").toLowerCase()&&p.game.toLowerCase()===String(entry.game_name||"").toLowerCase());
-    if(exists)continue;
-    const slot=current.findIndex(isEntryPlaceholder);
+    const key=entryKey(entry);
+    const existing=current.findIndex(player=>[String(player.username||"").trim().toLowerCase(),String(player.game||"").trim().toLowerCase(),String(player.bonusType||"Regular")].join("|")===key);
     const player={username:entry.caller_name,game:entry.game_name,buy:Number(entry.buy_amount||0).toFixed(2),casino:entry.casino||"Rainbet",bonusType:entry.bonus_type||"Regular"};
+    if(existing>=0){current[existing]=player;continue;}
+    const slot=current.findIndex(isEntryPlaceholder);
     if(slot>=0)current[slot]=player;else current.push(player);
    }
    const supported=[4,6,8,10,12,14,16,32];
@@ -232,11 +244,11 @@ async function refreshLivePlayers(){
    const capacity=supported.find(n=>n>=needed)||32;
    $("playerCount").value=String(capacity);
    while(current.length<capacity)current.push({username:"Player "+(current.length+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
-   writeEntryPlayers(current);updateHint();hasLoadedTournamentEntries=true;
+   writeEntryPlayers(current);updateHint();lastRemoteTournamentEntryKeys=incomingKeys;hasLoadedTournamentEntries=true;
   }
   renderTournamentBonuses(snapshot.bonus_entries||[]);updateTournamentCallsToggle();if(!canManageTournament)$("tournamentBonusList").querySelectorAll("button").forEach(btn=>btn.remove());
   const queueStatus=$("slotQueueStatus");if(queueStatus){queueStatus.textContent=queueSnapshot.active_queue==="cozies"?"COZIES CALLS OPEN":queueSnapshot.active_queue==="bonus_hunt"?"BONUS HUNT CALLS OPEN":"CALLS CLOSED";queueStatus.style.color=queueSnapshot.active_queue?"var(--blue)":"var(--pink)";}
-  if(snapshot.bracket&&!hasLoadedSavedBracket&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){restoreSavedBracket(snapshot.bracket);hasLoadedSavedBracket=true;}
+  if(snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){restoreSavedBracket(snapshot.bracket);hasLoadedSavedBracket=true;}
  }catch(error){$("liveStatus").textContent="CONNECTION ISSUE";$("entrantList").innerHTML='<span class="hint">Could not load the live player list. Refresh in a moment.</span>';return;}
  $("liveCount").textContent=livePlayers.length+" / "+liveState.max_players;
  $("liveStatus").textContent=liveState.is_open?"ENTRIES OPEN":"ENTRIES CLOSED";
@@ -268,8 +280,7 @@ $("loadChatPlayers").onclick=async()=>{
  $("setup").scrollIntoView({behavior:"smooth",block:"start"});
 };
 $("refreshPlayers").onclick=refreshLivePlayers;
-// Automatically sync Kick !slot entries into the tournament player fields.
-setInterval(()=>{if(!document.hidden)refreshLivePlayers();},1000);
+// Live updates are delivered by the Supabase Realtime subscriptions below; manual refresh remains available.
 async function adminSlotAction(action,extra={}){
  const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
  if(!session_key){$("slotAdminMessage").textContent="Sign in with Kick on SlotBuddy first.";return;}
@@ -325,7 +336,7 @@ $("testKick").onclick=async()=>{
 };
 refreshKickStatus();
 applyStaffView();refreshLivePlayers();
-sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"slot_calls"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"cozies_queue"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"bonus_hunt_queue"},refreshLivePlayers).on("postgres_changes",{event:"*",schema:"public",table:"stream_call_settings"},refreshLivePlayers).subscribe();
+sbClient.channel("tournament-live-list").on("postgres_changes",{event:"*",schema:"public",table:"tournament_players"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"tournament_state"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"slot_calls"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"cozies_queue"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"bonus_hunt_queue"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"stream_call_settings"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"tournament_slot_entries"},()=>refreshLivePlayers(true,false)).on("postgres_changes",{event:"*",schema:"public",table:"tournament_bonus_entries"},()=>refreshLivePlayers()).on("postgres_changes",{event:"*",schema:"public",table:"tournament_bracket_state"},()=>refreshLivePlayers(false,true)).subscribe();
 function renderTournamentBonuses(items){
  const list=$("tournamentBonusList");if(!list)return;
  list.innerHTML=items.length?items.map(x=>"<div class='entrant' style='border-radius:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap'><strong>"+safeText(x.caller_name)+"</strong> · "+safeText(x.bonus_type||"Regular")+" · "+safeText(x.bonus_name)+" · Spin "+Number(x.spin_amount||0).toFixed(2)+" · Paid "+Number(x.payout_amount||0).toFixed(2)+" <button class='dark' style='padding:4px 8px' onclick='deleteTournamentBonus("+Number(x.id)+")'>DELETE</button></div>").join(""):"<span class='hint'>No tournament bonus buys recorded yet.</span>";
