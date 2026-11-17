@@ -445,7 +445,25 @@ function renderEntryPlayers(){
     if(!response.ok||!result.ok)throw new Error(result.error||"Could not remove the saved tournament entry.");
    }catch(error){btn.disabled=false;$("setupStatus").textContent=error.message||"Could not remove the saved tournament entry.";return;}
   }
-  a[index]={...a[index],username:"",game:"",buy:""};writeEntryPlayers(a);resizeEntryPlayers();updateHint();$("setupStatus").textContent="Player "+(index+1)+" removed. That bracket spot is still open.";
+  const removedName=String(player.username||"").trim().toLowerCase(),removedGame=String(player.game||"").trim().toLowerCase();
+  let removedFromBracket=false,removedWinnerRound=-1;
+  if(Array.isArray(rounds)&&rounds.length){
+   rounds.forEach((round,r)=>round.forEach(match=>{
+    for(const side of ["a","b"]){
+     const candidate=match[side],candidateName=String(candidate?.username||candidate?.name||candidate||"").trim().toLowerCase(),candidateGame=String(candidate?.game||"").trim().toLowerCase();
+     if(candidateName===removedName&&candidateGame===removedGame){match[side]=null;removedFromBracket=true;}
+    }
+    const winner=match.winner,winnerName=String(winner?.username||winner?.name||winner||"").trim().toLowerCase(),winnerGame=String(winner?.game||"").trim().toLowerCase();
+    if(winnerName===removedName&&winnerGame===removedGame){match.winner=null;match.payout="";match.aPayout="";match.bPayout="";removedWinnerRound=Math.max(removedWinnerRound,r);removedFromBracket=true;}
+   }));
+   if(removedWinnerRound>=0){
+    for(let r=removedWinnerRound+1;r<rounds.length;r++)rounds[r].forEach(match=>{match.a=null;match.b=null;match.winner=null;match.payout="";match.aPayout="";match.bPayout="";});
+   }
+   if(removedFromBracket)renderBracket();
+  }
+  a[index]={...a[index],username:"",game:"",buy:""};writeEntryPlayers(a);resizeEntryPlayers();updateHint();
+  if(removedFromBracket)await saveBracketOnline();
+  $("setupStatus").textContent="Player "+(index+1)+" removed. The saved bracket is being updated on both pages.";
  });
  list.querySelectorAll("[data-buy-entry]").forEach(input=>input.onchange=()=>{const a=namesFromInput(),index=Number(input.dataset.buyEntry),value=input.value;if(!Number.isFinite(Number(value))||Number(value)<0){input.value=Number(a[index]?.buy||0).toFixed(2);return;}if(a[index])a[index].buy=Number(value).toFixed(2);writeEntryPlayers(a);updateHint();});
  if($("addTournamentPlayer"))$("addTournamentPlayer").disabled=players.length>=Number($("playerCount").value)&&!players.some(isEntryPlaceholder);
