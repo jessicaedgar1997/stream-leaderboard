@@ -109,7 +109,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <div><div class="hint">Queue status</div><div class="live-status" id="slotQueueStatus">CALLS CLOSED</div></div>
 </div>
 <div class="entrant-list" id="slotQueue"><span class="hint">Loading slot calls…</span></div>
-<p class="hint">Tell chat: <strong>!slot + your game</strong> — one active request per viewer. In tournament mode, they can add <strong>super</strong> or <strong>reg</strong> at the end to set the bonus type. The queue updates live.</p>
+<p class="hint">Tell chat: <strong>!slot + your game</strong> — one active request per viewer. For Tournament entries only, add <strong>super</strong> or <strong>reg</strong> after the game. Bonus Hunt and Cozies calls do not need a suffix.</p>
 <div class="actions" id="slotCallControls" hidden>
 <button id="nextSlotCall">▶ Call next game</button>
 <button class="pink" id="clearSlotCalls">Clear slot queue</button>
@@ -118,7 +118,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <p class="status" id="slotAdminMessage" role="status"></p>
 <details style="margin-top:12px">
 <summary style="cursor:pointer;color:var(--pink);font-weight:900;padding:8px 0">🤖 BotRix command setup</summary>
-<p class="hint">Create a custom command named <strong>!slot</strong>. Set its response to the line below. Viewers can type <strong>!slot Gates of Olympus super</strong> or <strong>!slot Sweet Bonanza reg</strong>; without a suffix it defaults to Regular. The game name and bonus type are added automatically to the wheels and tournament tracker when tournament mode is active. To change a call, use <strong>!editslot Gates of Olympus super</strong> or put <strong>reg</strong> at the end instead.</p>
+<p class="hint">Create one custom command named <strong>!slot</strong> and use the response below. For Bonus Hunt or Cozies, viewers type <strong>!slot Gates of Olympus</strong> — no suffix needed, and the name/game are added to the Name Wheels. For Tournament entries only, viewers type <strong>!slot Gates of Olympus super</strong> or <strong>!slot Gates of Olympus reg</strong> to choose the bonus type.</p>
 <pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:12px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-join?action=call&amp;key=YOUR_PRIVATE_BOT_KEY&amp;user=$(sender)&amp;game=$(urlencode $(variable))]</pre>
 <p class="hint">Optional second command: <strong>!slots</strong> — response:</p>
 <pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#0c1329;padding:12px;border-radius:10px;color:#dce6ff">fetch[https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-queue?action=list]</pre>
