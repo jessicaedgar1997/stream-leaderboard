@@ -64,6 +64,6 @@ load();
 </style>
 <div id="siteAutumnLeaves" aria-hidden="true"></div>
 <script id="site-autumn-leaves-script">
-(()=>{const layer=document.getElementById("siteAutumnLeaves");if(!layer||layer.dataset.ready)return;layer.dataset.ready="1";const leaves=["🍂","🍁","🍃","🍂","🍁","🍂","🍃","🍁"];for(let i=0;i<50;i++){const leaf=document.createElement("span");leaf.className="site-autumn-leaf";leaf.textContent=leaves[i%leaves.length];leaf.style.setProperty("--x",((i*37)%100)+"vw");leaf.style.setProperty("--size",(21+(i*13)%26)+"px");leaf.style.setProperty("--duration",(10+(i*7)%13)+"s");leaf.style.setProperty("--delay",(-((i*5)%22))+"s");for(let j=1;j<=5;j++)leaf.style.setProperty("--d"+j,(((i*(j*17+13))%(220+j*25))-(110+j*12))+"px");layer.appendChild(leaf)}})();
+(()=>{const layer=document.getElementById("siteAutumnLeaves");if(!layer||layer.dataset.ready)return;layer.dataset.ready="1";const leaves=["🍂","🍁","🍃","🍂","🍁","🍂","🍃","🍁"];for(let i=0;i< 45;i++){const leaf=document.createElement("span");leaf.className="site-autumn-leaf";leaf.textContent=leaves[i%leaves.length];leaf.style.setProperty("--x",((i*37)%100)+"vw");leaf.style.setProperty("--size",(21+(i*13)%26)+"px");leaf.style.setProperty("--duration",(10+(i*7)%13)+"s");leaf.style.setProperty("--delay",(-((i*5)%22))+"s");for(let j=1;j<=5;j++)leaf.style.setProperty("--d"+j,(((i*(j*17+13))%(220+j*25))-(110+j*12))+"px");layer.appendChild(leaf)}})();
 </script>
 </body></html>
