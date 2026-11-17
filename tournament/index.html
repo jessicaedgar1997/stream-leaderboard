@@ -51,8 +51,8 @@ body:not(.slotbuddy-manager) [role="button"]{display:none!important;visibility:h
 /* Giveaway is a private organizer feature: hide its navigation link for viewers. */
 body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibility:hidden!important;pointer-events:none!important}
 
-#tournamentCallsOn{background:#ff39b9!important;color:#fff!important;border-color:#ff8bd6!important}
-#tournamentCallsOff{background:#65dfff!important;color:#081526!important;border-color:#a6efff!important}
+#tournamentCallsToggle.calls-on{background:#ff39b9!important;color:#fff!important;border-color:#ff8bd6!important}
+#tournamentCallsToggle.calls-off{background:#65dfff!important;color:#081526!important;border-color:#a6efff!important}
 
 
 /* Kick is already connected through SlotBuddy; hide redundant connection UI here. */
@@ -167,7 +167,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <p class="hint" id="countHint">Add 8 players with their slot and buy. They will be shuffled into the bracket.</p>
 <textarea id="players" spellcheck="false" hidden aria-hidden="true"></textarea>
 <div class="actions tournament-controls"></div>
-<div class="actions"><button id="build">🎲 Start Tournament</button><button class="dark" id="endTournament" data-manager-only hidden type="button">🏁 End Tournament</button><button id="tournamentCallsOn" data-manager-only hidden type="button">📣 CALLS ON</button><button id="tournamentCallsOff" data-manager-only hidden type="button">🔕 CALLS OFF</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
+<div class="actions"><button id="build">🎲 Start Tournament</button><button class="dark" id="endTournament" data-manager-only hidden type="button">🏁 End Tournament</button><button id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
 <button id="fillDemo" type="button" hidden>Add sample names</button>
 <p class="status" id="setupStatus" role="status"></p>
 </section>
@@ -350,9 +350,8 @@ let selectedMatchKey = "";
 
 function updateTournamentCallsToggle(){
  const enabled=liveState?.slot_calls_enabled!==false;
- const on=$("tournamentCallsOn"),off=$("tournamentCallsOff");
- if(on)on.disabled=enabled;
- if(off)off.disabled=!enabled;
+ const toggle=$("tournamentCallsToggle");
+ if(toggle){toggle.textContent=enabled?"📣 CALLS ON":"🔕 CALLS OFF";toggle.classList.toggle("calls-on",enabled);toggle.classList.toggle("calls-off",!enabled);toggle.disabled=false;}
 }
 async function setTournamentCalls(enabled,button){
  if(!canManageTournament||!button)return;
@@ -364,8 +363,7 @@ async function setTournamentCalls(enabled,button){
   $("setupStatus").textContent=message;
  }catch(error){$("setupStatus").textContent=error.message;button.disabled=false;}
 }
-$("tournamentCallsOn").onclick=()=>setTournamentCalls(true,$("tournamentCallsOn"));
-$("tournamentCallsOff").onclick=()=>setTournamentCalls(false,$("tournamentCallsOff"));
+$("tournamentCallsToggle").onclick=()=>setTournamentCalls(liveState?.slot_calls_enabled===false,$("tournamentCallsToggle"));
 
 async function saveBracketOnline(){
  const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
@@ -569,6 +567,18 @@ $("build").onclick=()=>{
  if(list.some(p=>p.username.length>40||p.game.length>100)){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
  buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+" players • Single elimination • Click a name to advance them."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="Bracket randomized! Good luck, everyone!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
 };
+const originalStartTournament=$("build").onclick;
+function updateStartEndButton(){
+ const active=rounds.length>0&&!$("tournament").classList.contains("hidden");
+ $("build").textContent=active?"🏁 End Tournament":"🎲 Start Tournament";
+ $("build").classList.toggle("dark",active);$("build").classList.toggle("pink",!active);
+}
+$("build").onclick=()=>{
+ const active=rounds.length>0&&!$("tournament").classList.contains("hidden");
+ if(active){$("endTournament").click();return;}
+ originalStartTournament();setTimeout(updateStartEndButton,0);
+};
+updateStartEndButton();
 $("shuffleBracket").onclick=()=>{
  if(!rounds.length)return;
  if(rounds.some(round=>round.some(match=>match.winner))){
@@ -637,6 +647,7 @@ document.getElementById("endTournament")?.addEventListener("click",async()=>{
   liveState={...liveState,is_open:false,slot_calls_enabled:false};
   updateTournamentCallsToggle();
   document.getElementById("tournament").classList.add("hidden");
+  document.getElementById("build").textContent="🎲 Start Tournament";document.getElementById("build").classList.remove("dark");document.getElementById("build").classList.add("pink");
   document.getElementById("setupStatus").textContent="🏁 Tournament ended! Your bracket and results are saved. Slot calls are OFF. Use Clear players / new tournament when you're ready to start another.";
   window.scrollTo({top:0,behavior:"smooth"});
  }catch(error){document.getElementById("setupStatus").textContent=error.message;}
