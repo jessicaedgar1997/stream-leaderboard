@@ -635,7 +635,7 @@ function tournamentSlotLabel(player){
  return "Player";
 }
 function playerButton(player,r,i,side,winner){
- if(!player)return '<div class="player empty" aria-hidden="true"></div>';
+ if(!player){if(r===0){const slotNumber=i*2+(side==="a"?1:2);return '<div class="player empty">Player '+slotNumber+'</div>';}return '<div class="player empty" aria-hidden="true"></div>';}
  const isWinner=!!winner&&((winner===player)||(winner.username&&winner.username===(player.username||player.name)&&winner.game===player.game));
  const label=escapeHtml(tournamentSlotLabel(player))+(isWinner?' <small>✓ ADVANCES</small>':'');
  if(!canManageTournament)return '<div class="player '+(isWinner?'winner':'')+'">'+label+'</div>';
