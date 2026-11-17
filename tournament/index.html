@@ -440,12 +440,26 @@ function renderEntryPlayers(){
    const index=Number(btn.dataset.addBracketEntry),player=namesFromInput()[index];
    if(!player||isEntryPlaceholder(player))return;
    const key=entryKey(player);
-   if(bracketAddedEntries.some(x=>entryKey(x)===key)){$("setupStatus").textContent=player.username+" has already been added.";return;}
+   if(bracketAddedEntries.some(x=>entryKey(x)===key)){$("setupStatus").textContent=player.username+" is already in the bracket.";return;}
    const limit=Number($("playerCount").value)||4;
    if(bracketAddedEntries.length>=limit){$("setupStatus").textContent="The bracket is full ("+limit+" players).";return;}
+   if(!player.username.trim()||!player.game.trim()){$("setupStatus").textContent="Enter both a player name and game before adding them.";return;}
+   const entryLimit=Number($("entriesPerPerson").value)||1;
+   const sameName=bracketAddedEntries.filter(p=>p.username.trim().toLowerCase()===player.username.trim().toLowerCase()).length;
+   if(sameName>=entryLimit){$("setupStatus").textContent=player.username+" has reached the limit of "+entryLimit+" entr"+(entryLimit===1?"y":"ies")+".";return;}
+   if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"&&bracketAddedEntries.some(p=>p.game.trim().toLowerCase()===player.game.trim().toLowerCase())){$("setupStatus").textContent="Duplicate games are turned OFF. Turn DUP ON to allow this game.";return;}
+   if(player.username.length>40||player.game.length>100){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
    bracketAddedEntries.push({...player});
    localStorage.setItem("slotbuddyBracketAddedEntries",JSON.stringify(bracketAddedEntries));
-   $("setupStatus").textContent=player.username+" added ("+bracketAddedEntries.length+"/"+limit+"). Add the next player, then press START TOURNAMENT to build and shuffle the bracket.";
+   buildBracket(bracketAddedEntries);
+   playerTotal=bracketAddedEntries.length;
+   $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
+   $("bracketInfo").textContent=playerTotal+" of "+limit+" player spots • Add players directly to this bracket as you go.";
+   $("tournament").classList.remove("hidden");
+   tournamentIsActive=true;
+   updateStartEndButton();
+   $("setupStatus").textContent=player.username+" added directly to the bracket ("+playerTotal+"/"+limit+").";
+   queueBracketSave();
    renderEntryPlayers();
   });
   list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=async()=>{
@@ -483,7 +497,7 @@ function renderEntryPlayers(){
 function writeEntryPlayers(players){$("players").value=players.map(p=>[p.username,p.game||"",p.buy||"",p.casino||"Rainbet",p.bonusType||"Regular"].join(" | ")).join("\n");}
 function updateHint(){
  const count=Number($("playerCount").value),players=namesFromInput(),got=players.filter(p=>!isEntryPlaceholder(p)).length,open=Math.max(0,count-got);
- $("countHint").textContent="Fill in all "+count+" player spots with a username, game, and buy-in. They will be shuffled into the bracket.";
+ $("countHint").textContent="Add players with a username and game. Each player appears in the bracket as soon as you press ADD TO BRACKET.";
  if($("entryCount"))$("entryCount").textContent=got+" / "+count+" players";
  if($("entrySpots"))$("entrySpots").textContent=open+" open spots";
  renderEntryPlayers();
@@ -655,7 +669,7 @@ $("build").onclick=()=>{
  const list=bracketAddedEntries.length?[...bracketAddedEntries]:namesFromInput().filter(p=>!isEntryPlaceholder(p));
  if(list.length<2){$("setupStatus").textContent="Add at least 2 players to the bracket one at a time before starting.";return;}
  if(list.length>required){$("setupStatus").textContent="You added "+list.length+" players, but the bracket is set for "+required+".";return;}
- if(list.some(p=>!p.username.trim()||!p.game.trim()||p.buy===""||!Number.isFinite(Number(p.buy)))){$("setupStatus").textContent="Every added player needs a username, game, and valid buy-in.";return;}
+ if(list.some(p=>!p.username.trim()||!p.game.trim()||p.buy===""||!Number.isFinite(Number(p.buy)))){$("setupStatus").textContent="Every added player needs a username and game.";return;}
  const entryLimit=Number($("entriesPerPerson").value)||1;
  const usernameCounts={};list.forEach(p=>{const k=p.username.toLowerCase();usernameCounts[k]=(usernameCounts[k]||0)+1;});
  const overLimit=Object.entries(usernameCounts).find(([,count])=>count>entryLimit);
@@ -667,8 +681,9 @@ $("build").onclick=()=>{
 const originalStartTournament=$("build").onclick;
 function updateStartEndButton(){
  const active=tournamentIsActive;
- $("build").textContent=active?"🏁 END TOURNAMENT":"🎲 START TOURNAMENT";
- $("build").classList.toggle("dark",active);$("build").classList.toggle("pink",!active);
+ $("build").textContent="🏁 END TOURNAMENT";
+ $("build").classList.toggle("dark",true);$("build").classList.remove("pink");
+ $("build").hidden=!active;
 }
 function addQueuedCallsToNextBracket(calls){
  const current=namesFromInput().filter(p=>!isEntryPlaceholder(p));
@@ -715,10 +730,7 @@ async function endTournamentNow(){
  finally{$("build").disabled=false;}
 }
 $("build").onclick=async()=>{
- if(tournamentIsActive){await endTournamentNow();return;}
- originalStartTournament();
- if(rounds.length>0&&!$("tournament").classList.contains("hidden"))tournamentIsActive=true;
- updateStartEndButton();
+ if(tournamentIsActive)await endTournamentNow();
 };
 updateStartEndButton();
 $("shuffleBracket").onclick=()=>{
@@ -749,7 +761,7 @@ $("clearAllBracket").onclick=async()=>{
  await saveBracketOnline();
  $("setupStatus").textContent="Player names, games, and buy-ins cleared. Bracket layout, event settings, and saved payout amounts were left unchanged.";
 };
-$("newTournament").onclick=()=>{tournamentIsActive=false;bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");renderEntryPlayers();$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Add players one at a time, then start and shuffle.";updateStartEndButton();window.scrollTo({top:0,behavior:"smooth"});};
+$("newTournament").onclick=()=>{tournamentIsActive=false;bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");renderEntryPlayers();$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Add players one at a time; each one appears in the bracket immediately.";updateStartEndButton();window.scrollTo({top:0,behavior:"smooth"});};
 $("print").onclick=()=>window.print();
 $("saveBracket").onclick=saveBracketOnline;
 updateHint();
