@@ -600,7 +600,7 @@ async function announceTournamentWinner(r,i){
  const winner=tournamentPlayerIdentity(match.winner),loser=tournamentPlayerIdentity(match.winner===match.a?match.b:match.a);
  const key=r+":"+i+":"+winner+":"+loser;
  if(state.winners[key])return;
- const message="🏆 "+roundName(r).toUpperCase()+" WINNER — "+playerLabel(match.winner)+" defeats "+playerLabel(match.winner===match.a?match.b:match.a)+" and advances!";
+ const isFinal=r===rounds.length-1;const message=isFinal?"🏆 TOURNAMENT CHAMPION: "+playerLabel(match.winner)+" wins the FINAL against "+playerLabel(match.winner===match.a?match.b:match.a)+"! 💗💙":"🏆 "+roundName(r).toUpperCase()+" WINNER — "+playerLabel(match.winner)+" defeats "+playerLabel(match.winner===match.a?match.b:match.a)+" and advances!";
  if(await sendTournamentChatMessage(message)){state.winners[key]=true;saveTournamentChatState();}
 }
 function buildBracket(list){
