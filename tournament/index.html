@@ -172,6 +172,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <section class="panel" id="winnersPanel"><div class="bracket-head"><div><div class="section-kicker">Tournament results · Section 3</div><h2>🥇 WINNERS</h2></div><button class="dark" id="clearAllWinners" data-manager-only hidden type="button">🧹 CLEAR ALL WINNERS</button></div><p class="hint">Every completed match appears here, including its saved payout. The tournament champion is shown at the top.</p><div id="tournamentWinners" class="winner-list"><div class="empty-state">Winners will appear here as matches are completed.</div></div></section>
 <footer class="hero"><p>💗 Sky blue • Hot pink • Big tournament energy 💙</p></footer>
 </main>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://xbogfbyysrjttyfvzluh.supabase.co" crossorigin>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -269,12 +270,15 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
  if(syncEntries)hasLoadedTournamentEntries=false;
  if(syncBracket)hasLoadedSavedBracket=false;
  try{
-  const response=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});
+  // Load the Tournament snapshot and slot queue together instead of waiting on two network round trips.
+  const [response,queueResponse]=await Promise.all([
+   fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"}),
+   fetch(QUEUE_URL+"?action=snapshot",{cache:"no-store"})
+  ]);
   if(!response.ok)throw new Error("Snapshot unavailable");
-  const snapshot=await response.json();
+  const [snapshot,queueSnapshotRaw]=await Promise.all([response.json(),queueResponse.ok?queueResponse.json():Promise.resolve({calls:[],active_queue:null})]);
   if(snapshot.error)throw new Error(snapshot.error);
-  const queueResponse=await fetch(QUEUE_URL+"?action=snapshot",{cache:"no-store"});
-  const queueSnapshot=queueResponse.ok?await queueResponse.json():{calls:[],active_queue:null};
+  const queueSnapshot=queueSnapshotRaw||{calls:[],active_queue:null};
   if(requestVersion!==tournamentSnapshotVersion)return;
   livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;
   // Keep the organizer's selected bracket size from the saved page draft.
@@ -403,7 +407,7 @@ sbClient.channel("tournament-live-list")
  .subscribe((status,error)=>{
   if(status==="SUBSCRIBED"){
    console.info("Tournament live sync connected");
-   refreshLivePlayers(false,true);
+   // The initial snapshot is already loading; subsequent database changes trigger refreshes.
   }else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
    console.warn("Tournament live sync status:",status,error||"");
   }
