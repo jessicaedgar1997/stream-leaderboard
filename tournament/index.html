@@ -590,28 +590,26 @@ $("allowDuplicateGames").onclick=()=>{const on=$("allowDuplicateGames").getAttri
 const savedDup=localStorage.getItem("chaosQueenTournamentDuplicateGames")==="true";$("allowDuplicateGames").setAttribute("aria-pressed",String(savedDup));$("allowDuplicateGames").textContent="DUP: "+(savedDup?"ON":"OFF");$("allowDuplicateGames").classList.toggle("pink",savedDup);
 $("playerCount").addEventListener("change",async()=>{
  const size=Number($("playerCount").value)||4;
- const previous=Number(liveState?.max_players)||4;
- if(rounds.length&&bracketAddedEntries.length>size){
-  $("playerCount").value=String(previous);resizeEntryPlayers();updateHint();
-  $("setupStatus").textContent="You already added "+bracketAddedEntries.length+" players. Remove players before reducing the bracket size.";
+ const existing=((rounds[0]||[]).flatMap(match=>[match.a,match.b]).filter(Boolean)).map(p=>typeof p==="string"?{username:p,game:""}:{...p});
+ if(existing.length>size){
+  $("playerCount").value=String(Number(liveState?.max_players)||8);resizeEntryPlayers();updateHint();
+  $("setupStatus").textContent="There are "+existing.length+" players already in the bracket. Remove at least "+(existing.length-size)+" before switching to "+size+". No players were removed.";
   return;
  }
  resizeEntryPlayers();updateHint();
  await adminAction("size",{value:size});
  if(!$("liveAdminMessage").textContent.startsWith("Tournament size set to "+size+" players.")){
-  $("playerCount").value=String(previous);resizeEntryPlayers();updateHint();
-  $("setupStatus").textContent="Bracket size was not saved online. Please try again.";
-  return;
+  $("setupStatus").textContent="Bracket layout changed on this page, but the shared entry limit did not confirm the update. Please retry.";
  }
- if(rounds.length){
-  const nextPlayers=[...bracketAddedEntries];
-  buildBracket(nextPlayers,size);
-  playerTotal=nextPlayers.length;
-  $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
-   $("bracketInfo").textContent=size+"-player tournament • "+playerTotal+" entered.";
-  $("setupStatus").textContent="Bracket layout updated to "+size+" player spots. Existing match results were reset; your manually added players were kept.";
-  queueBracketSave();
- }
+ bracketAddedEntries=existing.map(p=>({...p}));
+ localStorage.setItem("slotbuddyBracketAddedEntries",JSON.stringify(bracketAddedEntries));
+ buildBracket(existing,size);
+ playerTotal=existing.length;
+ $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
+ $("bracketInfo").textContent=existing.length+" of "+size+" player spots • "+size+"-player tournament.";
+ $("tournament").classList.remove("hidden");tournamentIsActive=true;
+ $("setupStatus").textContent="Bracket rebuilt for "+size+" players. All "+existing.length+" entered players were kept; match results were reset.";
+ await saveBracketOnline();
 });
 $("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
 $("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
@@ -692,23 +690,25 @@ async function announceTournamentWinner(r,i){
 function buildBracket(list,requestedSize){
  playerTotal=list.length;
  const entries=list.map(p=>typeof p==="string"?{username:p,game:""}:{...p,username:String(p.username||p.name||""),game:String(p.game||""),buy:p.buy==null?"":String(p.buy),casino:String(p.casino||"Rainbet"),bonusType:String(p.bonusType||"Regular")});
- const requested=Number(requestedSize)||Math.max(2,playerTotal),size=2**Math.ceil(Math.log2(Math.max(2,requested))),roundCount=Math.log2(size);
- rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:"",directAdvance:false})));
- const firstRoundMatches=size/2,playInMatches=Math.max(0,Math.min(firstRoundMatches,requested-firstRoundMatches)),directMatches=firstRoundMatches-playInMatches;
- const playInEntries=entries.slice(0,playInMatches*2),directEntries=entries.slice(playInMatches*2);
- let playCursor=0,directCursor=0;
- for(let i=0;i<firstRoundMatches;i++){
-  const m=rounds[0][i];
-  const directIndex=(i%2===1&&i<2*Math.min(playInMatches,directMatches))||(i>=playInMatches*2&&i<playInMatches*2+Math.max(0,directMatches-playInMatches));
-  if(directIndex){m.directAdvance=true;m.a=directEntries[directCursor++]||null;m.winner=m.a||null;}
-  else{m.a=playInEntries[playCursor++]||null;m.b=playInEntries[playCursor++]||null;}
- }
+ const requested=Math.max(2,Number(requestedSize)||Math.max(2,playerTotal));
+ const roundSizes=[];let matches=Math.ceil(requested/2);roundSizes.push(matches);
+ while(matches>1){matches=Math.ceil(matches/2);roundSizes.push(matches);}
+ rounds=roundSizes.map(count=>Array.from({length:count},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:"",directAdvance:false})));
+ let cursor=0;
+ rounds[0].forEach(match=>{match.a=entries[cursor++]||null;match.b=entries[cursor++]||null;if(match.a&&!match.b){match.directAdvance=true;match.winner=match.a;}});
  propagate(0);renderBracket();
 }
 function propagate(fromRound){
  for(let r=Math.max(1,fromRound+1);r<rounds.length;r++){
   const prev=rounds[r-1];
-  rounds[r].forEach((m,i)=>{const nextA=prev[i*2]?.winner||null,nextB=prev[i*2+1]?.winner||null;const changed=JSON.stringify(m.a)!==JSON.stringify(nextA)||JSON.stringify(m.b)!==JSON.stringify(nextB);m.a=nextA;m.b=nextB;if(changed){m.winner=null;m.payout="";}});
+  rounds[r].forEach((m,i)=>{
+   const nextA=prev[i*2]?.winner||null,nextB=prev[i*2+1]?.winner||null;
+   const changed=JSON.stringify(m.a)!==JSON.stringify(nextA)||JSON.stringify(m.b)!==JSON.stringify(nextB);
+   m.a=nextA;m.b=nextB;m.directAdvance=!!((nextA&&!nextB)||(!nextA&&nextB));
+   if(changed){m.winner=null;m.payout="";m.aPayout="";m.bPayout="";}
+   if(m.directAdvance)m.winner=nextA||nextB||null;
+   else if(!nextA&&!nextB)m.winner=null;
+  });
  }
 }
 function chooseWinner(r,i,side){
