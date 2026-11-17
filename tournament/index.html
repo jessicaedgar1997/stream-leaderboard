@@ -700,29 +700,46 @@ $("shuffleBracket").onclick=()=>{
  $("setupStatus").textContent="Players shuffled! Each called game stayed with its player. 💗💙";
  queueBracketSave();
 };
-$("clearAllBracket").addEventListener("click",async()=>{
- $("setupStatus").textContent="Checking SlotBuddy manager access…";
- if(!canManageTournament)await applyStaffView();
- if(!canManageTournament){$("setupStatus").textContent="Manager access could not be verified. Please sign in to SlotBuddy again, then retry Clear Names & Games.";return;}
- if(!confirm("Clear player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same."))return;
- clearTimeout(bracketSaveTimer);
- const count=Math.max(2,Number($("playerCount").value)||playerTotal||4);
- const emptyPlayers=Array.from({length:count},(_,i)=>({username:"",game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
- writeEntryPlayers(emptyPlayers);
- bracketAddedEntries=[];
- localStorage.removeItem("slotbuddyBracketAddedEntries");
- localStorage.removeItem("chaosQueenTournamentDraft");
- playerTotal=count;
- rounds=rounds.map(round=>round.map(match=>({...match,a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
- $("matchPayoutA").value="";
- $("matchPayoutB").value="";
- $("matchPayoutStatus").textContent="";
- $("setupStatus").textContent="Names and games cleared. Saving the empty bracket…";
- updateHint();
- renderBracket();
- const saved=await saveBracketOnline();
- $("setupStatus").textContent=saved?"Player names, games, buy-ins, and match payouts cleared. Bracket size and event settings were kept.":"Names and games cleared on this screen, but the online save needs attention: sign in again and press Save bracket.";
-});
+$("clearAllBracket").onclick=async()=>{
+ const button=$("clearAllBracket"),status=$("setupStatus");
+ button.disabled=true;
+ status.textContent="Checking SlotBuddy manager access…";
+ try{
+  await applyStaffView();
+  if(!canManageTournament&&document.body.classList.contains("slotbuddy-manager"))canManageTournament=true;
+  if(!canManageTournament){
+   status.textContent="Manager access could not be verified. Please sign in to SlotBuddy again, then retry Clear Names & Games.";
+   return;
+  }
+  if(!confirm("Clear player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same.")){
+   status.textContent="Clear cancelled. Nothing was changed.";
+   return;
+  }
+  clearTimeout(bracketSaveTimer);
+  const count=Math.max(2,Number($("playerCount").value)||playerTotal||4);
+  const emptyPlayers=Array.from({length:count},(_,i)=>({username:"",game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
+  writeEntryPlayers(emptyPlayers);
+  bracketAddedEntries=[];
+  localStorage.removeItem("slotbuddyBracketAddedEntries");
+  localStorage.removeItem("chaosQueenTournamentDraft");
+  playerTotal=count;
+  rounds=rounds.map(round=>round.map(match=>({...match,a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
+  $("matchPayoutA").value="";
+  $("matchPayoutB").value="";
+  $("matchPayoutStatus").textContent="";
+  $("champion").classList.add("hidden");
+  $("champion").textContent="";
+  status.textContent="Names and games cleared. Saving the empty bracket…";
+  updateHint();
+  renderBracket();
+  const saved=await saveBracketOnline();
+  status.textContent=saved?"Player names, games, buy-ins, and match payouts cleared. Bracket size and event settings were kept.":"Names and games cleared on this screen, but the online save needs attention: sign in again and press Save bracket.";
+ }catch(error){
+  status.textContent="Clear Names & Games hit an error: "+(error?.message||"Please refresh and try again.");
+ }finally{
+  button.disabled=false;
+ }
+};
 $("newTournament").onclick=()=>{tournamentIsActive=false;bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");renderEntryPlayers();$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Add players one at a time; each one appears in the bracket immediately.";;window.scrollTo({top:0,behavior:"smooth"});};
 $("print").onclick=()=>window.print();
 $("saveBracket").onclick=saveBracketOnline;
