@@ -576,7 +576,7 @@ async function sendTournamentChatMessage(content){
   return true;
  }catch(error){$("setupStatus").textContent="Tournament chat announcement failed: "+(error.message||"Reconnect Kick and try again.");return false;}
 }
-async function tournamentMoney(value){
+function tournamentMoney(value){
  const n=Number(value);
  return value!==""&&value!=null&&Number.isFinite(n)?"$"+n.toFixed(2):"not entered";
 }
@@ -589,7 +589,7 @@ function tournamentPlayerResultLine(player,payout){
   ?(payoutNumber/buyNumber).toFixed(2)+"x":"N/A";
  return playerLabel(player)+" — Buy: "+buyText+" | Payout: "+payoutText+" | "+multiplier;
 }
-function announceTournamentRound(r){
+async function announceTournamentRound(r){
  if(!rounds[r])return;
  const state=getTournamentChatState();
  for(let i=0;i<rounds[r].length;i++){
