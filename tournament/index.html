@@ -502,6 +502,11 @@ const savedDup=localStorage.getItem("chaosQueenTournamentDuplicateGames")==="tru
 $("playerCount").addEventListener("change",async()=>{
  const size=Number($("playerCount").value)||4;
  const previous=Number(liveState?.max_players)||4;
+ if(rounds.length&&bracketAddedEntries.length>size){
+  $("playerCount").value=String(previous);resizeEntryPlayers();updateHint();
+  $("setupStatus").textContent="You already added "+bracketAddedEntries.length+" players. Remove players before reducing the bracket size.";
+  return;
+ }
  resizeEntryPlayers();updateHint();
  await adminAction("size",{value:size});
  if(!$("liveAdminMessage").textContent.startsWith("Tournament size set to "+size+" players.")){
@@ -511,11 +516,6 @@ $("playerCount").addEventListener("change",async()=>{
  }
  if(rounds.length){
   const nextPlayers=[...bracketAddedEntries];
-  if(nextPlayers.length>size){
-   $("playerCount").value=String(previous);resizeEntryPlayers();updateHint();
-   $("setupStatus").textContent="You already added "+nextPlayers.length+" players. Remove players before reducing the bracket size.";
-   return;
-  }
   buildBracket(nextPlayers,size);
   playerTotal=nextPlayers.length;
   $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
