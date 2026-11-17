@@ -737,7 +737,7 @@ function renderBracket(){
 }
 $("build").onclick=()=>{
  const required=Number($("playerCount").value)||4;
- const list=bracketAddedEntries.length?[...bracketAddedEntries]:namesFromInput().filter(p=>!isEntryPlaceholder(p));
+ const list=[...bracketAddedEntries];
  if(list.length<2){$("setupStatus").textContent="Add at least 2 players to the bracket one at a time before starting.";return;}
  if(list.length>required){$("setupStatus").textContent="You added "+list.length+" players, but the bracket is set for "+required+".";return;}
  if(list.some(p=>!p.username.trim()||!p.game.trim())){$("setupStatus").textContent="Every added player needs a username and game.";return;}
