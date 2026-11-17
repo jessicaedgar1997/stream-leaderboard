@@ -849,8 +849,6 @@ function renderBracket(){
  $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champName)+(typeof champ==="object"&&champ.game?' · '+escapeHtml(champ.game):""):"";
  renderTournamentSections();
 }
- renderTournamentSections();
-}
 $("build").onclick=()=>{
  const required=Number($("playerCount").value)||4;
  const list=[...bracketAddedEntries];
