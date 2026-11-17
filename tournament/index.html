@@ -404,6 +404,15 @@ function namesFromInput(){return $("players").value.split(/\r?\n/).map((line,ind
 function isEntryPlaceholder(p){return /^Player \d+$/i.test(String(p.username||""))&&!String(p.game||"").trim()&&!String(p.buy||"").trim();}
 function resizeEntryPlayers(){
  const limit=Number($("playerCount").value)||4,players=namesFromInput();
+ // Restore a missing numbered placeholder in its original position without moving filled player entries.
+ for(let n=1;n<=limit&&players.length<limit;n++){
+  const label="Player "+n;
+  const hasNumberedPlaceholder=players.some(p=>String(p.username||"").trim().toLowerCase()===label.toLowerCase()&&isEntryPlaceholder(p));
+  const hasLaterNumberedPlaceholder=players.some(p=>{const match=String(p.username||"").trim().match(/^Player (\\d+)$/i);return match&&Number(match[1])>n&&isEntryPlaceholder(p);});
+  if(!hasNumberedPlaceholder&&hasLaterNumberedPlaceholder){
+   players.splice(Math.min(n-1,players.length),0,{username:label,game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
+  }
+ }
  while(players.length>limit){let removeAt=-1;for(let i=players.length-1;i>=0;i--){if(isEntryPlaceholder(players[i])){removeAt=i;break;}}if(removeAt<0)removeAt=players.length-1;players.splice(removeAt,1);}
  while(players.length<limit)players.push({username:"Player "+(players.length+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
  writeEntryPlayers(players);
