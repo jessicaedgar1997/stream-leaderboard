@@ -469,6 +469,8 @@ async function saveBracketOnline(){
  const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
  if(!key&&!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to save the bracket online. Your bracket is still on this screen.";return false;}
  const payload={name:$("eventName").value.trim()||"Tournament",count:Number($("playerCount").value)||4,player_count:playerTotal,rounds};
+ // Keep a local copy so this browser can paint the last saved bracket immediately on the next visit.
+ try{localStorage.setItem("slotbuddyTournamentBracketCache",JSON.stringify(payload));}catch(e){}
  try{
   const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});
   const msg=await res.text();
@@ -503,9 +505,12 @@ function restoreSavedBracket(data){
  renderBracket();
  
  $("setupStatus").textContent="Your saved tournament bracket has been restored. 💗💙";
+ try{localStorage.setItem("slotbuddyTournamentBracketCache",JSON.stringify(data));}catch(e){}
 }
 const saved = localStorage.getItem("chaosQueenTournamentDraft");
 if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
+// Paint the last known bracket immediately; the live Supabase snapshot will refresh it afterward.
+try{const cachedBracket=JSON.parse(localStorage.getItem("slotbuddyTournamentBracketCache")||"null");if(cachedBracket&&Array.isArray(cachedBracket.rounds)&&cachedBracket.rounds.length)restoreSavedBracket(cachedBracket);}catch(e){}
 resizeEntryPlayers();
 function namesFromInput(){return $("players").value.split(/\r?\n/).map((line,index)=>{const parts=line.split("|").map(part=>part.trim());return {username:(parts[0]||"").trim()||"Player "+(index+1),game:(parts[1]||"").trim(),buy:(parts[2]||"").trim(),casino:(parts[3]||"Rainbet").trim()||"Rainbet",bonusType:(parts[4]||"Regular").trim()||"Regular"};});}
 function isEntryPlaceholder(p){return (!String(p.username||"").trim()||/^Player \d+$/i.test(String(p.username||"")))&&!String(p.game||"").trim()&&!String(p.buy||"").trim();}
