@@ -228,7 +228,7 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
    for(const oldKey of lastRemoteTournamentEntryKeys){
     if(!incomingKeys.has(oldKey)){
      const staleIndex=current.findIndex(player=>[String(player.username||"").trim().toLowerCase(),String(player.game||"").trim().toLowerCase(),String(player.bonusType||"Regular")].join("|")===oldKey);
-     if(staleIndex>=0)current[staleIndex]={...current[staleIndex],username:"",game:"",buy:""};
+     if(staleIndex>=0)current[staleIndex]={...current[staleIndex],username:"Player "+(staleIndex+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"};
     }
    }
    for(const entry of incoming){
@@ -422,7 +422,7 @@ const saved = localStorage.getItem("chaosQueenTournamentDraft");
 if(saved){try{const draft=JSON.parse(saved);$("eventName").value=draft.name||"Chaos Queen Tournament";$("playerCount").value=String(draft.count||4);$("players").value=draft.players||"";}catch(e){}}
 resizeEntryPlayers();
 function namesFromInput(){return $("players").value.split(/\r?\n/).map((line,index)=>{const parts=line.split("|").map(part=>part.trim());return {username:(parts[0]||"").trim()||"Player "+(index+1),game:(parts[1]||"").trim(),buy:(parts[2]||"").trim(),casino:(parts[3]||"Rainbet").trim()||"Rainbet",bonusType:(parts[4]||"Regular").trim()||"Regular"};});}
-function isEntryPlaceholder(p){return /^Player \d+$/i.test(String(p.username||""))&&!String(p.game||"").trim()&&!String(p.buy||"").trim();}
+function isEntryPlaceholder(p){return (!String(p.username||"").trim()||/^Player \d+$/i.test(String(p.username||"")))&&!String(p.game||"").trim()&&!String(p.buy||"").trim();}
 function resizeEntryPlayers(){
  const limit=Number($("playerCount").value)||4,players=namesFromInput();
  while(players.length>limit){let removeAt=-1;for(let i=players.length-1;i>=0;i--){if(isEntryPlaceholder(players[i])){removeAt=i;break;}}if(removeAt<0)removeAt=players.length-1;players.splice(removeAt,1);}
