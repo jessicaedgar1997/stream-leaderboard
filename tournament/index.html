@@ -322,6 +322,20 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   if(snapshot.error)throw new Error(snapshot.error);
   const queueSnapshot=queueSnapshotRaw||{calls:[],active_queue:null};
   if(requestVersion!==tournamentSnapshotVersion)return;
+  // A new server-side blank tournament reset must clear stale browser drafts/caches once per reset.
+  const resetStamp=String(snapshot.bracket_updated_at||"");
+  const isFreshTournamentReset=!!resetStamp&&snapshot.bracket&&snapshot.bracket.name===""&&Number(snapshot.bracket.count)===4&&Number(snapshot.bracket.player_count)===0&&localStorage.getItem("slotbuddyTournamentResetSeenAt")!==resetStamp;
+  if(isFreshTournamentReset){
+   $("playerCount").value="4";$("eventName").value="";
+   const resetSlots=Array.from({length:4},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
+   writeEntryPlayers(resetSlots);bracketAddedEntries=[];
+   localStorage.removeItem("slotbuddyTournamentBracketCache");
+   localStorage.removeItem("slotbuddyBracketAddedEntries");
+   localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:"",count:4,players:$("players").value}));
+   localStorage.setItem("slotbuddyTournamentResetSeenAt",resetStamp);
+   renderEntryPlayers();
+   $("setupStatus").textContent="Tournament fully reset. Ready for a fresh 4-player setup! 💗💙";
+  }
   livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;
   // Keep the organizer's selected bracket size from the saved page draft.
   // The live chat-entry limit is separate and must not overwrite the bracket size.
