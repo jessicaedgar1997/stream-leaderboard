@@ -452,8 +452,7 @@ function renderEntryPlayers(){
    $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
    $("bracketInfo").textContent=playerTotal+" of "+limit+" player spots • Add players directly to this bracket as you go.";
    $("tournament").classList.remove("hidden");
-   tournamentIsActive=true;
-   updateStartEndButton();
+   tournamentIsActive=true;;
    renderEntryPlayers();
    const saved=await saveBracketOnline();
    if(saved)$("setupStatus").textContent=player.username+" added and saved to the shared bracket ("+playerTotal+"/"+limit+").";
@@ -704,7 +703,7 @@ $("clearAllBracket").onclick=async()=>{
  await saveBracketOnline();
  $("setupStatus").textContent="Player names, games, and buy-ins cleared. Bracket layout, event settings, and saved payout amounts were left unchanged.";
 };
-$("newTournament").onclick=()=>{tournamentIsActive=false;bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");renderEntryPlayers();$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Add players one at a time; each one appears in the bracket immediately.";updateStartEndButton();window.scrollTo({top:0,behavior:"smooth"});};
+$("newTournament").onclick=()=>{tournamentIsActive=false;bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");renderEntryPlayers();$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Add players one at a time; each one appears in the bracket immediately.";;window.scrollTo({top:0,behavior:"smooth"});};
 $("print").onclick=()=>window.print();
 $("saveBracket").onclick=saveBracketOnline;
 updateHint();
