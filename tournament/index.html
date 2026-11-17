@@ -524,21 +524,6 @@ $("playerCount").addEventListener("change",async()=>{
   queueBracketSave();
  }
 });
- if(!$("liveAdminMessage").textContent.startsWith("Tournament size set to "+size+" players.")){
-  $("playerCount").value=String(previous);resizeEntryPlayers();updateHint();
-  $("setupStatus").textContent="Bracket size was not saved online. Please try again.";
-  return;
- }
- if(rounds.length){
-  const nextPlayers=namesFromInput();
-  buildBracket(nextPlayers);
-  playerTotal=nextPlayers.length;
-  $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
-  $("bracketInfo").textContent=playerTotal+" player spots • Bracket resized • Shuffle players or choose winners below.";
-  $("setupStatus").textContent="Bracket updated and saved to "+size+" player spots.";
-  queueBracketSave();
- }
-});
 $("players").addEventListener("input",updateHint);$("eventName").addEventListener("input",updateHint);
 $("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
 $("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
