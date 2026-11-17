@@ -177,6 +177,8 @@ const $ = id => document.getElementById(id);
 const SUPABASE_URL = "https://xbogfbyysrjttyfvzluh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_rU0twvbtzrYlKqqbuNPD6g_B38iNXt5";
 const CONTROL_URL = SUPABASE_URL + "/functions/v1/tournament-join";
+const KICK_CHAT_URL = SUPABASE_URL + "/functions/v1/kick-connect";
+let tournamentChatState = null;
 const BONUS_HUNT_URL = SUPABASE_URL + "/functions/v1/slotbuddy-bonus-hunt";
 const QUEUE_URL = SUPABASE_URL + "/functions/v1/slotbuddy-queue";
 const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -547,6 +549,60 @@ $("players").addEventListener("input",updateHint);$("eventName").addEventListene
 $("fillDemo").onclick=()=>{$("players").value=Array.from({length:Number($("playerCount").value)},(_,i)=>"Player "+(i+1)).join("\n");updateHint();};
 $("clearNames").onclick=()=>{$("players").value="";updateHint();$("setupStatus").textContent="Names cleared.";};
 function shuffle(list){const a=[...list];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function tournamentPlayerIdentity(player){
+ if(!player)return "BYE";
+ return [String(player.username||player.name||player.display_name||player),String(player.game||"")].join("|").toLowerCase();
+}
+function tournamentChatBracketKey(){
+ const name=String($("eventName")?.value||$("bracketTitle")?.textContent||"Tournament").trim();
+ return JSON.stringify({name,first:(rounds[0]||[]).map(m=>[tournamentPlayerIdentity(m.a),tournamentPlayerIdentity(m.b)])});
+}
+function getTournamentChatState(){
+ const key=tournamentChatBracketKey();
+ if(!tournamentChatState||tournamentChatState.key!==key){
+  try{tournamentChatState=JSON.parse(localStorage.getItem("slotbuddyTournamentChatAnnouncements")||"null");}catch{tournamentChatState=null;}
+ }
+ if(!tournamentChatState||tournamentChatState.key!==key)tournamentChatState={key,matches:{},winners:{}};
+ return tournamentChatState;
+}
+function saveTournamentChatState(){localStorage.setItem("slotbuddyTournamentChatAnnouncements",JSON.stringify(tournamentChatState));}
+async function sendTournamentChatMessage(content){
+ const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+ if(!session_key){$("setupStatus").textContent="Sign in with Kick on SlotBuddy to send tournament announcements.";return false;}
+ try{
+  const response=await fetch(KICK_CHAT_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"send-message",session_key,content})});
+  const data=await response.json();
+  if(!response.ok||!data.ok)throw new Error(data.error||"Kick chat rejected the announcement.");
+  return true;
+ }catch(error){$("setupStatus").textContent="Tournament chat announcement failed: "+(error.message||"Reconnect Kick and try again.");return false;}
+}
+async function announceTournamentRound(r){
+ if(!rounds[r])return;
+ const state=getTournamentChatState();
+ for(let i=0;i<rounds[r].length;i++){
+  const match=rounds[r][i];
+  if(match.a&&match.b){
+   const key=r+":"+i+":"+tournamentPlayerIdentity(match.a)+":"+tournamentPlayerIdentity(match.b);
+   if(state.matches[key])continue;
+   const message="🏆 "+roundName(r).toUpperCase()+" MATCH "+(i+1)+": "+playerLabel(match.a)+" vs "+playerLabel(match.b)+"!";
+   if(await sendTournamentChatMessage(message)){state.matches[key]=true;saveTournamentChatState();}
+  }else if(match.a&&match.winner===match.a){
+   const key="bye:"+r+":"+i+":"+tournamentPlayerIdentity(match.a);
+   if(state.winners[key])continue;
+   const message="🏆 "+roundName(r).toUpperCase()+": "+playerLabel(match.a)+" advances with a BYE!";
+   if(await sendTournamentChatMessage(message)){state.winners[key]=true;saveTournamentChatState();}
+  }
+ }
+}
+async function announceTournamentWinner(r,i){
+ const match=rounds[r]?.[i];if(!match?.winner||!match.a||!match.b)return;
+ const state=getTournamentChatState();
+ const winner=tournamentPlayerIdentity(match.winner),loser=tournamentPlayerIdentity(match.winner===match.a?match.b:match.a);
+ const key=r+":"+i+":"+winner+":"+loser;
+ if(state.winners[key])return;
+ const message="🏆 "+roundName(r).toUpperCase()+" WINNER — "+playerLabel(match.winner)+" defeats "+playerLabel(match.winner===match.a?match.b:match.a)+" and advances!";
+ if(await sendTournamentChatMessage(message)){state.winners[key]=true;saveTournamentChatState();}
+}
 function buildBracket(list){
  playerTotal=list.length;const entries=list.map(p=>typeof p==="string"?{username:p,game:""}:{...p,username:String(p.username||p.name||""),game:String(p.game||""),buy:p.buy==null?"":String(p.buy),casino:String(p.casino||"Rainbet"),bonusType:String(p.bonusType||"Regular")});const size=2**Math.ceil(Math.log2(Math.max(2,playerTotal)));const roundCount=Math.log2(size);
  rounds=Array.from({length:roundCount},(_,r)=>Array.from({length:size/Math.pow(2,r+1)},()=>({a:null,b:null,winner:null,payout:""})));
@@ -567,6 +623,8 @@ function chooseWinner(r,i,side){
  match.winner=chosen;
  for(let later=r+1;later<rounds.length;later++)rounds[later].forEach(m=>{m.winner=null;m.payout="";});
  propagate(r);renderBracket();queueBracketSave();
+ announceTournamentWinner(r,i);
+ if(rounds[r+1])announceTournamentRound(r+1);
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function roundName(r){if(r===rounds.length-1)return "Final";if(r===rounds.length-2)return "Semi-finals";if(r===0)return "Round 1";return "Round "+(r+1);}
@@ -612,6 +670,7 @@ $("clearAllWinners").addEventListener("click",()=>{
  rounds.forEach(round=>round.forEach(match=>{
   if(match.a&&match.b){match.winner=null;match.payout="";match.aPayout="";match.bPayout="";}
  }));
+ const chatState=getTournamentChatState();chatState.winners={};saveTournamentChatState();
  for(let r=1;r<rounds.length;r++)rounds[r].forEach(match=>{match.winner=null;match.payout="";match.aPayout="";match.bPayout="";});
  renderBracket();
  queueBracketSave();
@@ -632,6 +691,7 @@ $("saveMatchPayout").addEventListener("click",()=>{
  else{$("matchPayoutStatus").textContent="Both slots paid the same. Choose the winner manually in the bracket above.";}
  match.payout=Math.max(aAmount,bAmount).toFixed(2);
  propagate(r);renderBracket();queueBracketSave();
+ if(match.winner){announceTournamentWinner(r,i);if(rounds[r+1])announceTournamentRound(r+1);}
 });
 
 function tournamentSlotLabel(player){
@@ -665,7 +725,7 @@ $("build").onclick=()=>{
  if(list.some(p=>!p.username.trim()||!p.game.trim())){$("setupStatus").textContent="Every added player needs a username and game.";return;}
  if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"){const gameNames=list.map(p=>p.game.trim().toLowerCase());if(new Set(gameNames).size!==gameNames.length){$("setupStatus").textContent="Duplicate games are turned OFF. Each player must have a different game, or turn DUP ON.";return;}}
  if(list.some(p=>p.username.length>40||p.game.length>100)){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
- buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=list.length+" of "+required+" player spots • Single elimination • Use Shuffle Players to reshuffle."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="All added players are in the bracket. Press SHUFFLE PLAYERS whenever you're ready!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+ buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=list.length+" of "+required+" player spots • Single elimination • Use Shuffle Players to reshuffle."; getTournamentChatState();announceTournamentRound(0); $("tournament").classList.remove("hidden");$("setupStatus").textContent="All added players are in the bracket. Press SHUFFLE PLAYERS whenever you're ready!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
 };
 function addQueuedCallsToNextBracket(calls){
  const current=namesFromInput().filter(p=>!isEntryPlaceholder(p));
@@ -742,7 +802,7 @@ $("clearAllBracket").onclick=async()=>{
   button.disabled=false;
  }
 };
-$("newTournament").onclick=()=>{tournamentIsActive=false;bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");renderEntryPlayers();$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Add players one at a time; each one appears in the bracket immediately.";;window.scrollTo({top:0,behavior:"smooth"});};
+$("newTournament").onclick=()=>{localStorage.removeItem("slotbuddyTournamentChatAnnouncements");tournamentChatState=null;tournamentIsActive=false;bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");renderEntryPlayers();$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Add players one at a time; each one appears in the bracket immediately.";;window.scrollTo({top:0,behavior:"smooth"});};
 $("print").onclick=()=>window.print();
 $("saveBracket").onclick=saveBracketOnline;
 updateHint();
