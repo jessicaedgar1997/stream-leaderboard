@@ -267,7 +267,7 @@ $("loadChatPlayers").onclick=async()=>{
 };
 $("refreshPlayers").onclick=refreshLivePlayers;
 // Automatically sync Kick !slot entries into the tournament player fields.
-setInterval(()=>{if(!document.hidden)refreshLivePlayers();},5000);
+setInterval(()=>{if(!document.hidden)refreshLivePlayers();},1000);
 async function adminSlotAction(action,extra={}){
  const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
  if(!session_key){$("slotAdminMessage").textContent="Sign in with Kick on SlotBuddy first.";return;}
