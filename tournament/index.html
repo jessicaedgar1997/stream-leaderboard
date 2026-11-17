@@ -588,20 +588,45 @@ function updateStartEndButton(){
  $("build").textContent=active?"🏁 END TOURNAMENT":"🎲 START TOURNAMENT";
  $("build").classList.toggle("dark",active);$("build").classList.toggle("pink",!active);
 }
+function addQueuedCallsToNextBracket(calls){
+ const current=namesFromInput().filter(p=>!isEntryPlaceholder(p));
+ const added=[];
+ for(const call of calls||[]){
+  const username=String(call.username||call.caller_name||"").trim();
+  const game=String(call.game||call.game_name||"").trim();
+  if(!username||!game)continue;
+  const duplicate=current.some(p=>p.username.trim().toLowerCase()===username.toLowerCase()&&p.game.trim().toLowerCase()===game.toLowerCase())||added.some(p=>p.username.toLowerCase()===username.toLowerCase()&&p.game.toLowerCase()===game.toLowerCase());
+  if(duplicate)continue;
+  added.push({username,game,buy:"0.00",casino:"Rainbet",bonusType:call.bonus_type||call.bonusType||"Regular"});
+ }
+ if(!added.length)return 0;
+ const combined=current.concat(added);
+ const supported=[4,6,8,10,12,14,16,32];
+ const currentLimit=Number($("playerCount").value)||4;
+ const capacity=supported.find(n=>n>=Math.max(currentLimit,combined.length))||32;
+ $("playerCount").value=String(capacity);
+ while(combined.length<capacity)combined.push({username:"Player "+(combined.length+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
+ writeEntryPlayers(combined);
+ updateHint();
+ return added.length;
+}
 async function endTournamentNow(){
  if(!canManageTournament)return;
  if(!rounds.length){$("setupStatus").textContent="Start the tournament before ending it.";return;}
- if(!confirm("End this tournament now? The bracket and results will be saved, and new tournament slot calls will be turned OFF."))return;
+ if(!confirm("End this tournament now? The bracket and results will be saved, and new tournament slot calls will be turned OFF. Queued slot calls will be added to the next bracket list."))return;
  $("build").disabled=true;
  try{
+  let callsToCarryOver=liveCalls;
+  try{const queueResponse=await fetch(QUEUE_URL+"?action=snapshot",{cache:"no-store"});if(queueResponse.ok){const queueData=await queueResponse.json();callsToCarryOver=queueData.calls||callsToCarryOver;}}catch(error){console.warn("Using the most recently loaded slot-call list for the next bracket.");}
   const response=await fetch(CONTROL_URL+"?action=end-tournament",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_key:localStorage.getItem("slotbuddy_kick_session")||""})});
   const message=await response.text();
   if(!response.ok)throw new Error(message||"Could not end the tournament.");
+  const carriedOver=addQueuedCallsToNextBracket(callsToCarryOver);
   liveState={...liveState,is_open:false,slot_calls_enabled:false};
   updateTournamentCallsToggle();
   tournamentIsActive=false;
   $("tournament").classList.add("hidden");
-  $("setupStatus").textContent="🏁 Tournament ended! Your bracket and results are saved. Slot calls are OFF. Use Clear players / new tournament when you're ready to start another.";
+  $("setupStatus").textContent="🏁 Tournament ended! Your bracket and results are saved. "+(carriedOver?carriedOver+" queued game"+(carriedOver===1?" was":"s were")+" added to the next bracket list (buy-ins set to $0.00).":"No new queued games needed to be added.")+" Slot calls are OFF. Review the player list and update buy-ins before starting again.";
   updateStartEndButton();
   window.scrollTo({top:0,behavior:"smooth"});
  }catch(error){$("setupStatus").textContent=error.message;}
