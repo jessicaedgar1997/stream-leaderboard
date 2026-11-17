@@ -459,6 +459,7 @@ function renderEntryPlayers(){
     if(!response.ok||!result.ok)throw new Error(result.error||"Could not remove the saved tournament entry.");
    }catch(error){btn.disabled=false;$("setupStatus").textContent=error.message||"Could not remove the saved tournament entry.";return;}
   }
+  const stagedKey=String(player.username||"").trim().toLowerCase()+"|"+String(player.game||"").trim().toLowerCase();bracketAddedEntries=bracketAddedEntries.filter(p=>String(p.username||"").trim().toLowerCase()+"|"+String(p.game||"").trim().toLowerCase()!==stagedKey);localStorage.setItem("slotbuddyBracketAddedEntries",JSON.stringify(bracketAddedEntries));
   const removedName=String(player.username||"").trim().toLowerCase(),removedGame=String(player.game||"").trim().toLowerCase();
   let removedFromBracket=false,removedWinnerRound=-1;
   if(Array.isArray(rounds)&&rounds.length){
@@ -749,7 +750,7 @@ $("clearAllBracket").onclick=async()=>{
  await saveBracketOnline();
  $("setupStatus").textContent="Player names, games, buy-ins, and match results cleared. The bracket and all "+count+" spots are still in place.";
 };
-$("newTournament").onclick=()=>{tournamentIsActive=false;$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Update the names and build again.";updateStartEndButton();window.scrollTo({top:0,behavior:"smooth"});};
+$("newTournament").onclick=()=>{tournamentIsActive=false;bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");renderEntryPlayers();$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for the next tournament. Add players one at a time, then start and shuffle.";updateStartEndButton();window.scrollTo({top:0,behavior:"smooth"});};
 $("print").onclick=()=>window.print();
 $("saveBracket").onclick=saveBracketOnline;
 updateHint();
