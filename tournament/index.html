@@ -162,6 +162,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 </section>
 
 <section class="panel" id="tournament">
+<p id="managerAccessStatus" role="status" aria-live="polite" style="padding:10px 13px;margin:0 0 14px;border:1px solid #53658e;border-radius:10px;background:#0c1329;color:#cbd5f5;font-size:.9rem">Checking your saved SlotBuddy manager sign-in…</p>
 <div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" type="button">🧹 Clear Names &amp; Games</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
 <div class="bracket" id="bracket"><div class="empty-state">No bracket is active yet. SlotBuddy should recognize your existing manager sign-in automatically. Your saved Tournament entries have not been deleted. 💗💙</div></div>
 <div id="champion" class="champion hidden"></div>
@@ -194,10 +195,13 @@ let canManageTournament = false;
 async function applyStaffView(){
  const session=localStorage.getItem("slotbuddy_kick_session")||"";
  const status=$("setupStatus");
+ const accessStatus=$("managerAccessStatus");
+ const showAccess=message=>{if(accessStatus)accessStatus.textContent=message;};
  canManageTournament=false;
  if(!session){
   document.body.classList.remove("slotbuddy-manager");
   if(status)status.textContent="SlotBuddy manager sign-in was not found in this browser session. Your saved Tournament entries are still safe.";
+  showAccess("Manager sign-in not found on this page. Your saved Tournament entries are safe. The page cannot show organizer controls until it can read the saved SlotBuddy session.");
  }else{
   try{
    const r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session})});
@@ -206,13 +210,16 @@ async function applyStaffView(){
    if(canManageTournament){
     document.body.classList.add("slotbuddy-manager");
     if(status)status.textContent="Manager access recognized. Loading your saved Tournament entries…";
+    showAccess("✓ SlotBuddy manager sign-in recognized. Organizer controls are being enabled.");
    }else{
     document.body.classList.remove("slotbuddy-manager");
     if(status)status.textContent=d.error||("Kick sign-in responded, but this account has the role: "+String(d.user?.role||"unverified")+". Tournament manager controls remain locked.");
+    showAccess("Manager sign-in was found, but access was not granted. Account role: "+String(d.user?.role||"unverified")+". Please do not sign in again; this needs a permission check.");
    }
   }catch(error){
    document.body.classList.remove("slotbuddy-manager");
    if(status)status.textContent="Couldn't verify the saved SlotBuddy sign-in: "+(error?.message||"connection error")+". Your saved entries have not been changed.";
+   showAccess("Could not verify the saved SlotBuddy session: "+(error?.message||"connection error")+". Your saved entries are safe.");
   }
  }
  ["ownerControls","bracketLoadControls","slotCallControls","tournamentBonusAdmin","setup"].forEach(id=>{const el=$(id);if(el)el.hidden=!canManageTournament;});
