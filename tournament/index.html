@@ -209,7 +209,7 @@ async function applyStaffView(){
   try{
    showAccess("Saved sign-in found. Contacting SlotBuddy to verify manager access…");
    const controller=new AbortController();
-   const timeout=setTimeout(()=>controller.abort(),12000);
+   const timeout=setTimeout(()=>controller.abort(),30000);
    let r,d;
    try{
     r=await fetch(SUPABASE_URL+"/functions/v1/slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:session}),signal:controller.signal,cache:"no-store"});
@@ -228,7 +228,7 @@ async function applyStaffView(){
    }
   }catch(error){
    document.body.classList.remove("slotbuddy-manager");
-   const detail=error?.name==="AbortError"?"The manager check timed out after 12 seconds":(error?.message||"connection error");
+   const detail=error?.name==="AbortError"?"The manager check timed out after 30 seconds. This is a connection delay, not a sign-out":(error?.message||"connection error");
    if(status)status.textContent="Couldn't verify the saved SlotBuddy sign-in: "+detail+". Your saved entries have not been changed.";
    showAccess("Could not finish checking the saved SlotBuddy session: "+detail+". Your saved entries are safe. You do not need to sign in again.");
   }
