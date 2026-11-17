@@ -722,7 +722,7 @@ function tournamentSlotLabel(player){
 function playerButton(player,r,i,side,winner){
  if(!player){if(r===0){const slotNumber=i*2+(side==="a"?1:2);return '<div class="player empty">Player '+slotNumber+'</div>';}return '<div class="player empty" aria-hidden="true"></div>';}
  const isWinner=!!winner&&((winner===player)||(winner.username&&winner.username===(player.username||player.name)&&winner.game===player.game));
- const label=escapeHtml(tournamentSlotLabel(player))+(isWinner?' <small>✓ ADVANCES</small>':'');
+ const buyValue=player&&typeof player==="object"?player.buy:"";const buyLabel=buyValue!==""&&buyValue!=null&&Number.isFinite(Number(buyValue))?"Buy-in: C$"+Number(buyValue).toFixed(2):"Buy-in: Not set";const label=escapeHtml(tournamentSlotLabel(player))+'<small class="bracket-buy" style="display:block;margin-top:4px;font-size:11px;opacity:.85">'+escapeHtml(buyLabel)+'</small>'+(isWinner?' <small>✓ ADVANCES</small>':'');
  if(!canManageTournament)return '<div class="player '+(isWinner?'winner':'')+'">'+label+'</div>';
  return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+label+'</button>';
 }
