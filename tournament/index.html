@@ -420,7 +420,19 @@ function renderEntryPlayers(){
  const list=$("tournamentEntryList");if(!list)return;
  const players=namesFromInput();
  list.innerHTML=players.length?players.map((p,i)=>{const placeholder=isEntryPlaceholder(p);const meta=placeholder?"Waiting for player details":(escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular"));const buyControl=placeholder?"":'<label class="entry-buy-edit">Buy-in (C$) <input type="number" min="0" step="0.01" value="'+(p.buy!==""&&Number.isFinite(Number(p.buy))?Number(p.buy).toFixed(2):"0.00")+'" data-buy-entry="'+i+'" aria-label="Buy-in for '+escapeHtml(p.username)+'" style="width:105px;padding:6px;border-radius:8px;border:1px solid #526080;background:#10182a;color:white"></label>';return '<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+meta+'</div>'+buyControl+'</div><div class="entry-actions"><button class="entry-remove" type="button" data-remove-entry="'+i+'">REMOVE</button></div></div>';}).join(""):'<span class="hint">No player spots yet.</span>';
- list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=()=>{const a=namesFromInput(),index=Number(btn.dataset.removeEntry);if(!a[index])return;a[index]={...a[index],username:"",game:"",buy:""};writeEntryPlayers(a);resizeEntryPlayers();updateHint();$("setupStatus").textContent="Player "+(index+1)+" removed. That bracket spot is still open.";});
+ list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=async()=>{
+  const a=namesFromInput(),index=Number(btn.dataset.removeEntry),player=a[index];if(!player)return;
+  if(!isEntryPlaceholder(player)&&player.game&&canManageTournament){
+   btn.disabled=true;
+   try{
+    const session=localStorage.getItem("slotbuddy_kick_session")||"";
+    const response=await fetch(CONTROL_URL+"?action=slot-entry-delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_key:session,caller_name:player.username,game_name:player.game,bonus_type:player.bonusType||"Regular"})});
+    const result=await response.json();
+    if(!response.ok||!result.ok)throw new Error(result.error||"Could not remove the saved tournament entry.");
+   }catch(error){btn.disabled=false;$("setupStatus").textContent=error.message||"Could not remove the saved tournament entry.";return;}
+  }
+  a[index]={...a[index],username:"",game:"",buy:""};writeEntryPlayers(a);resizeEntryPlayers();updateHint();$("setupStatus").textContent="Player "+(index+1)+" removed. That bracket spot is still open.";
+ });
  list.querySelectorAll("[data-buy-entry]").forEach(input=>input.onchange=()=>{const a=namesFromInput(),index=Number(input.dataset.buyEntry),value=input.value;if(!Number.isFinite(Number(value))||Number(value)<0){input.value=Number(a[index]?.buy||0).toFixed(2);return;}if(a[index])a[index].buy=Number(value).toFixed(2);writeEntryPlayers(a);updateHint();});
  if($("addTournamentPlayer"))$("addTournamentPlayer").disabled=players.length>=Number($("playerCount").value)&&!players.some(isEntryPlaceholder);
 }
