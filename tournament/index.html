@@ -293,9 +293,11 @@ async function clearSavedTournamentEntries(){
    remoteRemaining=Math.max(remoteRemaining,remaining);
    if(remaining)throw new Error("The player draft was cleared on this device, but "+remaining+" saved player entr"+(remaining===1?"y remains":"ies remain")+" online. Please retry.");
   }
-  writeEntryPlayers([]);
-  bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");
-  localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count:Number($("playerCount").value)||4,players:""}));
+  const slotCount=Math.max(1,Number($("playerCount").value)||4);
+  const emptySlots=Array.from({length:slotCount},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
+  writeEntryPlayers(emptySlots);
+  renderEntryPlayers();
+  localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count:slotCount,players:$("players").value}));
   if(!session_key)status.textContent="This device's saved Tournament player names were cleared. Sign in to clear any names saved online.";
   else status.textContent="Saved Tournament player names cleared"+(remoteChecked?" and verified online":"")+"! "+(removed?"Removed "+removed+" online entr"+(removed===1?"y":"ies")+". ":"")+"You can start fresh! 💗💙";
   await refreshLivePlayers(true,false);
