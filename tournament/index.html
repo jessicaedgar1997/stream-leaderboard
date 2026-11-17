@@ -399,7 +399,7 @@ function namesFromInput(){return $("players").value.split(/\r?\n/).map((line,ind
 function isEntryPlaceholder(p){return (!String(p.username||"").trim()||/^Player \d+$/i.test(String(p.username||"")))&&!String(p.game||"").trim()&&!String(p.buy||"").trim();}
 function resizeEntryPlayers(){
  const limit=Number($("playerCount").value)||4,players=namesFromInput();
- while(players.length>limit){let removeAt=-1;for(let i=players.length-1;i>=0;i--){if(isEntryPlaceholder(players[i])){removeAt=i;break;}}if(removeAt<0)removeAt=players.length-1;players.splice(removeAt,1);}
+ // Preserve all entered players even when the selected bracket size is smaller.
  while(players.length<limit)players.push({username:"",game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
  players.forEach((p,index)=>{if(isEntryPlaceholder(p))p.username="Player "+(index+1);});
  writeEntryPlayers(players);
