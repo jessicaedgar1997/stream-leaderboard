@@ -265,6 +265,7 @@ async function restoreSavedTournamentEntries(){
 $("restoreSavedEntries")?.addEventListener("click",restoreSavedTournamentEntries);
 function safeText(s){return String(s).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
 async function refreshLivePlayers(syncEntries=false,syncBracket=false){
+ const requestVersion=tournamentSnapshotVersion;
  if(syncEntries)hasLoadedTournamentEntries=false;
  if(syncBracket)hasLoadedSavedBracket=false;
  try{
@@ -274,6 +275,7 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   if(snapshot.error)throw new Error(snapshot.error);
   const queueResponse=await fetch(QUEUE_URL+"?action=snapshot",{cache:"no-store"});
   const queueSnapshot=queueResponse.ok?await queueResponse.json():{calls:[],active_queue:null};
+  if(requestVersion!==tournamentSnapshotVersion)return;
   livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;
   // Keep the organizer's selected bracket size from the saved page draft.
   // The live chat-entry limit is separate and must not overwrite the bracket size.
@@ -281,7 +283,7 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   const queueStatus=$("slotQueueStatus");if(queueStatus){queueStatus.textContent=queueSnapshot.active_queue==="cozies"?"COZIES CALLS OPEN":queueSnapshot.active_queue==="bonus_hunt"?"BONUS HUNT CALLS OPEN":"CALLS CLOSED";queueStatus.style.color=queueSnapshot.active_queue?"var(--blue)":"var(--pink)";}
   const remoteBracketUpdatedAt=snapshot.bracket_updated_at||null;
   const remoteBracketChanged=remoteBracketUpdatedAt!==lastRemoteBracketUpdatedAt;
-  if(snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
+  if(!bracketClearInProgress&&snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
    restoreSavedBracket(snapshot.bracket);hasLoadedSavedBracket=true;lastRemoteBracketUpdatedAt=remoteBracketUpdatedAt;
    const targetSize=Number($("playerCount").value)||Number(snapshot.bracket.count)||Number(snapshot.state?.max_players)||4;
    const savedSize=Number(snapshot.bracket.count)||((snapshot.bracket.rounds?.[0]?.length||0)*2);
@@ -437,6 +439,8 @@ let playerTotal = 4;
 let hasLoadedSavedBracket = false;
 let lastRemoteBracketUpdatedAt = null;
 let tournamentSyncPollBusy = false;
+let tournamentSnapshotVersion = 0;
+let bracketClearInProgress = false;
 let bracketSaveTimer = null;
 let selectedMatchKey = "";
 
@@ -908,6 +912,9 @@ $("clearAllBracket").onclick=async()=>{
    status.textContent="Clear cancelled. Nothing was changed.";
    return;
   }
+  // Invalidate any snapshot already in flight so an older copy cannot repaint cleared names.
+  tournamentSnapshotVersion++;
+  bracketClearInProgress=true;
   clearTimeout(bracketSaveTimer);
   const count=Math.max(2,Number($("playerCount").value)||((rounds[0]?.length||0)*2)||playerTotal||4);
   const emptyPlayers=Array.from({length:count},(_,i)=>({username:"",game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
@@ -928,10 +935,13 @@ $("clearAllBracket").onclick=async()=>{
   updateHint();
   renderBracket();
   const saved=await saveBracketOnline();
+  bracketClearInProgress=false;
+  if(saved)await refreshLivePlayers(false,true);
   status.textContent=saved?"Player names, games, buy-ins, and match payouts cleared. Bracket size and event settings were kept.":"Names and games cleared on this screen, but the online save needs attention: sign in again and press Save bracket.";
  }catch(error){
   status.textContent="Clear Names & Games hit an error: "+(error?.message||"Please refresh and try again.");
  }finally{
+  bracketClearInProgress=false;
   button.disabled=false;
  }
 };
