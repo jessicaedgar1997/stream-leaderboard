@@ -698,7 +698,8 @@ $("allowDuplicateGames").onclick=()=>{const on=$("allowDuplicateGames").getAttri
 const savedDup=localStorage.getItem("chaosQueenTournamentDuplicateGames")==="true";$("allowDuplicateGames").setAttribute("aria-pressed",String(savedDup));$("allowDuplicateGames").textContent="DUP: "+(savedDup?"ON":"OFF");$("allowDuplicateGames").classList.toggle("pink",savedDup);
 $("playerCount").addEventListener("change",async()=>{
  const size=Number($("playerCount").value)||4;
- const existing=((rounds[0]||[]).flatMap(match=>[match.a,match.b]).filter(Boolean)).map(p=>typeof p==="string"?{username:p,game:""}:{...p});
+ // Use the current entry list as the source of truth. Never resurrect names from an older bracket still held in memory.
+ const existing=namesFromInput().filter(p=>!isEntryPlaceholder(p)).map(p=>({...p}));
  if(existing.length>size){
   $("playerCount").value=String(Number(liveState?.max_players)||8);resizeEntryPlayers();updateHint();
   $("setupStatus").textContent="There are "+existing.length+" players already in the bracket. Remove at least "+(existing.length-size)+" before switching to "+size+". No players were removed.";
@@ -1041,7 +1042,20 @@ $("clearAllBracket").onclick=async()=>{
   button.disabled=false;
  }
 };
-$("newTournament").onclick=async()=>{localStorage.removeItem("slotbuddyTournamentChatAnnouncements");tournamentChatState=null;tournamentIsActive=false;bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");$("playerCount").value="4";$("livePlayerCount").value="4";resizeEntryPlayers();updateHint();localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count:4,players:""}));await adminAction("size",{value:4});renderEntryPlayers();$("tournament").classList.add("hidden");$("setupStatus").textContent="Ready for a new 4-player tournament. You can change the player count before adding players. 💗💙";window.scrollTo({top:0,behavior:"smooth"});};
+$("newTournament").onclick=async()=>{
+ localStorage.removeItem("slotbuddyTournamentChatAnnouncements");tournamentChatState=null;tournamentIsActive=false;
+ bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");
+ clearTimeout(bracketSaveTimer);
+ $("playerCount").value="4";$("livePlayerCount").value="4";
+ writeEntryPlayers(Array.from({length:4},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"})));
+ playerTotal=0;buildBracket([],4);
+ localStorage.removeItem("slotbuddyTournamentBracketCache");
+ localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count:4,players:$("players").value}));
+ updateHint();await adminAction("size",{value:4});await saveBracketOnline();
+ renderEntryPlayers();$("tournament").classList.add("hidden");
+ $("setupStatus").textContent="Old tournament cleared. Ready for a fresh 4-player tournament. You can change the player count before adding players. 💗💙";
+ window.scrollTo({top:0,behavior:"smooth"});
+};
 $("print").onclick=()=>window.print();
 $("saveBracket").onclick=saveBracketOnline;
 updateHint();
