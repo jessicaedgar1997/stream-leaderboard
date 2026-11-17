@@ -834,7 +834,8 @@ function playerButton(player,r,i,side,winner,payout){
  const buyLabel=hasBuy?'<small class="bracket-buy" style="display:block;margin-top:4px;font-size:11px;opacity:.85">Buy-in: C$'+Number(buyValue).toFixed(2)+'</small>':"";
  const hasPayout=payout!==""&&payout!=null&&Number.isFinite(Number(payout));
  const payoutLabel=hasPayout?'<small class="bracket-payout" style="display:block;margin-top:3px;font-size:11px;opacity:.95">Payout: $'+Number(payout).toFixed(2)+'</small>':"";
- const label=escapeHtml(tournamentSlotLabel(player))+buyLabel+payoutLabel+(isWinner?' <small>✓ ADVANCES</small>':'');
+ const winnerTag=isWinner?(r===rounds.length-1?' <small>✓ WINNER</small>':' <small>✓ ADVANCES</small>'):"";
+ const label=escapeHtml(tournamentSlotLabel(player))+buyLabel+payoutLabel+winnerTag;
  if(!canManageTournament)return '<div class="player '+(isWinner?'winner':'')+'">'+label+'</div>';
  return '<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+label+'</button>';
 }
