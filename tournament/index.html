@@ -1031,6 +1031,12 @@ document.addEventListener("click",async function(event){
 .bracket,.bracket *{color:#000!important;text-shadow:0 0 2px #fff,0 0 5px #fff!important}
 .bracket .player,.bracket .player.empty:not(:empty),.bracket .player.winner{ text-shadow:0 0 2px #fff,0 0 6px #fff!important}
 .bracket .bracket-payout-editor input{color:#000!important;text-shadow:none!important}
+
+/* Bracket player names and labels: black text, preserving the existing pink-to-blue styling. */
+.bracket .player,
+.bracket .player.winner,
+.bracket .player.empty:not(:empty),
+.bracket .player small{color:#000!important;text-shadow:0 0 2px #fff,0 0 4px #fff!important}
 </style>
 <div id="siteAutumnLeaves" aria-hidden="true"></div>
 <script id="site-autumn-leaves-script">
