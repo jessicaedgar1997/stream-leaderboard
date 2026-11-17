@@ -30,7 +30,9 @@ function slotLabels(rounds){return new Map();}
 function labelFor(player,labels){
  const name=playerName(player);
  const game=player&&typeof player==="object"?String(player.game||"").trim():"";
- return name?(name+(game?" · "+game:"")):"";
+ const buy=player&&typeof player==="object"&&player.buy!==""&&player.buy!=null&&Number.isFinite(Number(player.buy))?" · BUY C$"+Number(player.buy).toFixed(2):"";
+ const payout=player&&typeof player==="object"&&player.payout!==""&&player.payout!=null&&Number.isFinite(Number(player.payout))?" · PAYOUT C$"+Number(player.payout).toFixed(2):"";
+ return name?(name+(game?" · "+game:"")+buy+payout):"";
 }
 function draw(data){
  const bracket=data?.bracket;
