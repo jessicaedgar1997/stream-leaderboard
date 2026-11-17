@@ -156,7 +156,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <p class="hint" id="countHint">Add players from the slot-call queue, then press ADD TO BRACKET beside each name.</p>
 <textarea id="players" spellcheck="false" hidden aria-hidden="true"></textarea>
 <div class="actions tournament-controls"></div>
-<div class="actions"><button id="build" type="button">🎲 Start Tournament</button><button id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
+<div class="actions"><button id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
 <button id="fillDemo" type="button" hidden>Add sample names</button>
 <p class="status" id="setupStatus" role="status"></p>
 </section>
@@ -405,7 +405,7 @@ function restoreSavedBracket(data){
  $("tournament").classList.remove("hidden");
  tournamentIsActive = true;
  renderBracket();
- updateStartEndButton();
+ 
  $("setupStatus").textContent="Your saved tournament bracket has been restored. 💗💙";
 }
 const saved = localStorage.getItem("chaosQueenTournamentDraft");
@@ -643,13 +643,6 @@ $("build").onclick=()=>{
  if(list.some(p=>p.username.length>40||p.game.length>100)){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
  buildBracket(list);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=list.length+" of "+required+" player spots • Single elimination • Use Shuffle Players to reshuffle."; $("tournament").classList.remove("hidden");$("setupStatus").textContent="All added players are in the bracket. Press SHUFFLE PLAYERS whenever you're ready!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
 };
-const originalStartTournament=$("build").onclick;
-function updateStartEndButton(){
- const active=tournamentIsActive;
- $("build").textContent="🏁 END TOURNAMENT";
- $("build").classList.toggle("dark",true);$("build").classList.remove("pink");
- $("build").hidden=!active;
-}
 function addQueuedCallsToNextBracket(calls){
  const current=namesFromInput().filter(p=>!isEntryPlaceholder(p));
  const added=[];
@@ -672,32 +665,6 @@ function addQueuedCallsToNextBracket(calls){
  updateHint();
  return added.length;
 }
-async function endTournamentNow(){
- if(!canManageTournament)return;
- if(!rounds.length){$("setupStatus").textContent="Start the tournament before ending it.";return;}
- if(!confirm("End this tournament now? The bracket and results will be saved, and new tournament slot calls will be turned OFF. Queued slot calls will be added to the next bracket list."))return;
- $("build").disabled=true;
- try{
-  let callsToCarryOver=liveCalls;
-  try{const queueResponse=await fetch(QUEUE_URL+"?action=snapshot",{cache:"no-store"});if(queueResponse.ok){const queueData=await queueResponse.json();callsToCarryOver=queueData.calls||callsToCarryOver;}}catch(error){console.warn("Using the most recently loaded slot-call list for the next bracket.");}
-  const response=await fetch(CONTROL_URL+"?action=end-tournament",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_key:localStorage.getItem("slotbuddy_kick_session")||""})});
-  const message=await response.text();
-  if(!response.ok)throw new Error(message||"Could not end the tournament.");
-  const carriedOver=addQueuedCallsToNextBracket(callsToCarryOver);
-  liveState={...liveState,is_open:false,slot_calls_enabled:false};
-  updateTournamentCallsToggle();
-  tournamentIsActive=false;
-  $("tournament").classList.add("hidden");
-  $("setupStatus").textContent="🏁 Tournament ended! Your bracket and results are saved. "+(carriedOver?carriedOver+" queued game"+(carriedOver===1?" was":"s were")+" added to the next bracket list (buy-ins set to $0.00).":"No new queued games needed to be added.")+" Slot calls are OFF. Review the player list and update buy-ins before starting again.";
-  updateStartEndButton();
-  window.scrollTo({top:0,behavior:"smooth"});
- }catch(error){$("setupStatus").textContent=error.message;}
- finally{$("build").disabled=false;}
-}
-$("build").onclick=async()=>{
- if(tournamentIsActive)await endTournamentNow();
-};
-updateStartEndButton();
 $("shuffleBracket").onclick=()=>{
  if(!rounds.length)return;
  if(rounds.some(round=>round.some(match=>match.winner))){
