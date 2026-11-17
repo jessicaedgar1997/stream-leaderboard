@@ -53,4 +53,17 @@ load();
 (()=>{const paint=()=>{document.querySelectorAll('button,.btn,input[type="button"],input[type="submit"]').forEach(b=>{const t=(b.textContent||b.value||"").trim().toUpperCase();b.classList.remove("is-on","is-off");if(/\bON\s*$/.test(t)||b.id==="openEntries"||b.id==="openRound")b.classList.add("is-on");else if(/\bOFF\s*$/.test(t)||b.id==="closeEntries"||b.id==="closeRound")b.classList.add("is-off");});};paint();new MutationObserver(paint).observe(document.documentElement,{subtree:true,childList:true,characterData:true});})();
 </script>
 
+<style id="site-autumn-leaves-style">
+#siteAutumnLeaves{position:fixed;inset:0;z-index:99999;overflow:hidden;pointer-events:none;contain:strict}
+#siteAutumnLeaves .site-autumn-leaf{position:absolute;top:-14vh;left:var(--x);display:block;line-height:1;font-size:var(--size);opacity:0;filter:drop-shadow(0 3px 5px #160d08aa);animation:siteAutumnFall var(--duration) ease-in-out var(--delay) infinite;will-change:transform;transform-origin:center}
+#siteAutumnLeaves .site-autumn-leaf:nth-child(3n){color:#bd4c24}
+#siteAutumnLeaves .site-autumn-leaf:nth-child(3n+1){color:#e6b34b}
+#siteAutumnLeaves .site-autumn-leaf:nth-child(3n+2){color:#a84b25}
+@keyframes siteAutumnFall{0%{opacity:0;transform:translate3d(0,-12vh,0) rotate(0deg) scale(.75)}8%{opacity:.92}22%{transform:translate3d(var(--d1),18vh,0) rotate(155deg) scale(1)}43%{transform:translate3d(var(--d2),42vh,0) rotate(390deg) scale(.9)}65%{transform:translate3d(var(--d3),67vh,0) rotate(590deg) scale(1.08)}84%{opacity:.9;transform:translate3d(var(--d4),91vh,0) rotate(810deg) scale(.92)}100%{opacity:0;transform:translate3d(var(--d5),116vh,0) rotate(1080deg) scale(.72)}}
+@media(prefers-reduced-motion:reduce){#siteAutumnLeaves .site-autumn-leaf{animation-duration:45s}}
+</style>
+<div id="siteAutumnLeaves" aria-hidden="true"></div>
+<script id="site-autumn-leaves-script">
+(()=>{const layer=document.getElementById("siteAutumnLeaves");if(!layer||layer.dataset.ready)return;layer.dataset.ready="1";const leaves=["🍂","🍁","🍃","🍂","🍁","🍂","🍃","🍁"];for(let i=0;i<50;i++){const leaf=document.createElement("span");leaf.className="site-autumn-leaf";leaf.textContent=leaves[i%leaves.length];leaf.style.setProperty("--x",((i*37)%100)+"vw");leaf.style.setProperty("--size",(21+(i*13)%26)+"px");leaf.style.setProperty("--duration",(10+(i*7)%13)+"s");leaf.style.setProperty("--delay",(-((i*5)%22))+"s");for(let j=1;j<=5;j++)leaf.style.setProperty("--d"+j,(((i*(j*17+13))%(220+j*25))-(110+j*12))+"px");layer.appendChild(leaf)}})();
+</script>
 </body></html>
