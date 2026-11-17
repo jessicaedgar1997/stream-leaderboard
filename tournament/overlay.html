@@ -26,15 +26,12 @@ function roundTitle(r,total){if(r===total-1)return"Final";if(r===total-2)return"
 function playerName(player){if(!player)return "";if(typeof player==="string")return player;const n=player.username??player.name??player.display_name??player.slug??"";return typeof n==="string"?n:"";}
 function roundTitle(r,total){if(r===total-1)return"Final";if(r===total-2)return"Semi-finals";return r===0?"Round 1":"Round "+(r+1);}
 function playerName(player){if(!player)return"";if(typeof player==="string")return player;const n=player.username??player.name??player.display_name??player.slug??"";return typeof n==="string"?n:"";}
-function slotLabels(rounds){
- const labels=new Map();let n=0;
- for(const match of (rounds[0]||[]))for(const player of [match.a,match.b]){
-  n++;if(!player)continue;const name=playerName(player),key=name.toLowerCase();
-  if(key&&!labels.has(key))labels.set(key,"Player "+n);
- }
- return labels;
+function slotLabels(rounds){return new Map();}
+function labelFor(player,labels){
+ const name=playerName(player);
+ const game=player&&typeof player==="object"?String(player.game||"").trim():"";
+ return name?(name+(game?" · "+game:"")):"";
 }
-function labelFor(player,labels){const name=playerName(player);return name?(labels.get(name.toLowerCase())||"Player"):"";}
 function draw(data){
  const bracket=data?.bracket;
  if(!bracket?.rounds?.length){document.getElementById("event").textContent="Waiting for tournament…";document.getElementById("rounds").innerHTML="";document.getElementById("champion").innerHTML="";document.getElementById("empty").style.display="block";return;}
