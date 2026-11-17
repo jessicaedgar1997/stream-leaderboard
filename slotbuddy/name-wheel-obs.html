@@ -18,9 +18,9 @@ html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden
 .fall-leaves{position:fixed;inset:0;z-index:2;overflow:hidden;pointer-events:none;contain:strict}
 .stage{position:relative;z-index:3}
 #status{z-index:4}
-.fall-leaf{display:block;position:absolute;top:-12vh;left:var(--x);font-size:var(--size);opacity:0;color:#e99a42;filter:drop-shadow(0 2px 5px #0009);animation:autumnFall var(--duration) linear var(--delay) infinite;will-change:transform}
+.fall-leaf{display:block;position:absolute;top:-14vh;left:var(--x);font-size:var(--size);line-height:1;opacity:0;color:#e99a42;filter:drop-shadow(0 3px 5px #160d08cc);animation:autumnFall var(--duration) ease-in-out var(--delay) infinite;will-change:transform; transform-origin:center}
 .fall-leaf:nth-child(3n){color:#bd4c24}.fall-leaf:nth-child(3n+1){color:#e6b34b}.fall-leaf:nth-child(3n+2){color:#a84b25}
-@keyframes autumnFall{0%{opacity:0;transform:translate3d(0,-8vh,0) rotate(0deg)}8%{opacity:.72}50%{transform:translate3d(var(--drift),55vh,0) rotate(360deg)}92%{opacity:.6}100%{opacity:0;transform:translate3d(calc(var(--drift) * -0.45),112vh,0) rotate(720deg)}}
+@keyframes autumnFall{0%{opacity:0;transform:translate3d(0,-12vh,0) rotate(0deg) scale(.75)}8%{opacity:.95}22%{transform:translate3d(var(--drift1),18vh,0) rotate(155deg) scale(1)}43%{transform:translate3d(var(--drift2),42vh,0) rotate(390deg) scale(.9)}65%{transform:translate3d(var(--drift3),67vh,0) rotate(590deg) scale(1.08)}84%{opacity:.9;transform:translate3d(var(--drift4),91vh,0) rotate(810deg) scale(.92)}100%{opacity:0;transform:translate3d(var(--drift5),116vh,0) rotate(1080deg) scale(.72)}}
 @media(prefers-reduced-motion:reduce){.fall-leaf{animation-duration:45s;}}
 
 .stage{width:100%;height:100%;display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;padding:12px}
@@ -46,7 +46,7 @@ canvas{display:block;width:100%;height:100%;animation:wheelGlow 2.8s ease-in-out
 </main>
 <div id="status">Connecting to SlotBuddy…</div>
 <script>
-(()=>{const layer=document.getElementById("fallLeaves");if(!layer)return;const leaves=["🍂","🍁","🍃","🍂","🍁","🍂"];for(let i=0;i<24;i++){const leaf=document.createElement("span");leaf.className="fall-leaf";leaf.textContent=leaves[i%leaves.length];leaf.style.setProperty("--x",((i*43)%100)+"vw");leaf.style.setProperty("--size",(17+(i*7)%20)+"px");leaf.style.setProperty("--duration",(13+(i*11)%17)+"s");leaf.style.setProperty("--delay",(-((i*7)%28))+"s");leaf.style.setProperty("--drift",(((i*37)%150)-75)+"px");layer.appendChild(leaf)}})();
+(()=>{const layer=document.getElementById("fallLeaves");if(!layer)return;const leaves=["🍂","🍁","🍃","🍂","🍁","🍂","🍃","🍁"];for(let i=0;i<48;i++){const leaf=document.createElement("span");leaf.className="fall-leaf";leaf.textContent=leaves[i%leaves.length];leaf.style.setProperty("--x",((i*47)%104-2)+"vw");leaf.style.setProperty("--size",(22+(i*13)%27)+"px");leaf.style.setProperty("--duration",(10+(i*7)%13)+"s");leaf.style.setProperty("--delay",(-((i*5)%22))+"s");leaf.style.setProperty("--drift1",(((i*37)%220)-110)+"px");leaf.style.setProperty("--drift2",(((i*61)%300)-150)+"px");leaf.style.setProperty("--drift3",(((i*29)%260)-130)+"px");leaf.style.setProperty("--drift4",(((i*53)%340)-170)+"px");leaf.style.setProperty("--drift5",(((i*43)%220)-110)+"px");layer.appendChild(leaf)}})();
 const API="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-name-wheels";
 const state={1:{items:[],rotation:0,spinId:null,animating:false},2:{items:[],rotation:0,spinId:null,animating:false}};
 const $=id=>document.getElementById(id);
