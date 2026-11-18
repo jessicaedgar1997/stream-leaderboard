@@ -970,7 +970,7 @@ function playerButton(player,r,i,side,winner,payout){
   const editButton=canEditBuyIn?'<button type="button" class="dark bracket-player-edit-toggle" data-edit-player="'+side+'" data-round="'+r+'" data-match="'+i+'">✏️ EDIT</button>':"";
  const details='<div class="bracket-player-details">'+(payoutLabel?'<div class="bracket-payout-line">'+payoutLabel+'</div>':"")+'<div class="bracket-buy-row"><div class="bracket-buy-line">'+buyLabel+'</div>'+(editButton?'<div class="bracket-edit-line">'+editButton+'</div>':"")+'</div></div>';
  if(!canEditBuyIn)return '<div class="bracket-player-wrap">'+playerMarkup+details+'</div>';
- const buyInput=buyValue!==""&&buyValue!=null?escapeHtml(String(buyValue)):"";
+ const buyInput=""; // Always open the edit field blank, even when a buy-in is already saved.
  const editor='<div class="bracket-player-editor" data-player-editor="'+side+'" data-round="'+r+'" data-match="'+i+'" hidden><label>Buy-in amount ($)<input type="number" min="0" step="0.01" placeholder="" value="'+buyInput+'" data-player-buy></label><button type="button" class="pink" data-save-player-edit="'+side+'" data-round="'+r+'" data-match="'+i+'">SAVE</button></div>';
  return '<div class="bracket-player-wrap">'+playerMarkup+details+editor+'</div>';
 }
