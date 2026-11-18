@@ -1018,7 +1018,7 @@ async function saveBracketMatchPayout(r,i,button){
  match.payout=Math.max(aAmount,bAmount).toFixed(2);
  propagate(r);renderBracket();queueBracketSave();
  $("setupStatus").textContent=aAmount===bAmount?"Payouts saved. They are tied, so choose the winner by clicking their name.":"Payouts saved. The higher-paying player advances.";
- if(match.winner){announceTournamentWinner(r,i);if(rounds[r+1])announceTournamentRound(r+1);}
+ if(match.winner)announceTournamentWinner(r,i);
 }
 // Delegate buy-editor clicks from the stable bracket container so live refreshes
 // cannot remove the click handler when individual match cards are redrawn.
