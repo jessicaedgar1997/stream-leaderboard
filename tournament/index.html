@@ -271,8 +271,8 @@ async function restoreSavedTournamentEntries(){
  }catch(error){status.textContent="Could not restore players: "+error.message;}
 }
 $("restoreSavedEntries")?.addEventListener("click",restoreSavedTournamentEntries);
-async function clearSavedTournamentEntries(skipConfirm=false){
- const status=$("setupStatus"),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+async function clearSavedTournamentEntries(skipConfirm=false,statusTarget=null){
+ const status=statusTarget||$("setupStatus"),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
  if(!skipConfirm&&!confirm("Remove the saved Tournament players from RESTORE SAVED PLAYERS and this device's player draft? The active bracket, tournament settings, and bonus-buy history will stay unless you use REMOVE PLAYERS."))return false;
  const button=$("clearSavedEntries");if(button)button.disabled=true;
  status.textContent="Removing saved Tournament players…";
@@ -1163,7 +1163,7 @@ $("clearAllBracket").addEventListener("click",async()=>{
    return;
   }
   // Remove separate saved Tournament entries too, or they will be merged back in after refresh.
-  const entriesCleared=await clearSavedTournamentEntries(true);
+  const entriesCleared=await clearSavedTournamentEntries(true,status);
   if(!entriesCleared){status.textContent="Could not fully remove the saved player list. Please retry before starting a new tournament.";return;}
   // Invalidate any snapshot already in flight so an older copy cannot repaint cleared names.
   tournamentSnapshotVersion++;
