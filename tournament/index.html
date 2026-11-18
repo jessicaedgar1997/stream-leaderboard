@@ -1088,10 +1088,14 @@ $("shuffleBracket").onclick=()=>{
  if(shuffledEntries.map(tournamentPlayerIdentity).join("::")===originalOrder){
   shuffledEntries=shuffledEntries.slice(1).concat(shuffledEntries[0]);
  }
+ // Keep every player record together and update the staged entry list as well as the bracket.
+ bracketAddedEntries=shuffledEntries.map(player=>({...player}));
+ try{localStorage.setItem("slotbuddyBracketAddedEntries",JSON.stringify(bracketAddedEntries));}catch(e){}
+ writeEntryPlayers(shuffledEntries);
  let cursor=0;
  firstRound.forEach(match=>{
-  match.a=cursor<shuffledEntries.length?shuffledEntries[cursor++]:null;
-  match.b=cursor<shuffledEntries.length?shuffledEntries[cursor++]:null;
+  match.a=cursor<shuffledEntries.length?{...shuffledEntries[cursor++]}:null;
+  match.b=cursor<shuffledEntries.length?{...shuffledEntries[cursor++]}:null;
   match.winner=null;
   match.payout="";
   match.aPayout="";
@@ -1106,7 +1110,8 @@ $("shuffleBracket").onclick=()=>{
  }
  propagate(0);
  renderBracket();
- $("setupStatus").textContent="Players shuffled into new matchups! Their games and buy-ins moved with them. 💗💙";
+ renderEntryPlayers();
+ $("setupStatus").textContent="Shuffle applied to "+shuffledEntries.length+" players. Their names, games, and buy-ins were reordered together. 💗💙";
  queueBracketSave();
 };
 $("clearAllBracket").onclick=async()=>{
