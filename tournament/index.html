@@ -1242,6 +1242,27 @@ document.addEventListener("click",function(event){
 },true);
 </script>
 
+<script id="slotbuddy-bracket-remove-click-fix">
+/* Make the bracket Remove Players control reliably invoke its existing removal workflow,
+   even if another page script interferes with the button's normal click dispatch. */
+document.addEventListener("click",function(event){
+ const button=event.target.closest&&event.target.closest("#clearAllBracket");
+ if(!button)return;
+ event.preventDefault();
+ event.stopPropagation();
+ event.stopImmediatePropagation();
+ const status=document.getElementById("setupStatus");
+ if(button.disabled){if(status)status.textContent="Remove Players is already running. Please wait for it to finish.";return;}
+ if(status)status.textContent="Remove Players clicked — checking manager access…";
+ const action=button.onclick;
+ if(typeof action==="function"){
+  try{action.call(button);}catch(error){if(status)status.textContent="Remove Players could not start: "+(error&&error.message||"Please refresh and try again.");}
+ }else if(status){
+  status.textContent="Remove Players could not start because its bracket handler is missing. Refresh the page and try again.";
+ }
+},true);
+</script>
+
 <style id="site-autumn-leaves-style">
 #siteAutumnLeaves{position:fixed;inset:0;z-index:99999;overflow:hidden;pointer-events:none;contain:strict}
 #siteAutumnLeaves .site-autumn-leaf{position:absolute;top:-14vh;left:var(--x);display:block;line-height:1;font-size:var(--size);opacity:0;filter:drop-shadow(0 3px 5px #160d08aa);animation:siteAutumnFall var(--duration) ease-in-out var(--delay) infinite;will-change:transform;transform-origin:center}
