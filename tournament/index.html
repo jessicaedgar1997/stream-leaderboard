@@ -1264,64 +1264,61 @@ document.addEventListener("click",function(event){
  const status=document.getElementById("bracketActionStatus");
  if(!button||!status)return;
  button.onclick=async function(){
-  status.textContent="Remove Players clicked — checking manager access…";
   if(button.disabled)return;
-
- const button=$("clearAllBracket"),status=$("bracketActionStatus");
- button.disabled=true;
- status.textContent="Checking SlotBuddy manager access…";
- try{
-  await applyStaffView();
-  if(!canManageTournament&&document.body.classList.contains("slotbuddy-manager"))canManageTournament=true;
-  if(!canManageTournament){
-   status.textContent="Manager access could not be verified. Please sign in to SlotBuddy again, then retry Remove Players.";
-   return;
-  }
-  if(!confirm("Remove player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same.")){
-   status.textContent="Removal cancelled. Nothing was changed.";
-   return;
-  }
-  // Protect the bracket before clearing saved entries: that helper refreshes the shared snapshot.
-   // Without this guard, the refresh can restore the old bracket while removal is underway.
-   bracketClearInProgress=true;
-   tournamentSnapshotVersion++;
+  button.disabled=true;
+  status.textContent="Checking SlotBuddy manager access…";
+  bracketClearInProgress=true;
+  try{
+   await applyStaffView();
+   if(!canManageTournament&&document.body.classList.contains("slotbuddy-manager"))canManageTournament=true;
+   if(!canManageTournament){
+    status.textContent="Manager access could not be verified. Please sign in to SlotBuddy again, then retry Remove Players.";
+    return;
+   }
+   if(!confirm("Remove player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same.")){
+    status.textContent="Removal cancelled. Nothing was changed.";
+    return;
+   }
+   // Cancel local saves and use one server-side operation so old names cannot be re-saved between steps.
    clearTimeout(bracketSaveTimer);
    bracketSaveTimer=null;
    bracketSavePending=false;
-   // Remove separate saved Tournament entries too, or they will be merged back in after refresh.
-   const entriesCleared=await clearSavedTournamentEntries(true,status);
-   if(!entriesCleared){status.textContent="Could not fully remove the saved player list. Please retry before starting a new tournament.";return;}
-   // Invalidate any snapshot already in flight so an older copy cannot repaint cleared names.
    tournamentSnapshotVersion++;
-   const count=Math.max(2,Number($("playerCount").value)||((rounds[0]?.length||0)*2)||playerTotal||4);
-  const emptyPlayers=Array.from({length:count},(_,i)=>({username:"",game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
-  writeEntryPlayers(emptyPlayers);
-  bracketAddedEntries=[];
-  localStorage.removeItem("slotbuddyBracketAddedEntries");
-  localStorage.removeItem("chaosQueenTournamentDraft");
-  // Preserve bracket capacity while recording zero active players.
-  playerTotal=0;
-  const bracketSize=2**Math.ceil(Math.log2(count));
-  rounds=Array.from({length:Math.log2(bracketSize)},(_,round)=>Array.from({length:bracketSize/Math.pow(2,round+1)},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
-  playerTotal=0;
-  $("matchPayoutA").value="";
-  $("matchPayoutB").value="";
-  $("matchPayoutStatus").textContent="";
-  $("champion").classList.add("hidden");
-  $("champion").textContent="";
-  status.textContent="Players removed. Saving the empty bracket…";
-  updateHint();
-  renderBracket();
-  const saved=await saveBracketOnline();
-  bracketClearInProgress=false;
-  if(saved)await refreshLivePlayers(false,true);
-  status.textContent=saved?"Players, games, buy-ins, and match payouts removed. Bracket size and event settings were kept.":"Players were removed on this screen, but the online save needs attention: sign in again and press Save bracket.";
- }catch(error){
-  status.textContent="Remove Players hit an error: "+(error?.message||"Please refresh and try again.");
- }finally{
-  bracketClearInProgress=false;
-  button.disabled=false;
- }
+   status.textContent="Removing saved players and clearing the shared bracket…";
+   const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+   const response=await fetch(CONTROL_URL+"?action=bracket-remove-players",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({session_key})
+   });
+   let result={};
+   try{result=await response.json();}catch(e){}
+   if(!response.ok||result.ok!==true)throw new Error(result.error||"The shared bracket could not be cleared.");
+   const count=Math.max(2,Number($("playerCount").value)||Number(result.bracket?.count)||4);
+   const bracketSize=2**Math.ceil(Math.log2(count));
+   writeEntryPlayers(Array.from({length:count},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"})));
+   bracketAddedEntries=[];
+   localStorage.removeItem("slotbuddyBracketAddedEntries");
+   localStorage.removeItem("chaosQueenTournamentDraft");
+   playerTotal=0;
+   rounds=Array.from({length:Math.log2(bracketSize)},(_,round)=>Array.from({length:bracketSize/Math.pow(2,round+1)},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
+   $("matchPayoutA").value="";
+   $("matchPayoutB").value="";
+   $("matchPayoutStatus").textContent="";
+   $("champion").classList.add("hidden");
+   $("champion").textContent="";
+   updateHint();
+   renderBracket();
+   status.textContent="Players removed from the saved bracket and player list. Bracket size and event settings were kept. 💗💙";
+   bracketClearInProgress=false;
+   await refreshLivePlayers(false,true);
+   status.textContent="Players removed from the saved bracket and player list. Bracket size and event settings were kept. 💗💙";
+  }catch(error){
+   status.textContent="Remove Players hit an error: "+(error?.message||"Please refresh and try again.");
+  }finally{
+   bracketClearInProgress=false;
+   button.disabled=false;
+  }
  };
  button.addEventListener("pointerdown",function(){status.textContent="Remove Players pressed…";},{passive:true});
 })();
