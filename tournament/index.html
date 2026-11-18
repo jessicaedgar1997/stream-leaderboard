@@ -168,6 +168,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <p id="managerAccessStatus" role="status" aria-live="polite" style="padding:10px 13px;margin:0 0 14px;border:1px solid #53658e;border-radius:10px;background:#0c1329;color:#cbd5f5;font-size:.9rem">Checking your saved SlotBuddy manager sign-in…</p>
 <div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="pink" id="startTournamentMatch" data-manager-only hidden type="button">▶️ START NEXT MATCH</button><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" type="button">🗑️ REMOVE PLAYERS</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
 <div class="bracket" id="bracket"><div class="empty-state">No bracket is active yet. SlotBuddy should recognize your existing manager sign-in automatically. Your saved Tournament entries have not been deleted. 💗💙</div></div>
+<p class="status" id="bracketActionStatus" role="status" aria-live="polite"></p>
 <div id="champion" class="champion hidden"></div>
 <p class="hint">To advance a player, click their name in the match. You can change a winner any time; later rounds will update.</p>
 </section>
@@ -1146,8 +1147,8 @@ if(shuffleButton){
   shuffleTournamentPlayers();
  },true);
 }
-$("clearAllBracket").onclick=async()=>{
- const button=$("clearAllBracket"),status=$("setupStatus");
+$("clearAllBracket").addEventListener("click",async()=>{
+ const button=$("clearAllBracket"),status=$("bracketActionStatus");
  button.disabled=true;
  status.textContent="Checking SlotBuddy manager access…";
  try{
@@ -1196,7 +1197,7 @@ $("clearAllBracket").onclick=async()=>{
   bracketClearInProgress=false;
   button.disabled=false;
  }
-};
+});
 $("newTournament").onclick=async()=>{
  localStorage.removeItem("slotbuddyTournamentChatAnnouncements");tournamentChatState=null;tournamentIsActive=false;
  bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");
@@ -1246,33 +1247,7 @@ document.addEventListener("click",function(event){
 #clearAllBracket{position:relative!important;z-index:100001!important;display:inline-flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;touch-action:manipulation!important;cursor:pointer!important}
 #clearAllBracket:disabled{opacity:.65!important;cursor:wait!important}
 </style>
-<script id="slotbuddy-bracket-remove-click-fix">
-/* Bind directly to the actual button after the bracket script has defined its action. */
-(function(){
- const button=document.getElementById("clearAllBracket");
- if(!button)return;
- const existingAction=button.onclick;
- button.onclick=null;
- button.addEventListener("click",function(event){
-  event.preventDefault();
-  event.stopPropagation();
-  const status=document.getElementById("setupStatus");
-  if(typeof existingAction!=="function"){
-   if(status)status.textContent="Remove Players could not start: the removal action did not load. Refresh and try again.";
-   return;
-  }
-  try{existingAction.call(button);}catch(error){
-   if(status)status.textContent="Remove Players could not start: "+(error&&error.message||"Please refresh and try again.");
-  }
- });
- button.addEventListener("pointerdown",function(){
-  if(!button.disabled){
-   const status=document.getElementById("setupStatus");
-   if(status)status.textContent="Remove Players selected — starting…";
-  }
- });
-})();
-</script>
+
 
 <style id="site-autumn-leaves-style">
 #siteAutumnLeaves{position:fixed;inset:0;z-index:99999;overflow:hidden;pointer-events:none;contain:strict}
