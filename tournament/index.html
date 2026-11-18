@@ -280,19 +280,17 @@ async function clearSavedTournamentEntries(skipConfirm=false){
   if(!response.ok)throw new Error("Could not load saved players.");
   const snapshot=await response.json();if(snapshot.error)throw new Error(snapshot.error);
   const saved=Array.isArray(snapshot.slot_entries)?snapshot.slot_entries:[];
-  let removed=0;
-  if(saved.length){
-   if(!session_key)throw new Error("Sign in to SlotBuddy again so the saved Tournament player names can be cleared online.");
-   const clearResponse=await fetch(CONTROL_URL+"?action=slot-entries-clear",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_key})});
-   let clearData={};try{clearData=await clearResponse.json();}catch(e){}
-   if(!clearResponse.ok||clearData.ok!==true)throw new Error(clearData.error||"The online saved player list could not be cleared.");
-   removed=Number(clearData.removed)||0;
-   const verifyResponse=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});
-   if(!verifyResponse.ok)throw new Error("The saved list was cleared, but the online result could not be verified.");
-   const verify=await verifyResponse.json();if(verify.error)throw new Error(verify.error);
-   const remaining=Array.isArray(verify.slot_entries)?verify.slot_entries.length:0;
-   if(remaining)throw new Error(remaining+" saved player entr"+(remaining===1?"y remains":"ies remain")+" online. Please retry.");
-  }
+  if(!session_key)throw new Error("Sign in to SlotBuddy again so the saved Tournament player names can be cleared online.");
+  const clearResponse=await fetch(CONTROL_URL+"?action=slot-entries-clear",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_key})});
+  let clearData={};try{clearData=await clearResponse.json();}catch(e){}
+  if(!clearResponse.ok||clearData.ok!==true)throw new Error(clearData.error||"The online saved player list could not be cleared.");
+  const removed=Number(clearData.removed)||0;
+  const verifyResponse=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});
+  if(!verifyResponse.ok)throw new Error("The saved list was cleared, but the online result could not be verified.");
+  const verify=await verifyResponse.json();if(verify.error)throw new Error(verify.error);
+  const remaining=Array.isArray(verify.slot_entries)?verify.slot_entries.length:0;
+  if(remaining)throw new Error(remaining+" saved player entr"+(remaining===1?"y remains":"ies remain")+" online. Please retry.");
+  if(verify.slot_entries_cleared_at)localStorage.setItem("slotbuddyTournamentEntriesClearSeenAt",String(verify.slot_entries_cleared_at));
   const slotCount=Math.max(1,Number($("playerCount").value)||4);
   const emptySlots=Array.from({length:slotCount},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
   writeEntryPlayers(emptySlots);
@@ -334,6 +332,16 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
    localStorage.setItem("slotbuddyTournamentResetSeenAt",resetStamp);
    renderEntryPlayers();
    $("setupStatus").textContent="Tournament fully reset. Ready for a fresh 4-player setup! 💗💙";
+  }
+  const sharedEntryClearAt=String(snapshot.slot_entries_cleared_at||"");
+  if(sharedEntryClearAt&&localStorage.getItem("slotbuddyTournamentEntriesClearSeenAt")!==sharedEntryClearAt){
+   const count=Math.max(1,Number($("playerCount").value)||4);
+   const blankEntries=Array.from({length:count},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
+   writeEntryPlayers(blankEntries);
+   renderEntryPlayers();
+   localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count,players:$("players").value}));
+   localStorage.setItem("slotbuddyTournamentEntriesClearSeenAt",sharedEntryClearAt);
+   $("setupStatus").textContent="The shared Tournament player list was cleared by a moderator. Your Players section is now up to date. 💗💙";
   }
   livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;
   // Keep the organizer's selected bracket size from the saved page draft.
