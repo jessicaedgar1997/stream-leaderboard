@@ -138,7 +138,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <p class="hint" id="countHint">Add players from the slot-call queue, then press ADD TO BRACKET beside each name.</p>
 <textarea id="players" spellcheck="false" hidden aria-hidden="true"></textarea>
 <div class="actions tournament-controls"></div>
-<div class="actions"><button id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="restoreSavedEntries" data-manager-only hidden type="button">↩ RESTORE SAVED PLAYERS</button><button class="dark" id="clearSavedEntries" data-manager-only hidden type="button">🧹 CLEAR SAVED PLAYERS</button><button class="dark" id="clearNames" type="button">Clear players</button></div>
+<div class="actions"><button id="tournamentCallsToggle" data-manager-only hidden type="button">📣 CALLS ON</button><button class="dark" id="restoreSavedEntries" data-manager-only hidden type="button">↩ RESTORE SAVED PLAYERS</button><button class="dark" id="clearSavedEntries" data-manager-only hidden type="button">🗑️ REMOVE SAVED PLAYERS</button><button class="dark" id="clearNames" type="button">Remove players</button></div>
 <button id="fillDemo" type="button" hidden>Add sample names</button>
 <p class="status" id="setupStatus" role="status"></p>
 
@@ -166,7 +166,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 
 <section class="panel" id="tournament">
 <p id="managerAccessStatus" role="status" aria-live="polite" style="padding:10px 13px;margin:0 0 14px;border:1px solid #53658e;border-radius:10px;background:#0c1329;color:#cbd5f5;font-size:.9rem">Checking your saved SlotBuddy manager sign-in…</p>
-<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="pink" id="startTournamentMatch" data-manager-only hidden type="button">▶️ START NEXT MATCH</button><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" type="button">🧹 Clear Names &amp; Games</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
+<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="pink" id="startTournamentMatch" data-manager-only hidden type="button">▶️ START NEXT MATCH</button><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" type="button">🗑️ REMOVE PLAYERS</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
 <div class="bracket" id="bracket"><div class="empty-state">No bracket is active yet. SlotBuddy should recognize your existing manager sign-in automatically. Your saved Tournament entries have not been deleted. 💗💙</div></div>
 <div id="champion" class="champion hidden"></div>
 <p class="hint">To advance a player, click their name in the match. You can change a winner any time; later rounds will update.</p>
@@ -274,7 +274,7 @@ async function clearSavedTournamentEntries(skipConfirm=false){
  const status=$("setupStatus"),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
  if(!skipConfirm&&!confirm("Clear the saved Tournament player names from RESTORE SAVED PLAYERS and this device's player draft? This will not clear the active bracket, tournament settings, or bonus-buy history."))return false;
  const button=$("clearSavedEntries");if(button)button.disabled=true;
- status.textContent="Clearing saved Tournament player names…";
+ status.textContent="Removing saved Tournament players…";
  try{
   const response=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});
   if(!response.ok)throw new Error("Could not load saved players.");
@@ -290,16 +290,17 @@ async function clearSavedTournamentEntries(skipConfirm=false){
   const verify=await verifyResponse.json();if(verify.error)throw new Error(verify.error);
   const remaining=Array.isArray(verify.slot_entries)?verify.slot_entries.length:0;
   if(remaining)throw new Error(remaining+" saved player entr"+(remaining===1?"y remains":"ies remain")+" online. Please retry.");
-  if(verify.slot_entries_cleared_at)localStorage.setItem("slotbuddyTournamentEntriesClearSeenAt",String(verify.slot_entries_cleared_at));
+  if(!verify.slot_entries_cleared_at)throw new Error("The saved players were removed, but the shared removal notice was not confirmed. Please retry.");
+  localStorage.setItem("slotbuddyTournamentEntriesClearSeenAt",String(verify.slot_entries_cleared_at));
   const slotCount=Math.max(1,Number($("playerCount").value)||4);
   const emptySlots=Array.from({length:slotCount},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
   writeEntryPlayers(emptySlots);
   renderEntryPlayers();
   localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count:slotCount,players:$("players").value}));
-  status.textContent="Saved Tournament player names cleared"+(saved.length?" and verified online":"")+"! "+(removed?"Removed "+removed+" saved entr"+(removed===1?"y":"ies")+". ":"")+"Bonus-buy history and tournament settings were kept. 💗💙";
+  status.textContent="Saved Tournament players removed"+(saved.length?" and verified online":"")+"! "+(removed?"Removed "+removed+" saved entr"+(removed===1?"y":"ies")+". ":"")+"Bonus-buy history and tournament settings were kept. 💗💙";
   await refreshLivePlayers(true,false);
   return true;
- }catch(error){status.textContent="Could not fully clear saved players: "+error.message;return false;}
+ }catch(error){status.textContent="Could not fully remove saved players: "+error.message;return false;}
  finally{if(button)button.disabled=false;}
 }
 $("clearSavedEntries")?.addEventListener("click",clearSavedTournamentEntries);
@@ -492,7 +493,10 @@ sbClient.channel("tournament-live-list")
   }else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
    console.warn("Tournament live sync status:",status,error||"");
   }
- });
+ })
+// Backstop for tables that are not enabled for Supabase Realtime: keep both moderators in sync.
+// This refreshes shared state only; it does not reload the page or disturb an active buy-in edit.
+setInterval(()=>{if(!document.hidden&&!activeBuyEditor&&!bracketSaveInProgress&&!bracketSavePending&&!bracketClearInProgress)refreshLivePlayers(false,false);},5000);;
 function renderTournamentBonuses(items){
  const list=$("tournamentBonusList");if(!list)return;
  list.innerHTML=items.length?items.map(x=>"<div class='entrant' style='border-radius:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap'><strong>"+safeText(x.caller_name)+"</strong> · "+safeText(x.bonus_type||"Regular")+" · "+safeText(x.bonus_name)+" · Spin "+Number(x.spin_amount||0).toFixed(2)+" · Paid "+Number(x.payout_amount||0).toFixed(2)+" <button class='dark' style='padding:4px 8px' onclick='deleteTournamentBonus("+Number(x.id)+")'>DELETE</button></div>").join(""):"<span class='hint'>No tournament bonus buys recorded yet.</span>";
@@ -1150,11 +1154,11 @@ $("clearAllBracket").onclick=async()=>{
   await applyStaffView();
   if(!canManageTournament&&document.body.classList.contains("slotbuddy-manager"))canManageTournament=true;
   if(!canManageTournament){
-   status.textContent="Manager access could not be verified. Please sign in to SlotBuddy again, then retry Clear Names & Games.";
+   status.textContent="Manager access could not be verified. Please sign in to SlotBuddy again, then retry Remove Players.";
    return;
   }
-  if(!confirm("Clear player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same.")){
-   status.textContent="Clear cancelled. Nothing was changed.";
+  if(!confirm("Remove player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same.")){
+   status.textContent="Removal cancelled. Nothing was changed.";
    return;
   }
   // Remove separate saved Tournament entries too, or they will be merged back in after refresh.
@@ -1179,15 +1183,15 @@ $("clearAllBracket").onclick=async()=>{
   $("matchPayoutStatus").textContent="";
   $("champion").classList.add("hidden");
   $("champion").textContent="";
-  status.textContent="Names and games cleared. Saving the empty bracket…";
+  status.textContent="Players removed. Saving the empty bracket…";
   updateHint();
   renderBracket();
   const saved=await saveBracketOnline();
   bracketClearInProgress=false;
   if(saved)await refreshLivePlayers(false,true);
-  status.textContent=saved?"Player names, games, buy-ins, and match payouts cleared. Bracket size and event settings were kept.":"Names and games cleared on this screen, but the online save needs attention: sign in again and press Save bracket.";
+  status.textContent=saved?"Players, games, buy-ins, and match payouts removed. Bracket size and event settings were kept.":"Players were removed on this screen, but the online save needs attention: sign in again and press Save bracket.";
  }catch(error){
-  status.textContent="Clear Names & Games hit an error: "+(error?.message||"Please refresh and try again.");
+  status.textContent="Remove Players hit an error: "+(error?.message||"Please refresh and try again.");
  }finally{
   bracketClearInProgress=false;
   button.disabled=false;
