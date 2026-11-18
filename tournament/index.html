@@ -1072,8 +1072,21 @@ function addQueuedCallsToNextBracket(calls){
  return added.length;
 }
 $("shuffleBracket").onclick=()=>{
- if(!rounds.length)return;
- if(rounds.some(round=>round.some(match=>match.winner))){
+ try{
+  // If the player list is ready but the bracket has not been built yet, build it first.
+  if(!rounds.length){
+   const readyPlayers=namesFromInput().filter(player=>!isEntryPlaceholder(player));
+   if(readyPlayers.length<2){
+    $("setupStatus").textContent="Add at least two players with games, then build the bracket before shuffling. 💗💙";
+    return;
+   }
+   buildBracket(readyPlayers,Number($("playerCount").value)||Math.max(4,readyPlayers.length));
+  }
+  if(!rounds.length){
+   $("setupStatus").textContent="The bracket isn't ready yet. Please build it first, then shuffle again.";
+   return;
+  }
+  if(rounds.some(round=>round.some(match=>match.winner))){
   $("setupStatus").textContent="A match winner has already been recorded. Start a new bracket before reshuffling so results stay safe.";return;
  }
  const firstRound=rounds[0]||[];
@@ -1113,6 +1126,10 @@ $("shuffleBracket").onclick=()=>{
  renderEntryPlayers();
  $("setupStatus").textContent="Shuffle applied to "+shuffledEntries.length+" players. Their names, games, and buy-ins were reordered together. 💗💙";
  queueBracketSave();
+ }catch(error){
+  console.error("Shuffle players failed:",error);
+  $("setupStatus").textContent="Shuffle couldn't finish: "+(error?.message||"Please refresh the page and try again.")+". Your saved bracket was not intentionally cleared.";
+ }
 };
 $("clearAllBracket").onclick=async()=>{
  const button=$("clearAllBracket"),status=$("setupStatus");
