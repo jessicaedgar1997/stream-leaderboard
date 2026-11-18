@@ -272,7 +272,7 @@ async function restoreSavedTournamentEntries(){
 $("restoreSavedEntries")?.addEventListener("click",restoreSavedTournamentEntries);
 async function clearSavedTournamentEntries(skipConfirm=false){
  const status=$("setupStatus"),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
- if(!skipConfirm&&!confirm("Clear the saved Tournament player names from RESTORE SAVED PLAYERS and this device's player draft? This will not clear the active bracket, tournament settings, or bonus-buy history."))return false;
+ if(!skipConfirm&&!confirm("Remove the saved Tournament players from RESTORE SAVED PLAYERS and this device's player draft? The active bracket, tournament settings, and bonus-buy history will stay unless you use REMOVE PLAYERS."))return false;
  const button=$("clearSavedEntries");if(button)button.disabled=true;
  status.textContent="Removing saved Tournament players…";
  try{
@@ -280,13 +280,13 @@ async function clearSavedTournamentEntries(skipConfirm=false){
   if(!response.ok)throw new Error("Could not load saved players.");
   const snapshot=await response.json();if(snapshot.error)throw new Error(snapshot.error);
   const saved=Array.isArray(snapshot.slot_entries)?snapshot.slot_entries:[];
-  if(!session_key)throw new Error("Sign in to SlotBuddy again so the saved Tournament player names can be cleared online.");
+  if(!session_key)throw new Error("Sign in to SlotBuddy again so the saved Tournament players can be removed online.");
   const clearResponse=await fetch(CONTROL_URL+"?action=slot-entries-clear",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_key})});
   let clearData={};try{clearData=await clearResponse.json();}catch(e){}
-  if(!clearResponse.ok||clearData.ok!==true)throw new Error(clearData.error||"The online saved player list could not be cleared.");
+  if(!clearResponse.ok||clearData.ok!==true)throw new Error(clearData.error||"The online saved player list could not be removed.");
   const removed=Number(clearData.removed)||0;
   const verifyResponse=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});
-  if(!verifyResponse.ok)throw new Error("The saved list was cleared, but the online result could not be verified.");
+  if(!verifyResponse.ok)throw new Error("The saved players were removed, but the online result could not be verified.");
   const verify=await verifyResponse.json();if(verify.error)throw new Error(verify.error);
   const remaining=Array.isArray(verify.slot_entries)?verify.slot_entries.length:0;
   if(remaining)throw new Error(remaining+" saved player entr"+(remaining===1?"y remains":"ies remain")+" online. Please retry.");
@@ -320,7 +320,7 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   if(snapshot.error)throw new Error(snapshot.error);
   const queueSnapshot=queueSnapshotRaw||{calls:[],active_queue:null};
   if(requestVersion!==tournamentSnapshotVersion)return;
-  // A new server-side blank tournament reset must clear stale browser drafts/caches once per reset.
+  // A new server-side blank tournament reset must remove stale browser drafts/caches once per reset.
   const resetStamp=String(snapshot.bracket_updated_at||"");
   const isFreshTournamentReset=!!resetStamp&&snapshot.bracket&&snapshot.bracket.name===""&&Number(snapshot.bracket.count)===4&&Number(snapshot.bracket.player_count)===0&&localStorage.getItem("slotbuddyTournamentResetSeenAt")!==resetStamp;
   if(isFreshTournamentReset){
@@ -342,7 +342,7 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
    renderEntryPlayers();
    localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count,players:$("players").value}));
    localStorage.setItem("slotbuddyTournamentEntriesClearSeenAt",sharedEntryClearAt);
-   $("setupStatus").textContent="The shared Tournament player list was cleared by a moderator. Your Players section is now up to date. 💗💙";
+   $("setupStatus").textContent="A moderator removed the shared Tournament players. Your Players section is now up to date. 💗💙";
   }
   livePlayers=snapshot.players||[];liveCalls=queueSnapshot.calls||[];liveState=snapshot.state;
   // Keep the organizer's selected bracket size from the saved page draft.
@@ -360,7 +360,7 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
    cacheTournamentBracket({...snapshot.bracket,count:sharedSize},false);
    hasLoadedSavedBracket=true;lastRemoteBracketUpdatedAt=remoteBracketUpdatedAt;
   }
-  // Keep a freshly cleared tournament at four players after refresh, instead of reviving an older bracket size.
+  // Keep a freshly reset tournament at four players after refresh, instead of reviving an older bracket size.
   if(localStorage.getItem("slotbuddyTournamentFreshStart")==="true"){
    const savedSlotEntries=Array.isArray(snapshot.slot_entries)?snapshot.slot_entries:[];
    const bracketHasPlayers=(snapshot.bracket?.rounds||[]).some(round=>round.some(match=>match.a||match.b));
@@ -493,10 +493,10 @@ sbClient.channel("tournament-live-list")
   }else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED"){
    console.warn("Tournament live sync status:",status,error||"");
   }
- })
+ });
 // Backstop for tables that are not enabled for Supabase Realtime: keep both moderators in sync.
 // This refreshes shared state only; it does not reload the page or disturb an active buy-in edit.
-setInterval(()=>{if(!document.hidden&&!activeBuyEditor&&!bracketSaveInProgress&&!bracketSavePending&&!bracketClearInProgress)refreshLivePlayers(false,false);},5000);;
+setInterval(()=>{if(!document.hidden&&!activeBuyEditor&&!bracketSaveInProgress&&!bracketSavePending&&!bracketClearInProgress)refreshLivePlayers(false,false);},5000);
 function renderTournamentBonuses(items){
  const list=$("tournamentBonusList");if(!list)return;
  list.innerHTML=items.length?items.map(x=>"<div class='entrant' style='border-radius:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap'><strong>"+safeText(x.caller_name)+"</strong> · "+safeText(x.bonus_type||"Regular")+" · "+safeText(x.bonus_name)+" · Spin "+Number(x.spin_amount||0).toFixed(2)+" · Paid "+Number(x.payout_amount||0).toFixed(2)+" <button class='dark' style='padding:4px 8px' onclick='deleteTournamentBonus("+Number(x.id)+")'>DELETE</button></div>").join(""):"<span class='hint'>No tournament bonus buys recorded yet.</span>";
@@ -1163,7 +1163,7 @@ $("clearAllBracket").onclick=async()=>{
   }
   // Remove separate saved Tournament entries too, or they will be merged back in after refresh.
   const entriesCleared=await clearSavedTournamentEntries(true);
-  if(!entriesCleared){status.textContent="Could not fully clear the saved player list. Please retry before starting a new tournament.";return;}
+  if(!entriesCleared){status.textContent="Could not fully remove the saved player list. Please retry before starting a new tournament.";return;}
   // Invalidate any snapshot already in flight so an older copy cannot repaint cleared names.
   tournamentSnapshotVersion++;
   bracketClearInProgress=true;
