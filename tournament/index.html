@@ -964,7 +964,8 @@ function playerButton(player,r,i,side,winner,payout){
  const winnerTag=isWinner?(r===rounds.length-1?' <small>✓ WINNER</small>':' <small>✓ ADVANCES</small>'):"";
  const label=escapeHtml(tournamentSlotLabel(player))+winnerTag;
  const playerMarkup=canManageTournament?'<button type="button" class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+label+'</button>':'<div class="player '+(isWinner?'winner':'')+'">'+label+'</div>';
- const buyLabel=hasBuy?'<span class="bracket-buy">Buy-in:  const payoutLabel=hasPlayerPayout?'<span class="bracket-payout">Payout: $'+Number(playerPayout).toFixed(2)+'</span>':'';
+ const buyLabel=hasBuy?'<span class="bracket-buy">Buy-in: $'+Number(buyValue).toFixed(2)+'</span>':'';
+ const payoutLabel=hasPlayerPayout?'<span class="bracket-payout">Payout: $'+Number(playerPayout).toFixed(2)+'</span>':'';
  const canEditBuyIn=canManageTournament&&r===0;
   const editButton=canEditBuyIn?'<button type="button" class="dark bracket-player-edit-toggle" data-edit-player="'+side+'" data-round="'+r+'" data-match="'+i+'">✏️ EDIT</button>':"";
  const details='<div class="bracket-player-details">'+(payoutLabel?'<div class="bracket-payout-line">'+payoutLabel+'</div>':"")+'<div class="bracket-buy-row"><div class="bracket-buy-line">'+buyLabel+'</div>'+(editButton?'<div class="bracket-edit-line">'+editButton+'</div>':"")+'</div></div>';
