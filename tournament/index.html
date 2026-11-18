@@ -1281,14 +1281,19 @@ document.addEventListener("click",function(event){
    status.textContent="Removal cancelled. Nothing was changed.";
    return;
   }
-  // Remove separate saved Tournament entries too, or they will be merged back in after refresh.
-  const entriesCleared=await clearSavedTournamentEntries(true,status);
-  if(!entriesCleared){status.textContent="Could not fully remove the saved player list. Please retry before starting a new tournament.";return;}
-  // Invalidate any snapshot already in flight so an older copy cannot repaint cleared names.
-  tournamentSnapshotVersion++;
-  bracketClearInProgress=true;
-  clearTimeout(bracketSaveTimer);
-  const count=Math.max(2,Number($("playerCount").value)||((rounds[0]?.length||0)*2)||playerTotal||4);
+  // Protect the bracket before clearing saved entries: that helper refreshes the shared snapshot.
+   // Without this guard, the refresh can restore the old bracket while removal is underway.
+   bracketClearInProgress=true;
+   tournamentSnapshotVersion++;
+   clearTimeout(bracketSaveTimer);
+   bracketSaveTimer=null;
+   bracketSavePending=false;
+   // Remove separate saved Tournament entries too, or they will be merged back in after refresh.
+   const entriesCleared=await clearSavedTournamentEntries(true,status);
+   if(!entriesCleared){status.textContent="Could not fully remove the saved player list. Please retry before starting a new tournament.";return;}
+   // Invalidate any snapshot already in flight so an older copy cannot repaint cleared names.
+   tournamentSnapshotVersion++;
+   const count=Math.max(2,Number($("playerCount").value)||((rounds[0]?.length||0)*2)||playerTotal||4);
   const emptyPlayers=Array.from({length:count},(_,i)=>({username:"",game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
   writeEntryPlayers(emptyPlayers);
   bracketAddedEntries=[];
