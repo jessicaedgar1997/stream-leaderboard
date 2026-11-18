@@ -270,9 +270,9 @@ async function restoreSavedTournamentEntries(){
  }catch(error){status.textContent="Could not restore players: "+error.message;}
 }
 $("restoreSavedEntries")?.addEventListener("click",restoreSavedTournamentEntries);
-async function clearSavedTournamentEntries(){
+async function clearSavedTournamentEntries(skipConfirm=false){
  const status=$("setupStatus"),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
- if(!confirm("Clear the saved Tournament player names from RESTORE SAVED PLAYERS and this device's player draft? This will not clear the active bracket, tournament settings, or bonus-buy history."))return;
+ if(!skipConfirm&&!confirm("Clear the saved Tournament player names from RESTORE SAVED PLAYERS and this device's player draft? This will not clear the active bracket, tournament settings, or bonus-buy history."))return false;
  const button=$("clearSavedEntries");if(button)button.disabled=true;
  status.textContent="Clearing saved Tournament player names…";
  try{
@@ -307,7 +307,8 @@ async function clearSavedTournamentEntries(){
   if(!session_key)status.textContent="This device's saved Tournament player names were cleared. Sign in to clear any names saved online.";
   else status.textContent="Saved Tournament player names cleared"+(remoteChecked?" and verified online":"")+"! "+(removed?"Removed "+removed+" online entr"+(removed===1?"y":"ies")+". ":"")+"You can start fresh! 💗💙";
   await refreshLivePlayers(true,false);
- }catch(error){status.textContent="Could not fully clear saved players: "+error.message;}
+  return true;
+ }catch(error){status.textContent="Could not fully clear saved players: "+error.message;return false;}
  finally{if(button)button.disabled=false;}
 }
 $("clearSavedEntries")?.addEventListener("click",clearSavedTournamentEntries);
@@ -1174,6 +1175,9 @@ $("clearAllBracket").onclick=async()=>{
    status.textContent="Clear cancelled. Nothing was changed.";
    return;
   }
+  // Remove separate saved Tournament entries too, or they will be merged back in after refresh.
+  const entriesCleared=await clearSavedTournamentEntries(true);
+  if(!entriesCleared){status.textContent="Could not fully clear the saved player list. Please retry before starting a new tournament.";return;}
   // Invalidate any snapshot already in flight so an older copy cannot repaint cleared names.
   tournamentSnapshotVersion++;
   bracketClearInProgress=true;
@@ -1251,41 +1255,7 @@ document.addEventListener("click",function(event){
  }
 },true);
 </script>
-<script id="slotbuddy-clear-capture-fix">
-document.addEventListener("click",async function(event){
- const button=event.target.closest&&event.target.closest("#clearAllBracket");
- if(!button)return;
- event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
- const status=document.getElementById("setupStatus");
- const show=message=>{if(status)status.textContent=message;};
- button.disabled=true;show("Clear button received the click. Checking manager access…");
- try{
-  if(!window.confirm("Clear player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same.")){show("Clear cancelled. Nothing was changed.");return;}
-  const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
-  if(!session_key){show("Manager session is missing. Sign in with Kick again, then retry.");return;}
-  const base="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/";
-  const login=await fetch(base+"slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key})});
-  const auth=await login.json();
-  if(!login.ok||!auth.ok||!auth.user||!["owner","moderator"].includes(auth.user.role)){show("Manager access could not be verified. Sign in with Kick again, then retry.");return;}
-  const root=document.getElementById("bracket");
-  const visibleRounds=[...(root?root.querySelectorAll(":scope > .round"):[])];
-  const shape=visibleRounds.length?visibleRounds.map(round=>Math.max(1,round.querySelectorAll(".match").length)):[4,2,1];
-  const blankRounds=shape.map(matches=>Array.from({length:matches},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
-  const count=Math.max(1,Number(document.getElementById("playerCount")?.value)||1);
-  const name=document.getElementById("eventName")?.value?.trim()||document.getElementById("bracketTitle")?.textContent?.trim()||"Chaos Queen Tournament";
-  show("Clearing names and games and saving the empty bracket…");
-  const response=await fetch(base+"tournament-join?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:"",session_key,data:{name,count,rounds:blankRounds}})});
-  const result=await response.text();
-  if(!response.ok)throw new Error(result||"The online save was rejected.");
-  localStorage.removeItem("slotbuddyBracketAddedEntries");
-  localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name,count,players:""}));
-  const players=document.getElementById("players");if(players)players.value="";
-  show("Names, games, winners, and payouts cleared and saved. Reloading the empty bracket…");
-  setTimeout(()=>window.location.reload(),900);
- }catch(error){show("Clear failed: "+(error&&error.message?error.message:"Please refresh and try again."));}
- finally{button.disabled=false;}
-},true);
-</script>
+
 <style id="site-autumn-leaves-style">
 #siteAutumnLeaves{position:fixed;inset:0;z-index:99999;overflow:hidden;pointer-events:none;contain:strict}
 #siteAutumnLeaves .site-autumn-leaf{position:absolute;top:-14vh;left:var(--x);display:block;line-height:1;font-size:var(--size);opacity:0;filter:drop-shadow(0 3px 5px #160d08aa);animation:siteAutumnFall var(--duration) ease-in-out var(--delay) infinite;will-change:transform;transform-origin:center}
