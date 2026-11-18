@@ -198,6 +198,8 @@ let liveState = null;
 let hasLoadedTournamentEntries = false;
 let lastRemoteTournamentEntryKeys = new Set();
 let canManageTournament = false;
+let activeBuyEditor = null;
+let pendingBuyEditValues = {};
 async function applyStaffView(){
  const session=localStorage.getItem("slotbuddy_kick_session")||"";
  const status=$("setupStatus");
@@ -346,7 +348,7 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   const queueStatus=$("slotQueueStatus");if(queueStatus){queueStatus.textContent=queueSnapshot.active_queue==="cozies"?"COZIES CALLS OPEN":queueSnapshot.active_queue==="bonus_hunt"?"BONUS HUNT CALLS OPEN":"CALLS CLOSED";queueStatus.style.color=queueSnapshot.active_queue?"var(--blue)":"var(--pink)";}
   const remoteBracketUpdatedAt=snapshot.bracket_updated_at||null;
   const remoteBracketChanged=remoteBracketUpdatedAt!==lastRemoteBracketUpdatedAt;
-  if(!bracketClearInProgress&&snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
+  if(!activeBuyEditor&&!bracketClearInProgress&&snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
    let localBracketCache=null;try{localBracketCache=JSON.parse(localStorage.getItem("slotbuddyTournamentBracketCache")||"null");}catch(e){}
    const localSavedAt=Number(localBracketCache?._localSavedAt)||0;
    const remoteSavedAt=Date.parse(remoteBracketUpdatedAt||"")||0;
@@ -964,12 +966,23 @@ async function saveBracketMatchPayout(r,i,button){
  if(match.winner){announceTournamentWinner(r,i);if(rounds[r+1])announceTournamentRound(r+1);}
 }
 function renderBracket(){
+ const openKey=activeBuyEditor;
+ $("bracket").querySelectorAll("[data-player-editor]").forEach(editor=>{const input=editor.querySelector("[data-player-buy]");if(input&&!editor.hidden){const key=editor.dataset.round+":"+editor.dataset.match+":"+editor.dataset.playerEditor;pendingBuyEditValues[key]=input.value;}});
  $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+''+'</div>'+playerButton(m.a,r,i,"a",m.winner,m.aPayout)+playerButton(m.b,r,i,"b",m.winner,m.bPayout)+(canManageTournament&&m.a&&m.b?'<div class="bracket-payout-editor"><label>'+escapeHtml(playerLabel(m.a))+' payout ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(m.aPayout==null?"":escapeHtml(m.aPayout))+'" data-bracket-payout="a" data-round="'+r+'" data-match="'+i+'"></label><label>'+escapeHtml(playerLabel(m.b))+' payout ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(m.bPayout==null?"":escapeHtml(m.bPayout))+'" data-bracket-payout="b" data-round="'+r+'" data-match="'+i+'"></label></div><button type="button" class="dark bracket-payout-save" data-save-bracket-payout data-round="'+r+'" data-match="'+i+'">SAVE PAYOUTS</button>':'')+'</div>').join("")+'</div>').join("");
  $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
- $("bracket").querySelectorAll("[data-edit-player]").forEach(btn=>btn.addEventListener("click",()=>{
+ $("bracket").querySelectorAll("[data-edit-player]").forEach(btn=>btn.addEventListener("click",(event)=>{
+  event.preventDefault();event.stopPropagation();
+  const key=btn.dataset.round+":"+btn.dataset.match+":"+btn.dataset.editPlayer;
   const selector='[data-player-editor="'+btn.dataset.editPlayer+'"][data-round="'+btn.dataset.round+'"][data-match="'+btn.dataset.match+'"]';
-  const editor=$("bracket").querySelector(selector);if(editor)editor.hidden=!editor.hidden;
+  const editor=$("bracket").querySelector(selector);
+  if(editor){if(activeBuyEditor===key){activeBuyEditor=null;editor.hidden=true;}else{activeBuyEditor=key;editor.hidden=false;const input=editor.querySelector("[data-player-buy]");if(input){input.value=pendingBuyEditValues[key]??input.value;input.focus();}}}
  }));
+ $("bracket").querySelectorAll("[data-player-editor]").forEach(editor=>{
+  const key=editor.dataset.round+":"+editor.dataset.match+":"+editor.dataset.playerEditor,input=editor.querySelector("[data-player-buy]");
+  if(key===openKey){editor.hidden=false;if(input&&pendingBuyEditValues[key]!==undefined)input.value=pendingBuyEditValues[key];}
+  if(input)input.addEventListener("input",()=>{pendingBuyEditValues[key]=input.value;});
+  editor.addEventListener("click",event=>event.stopPropagation());
+ });
  $("bracket").querySelectorAll("[data-save-player-edit]").forEach(btn=>btn.addEventListener("click",()=>{
   const r=Number(btn.dataset.round),i=Number(btn.dataset.match),side=btn.dataset.savePlayerEdit,player=rounds[r]?.[i]?.[side];
   const selector='[data-player-editor="'+side+'"][data-round="'+r+'"][data-match="'+i+'"]';
@@ -977,6 +990,7 @@ function renderBracket(){
   const buy=editor.querySelector("[data-player-buy]").value.trim();
   if(buy!==""&&(!Number.isFinite(Number(buy))||Number(buy)<0)){$("setupStatus").textContent="Enter a valid buy amount of $0 or more for this player.";return;}
   player.buy=buy===""?"":Number(buy).toFixed(2);
+  activeBuyEditor=null;delete pendingBuyEditValues[r+":"+i+":"+side];
   renderBracket();queueBracketSave();
   $("setupStatus").textContent=playerLabel(player)+" buy amount updated and saved.";
  }));
