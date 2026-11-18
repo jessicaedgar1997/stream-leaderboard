@@ -128,7 +128,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
  <div class="field"><div><label for="liveEntriesPerPerson">Entries per person</label><select id="liveEntriesPerPerson"><option value="1">1 Entry</option><option value="2">2 Entries</option><option value="3">3 Entries</option><option value="4">4 Entries</option><option value="5">5 Entries</option><option value="6">6 Entries</option><option value="7">7 Entries</option><option value="8">8 Entries</option><option value="9">9 Entries</option><option value="10">10 Entries</option></select></div></div>
 </div>
 <div class="setup-grid">
- <div class="field"><label>Duplicate games</label><button id="allowDuplicateGames" class="dark" type="button" aria-pressed="false">DUP: OFF</button><p class="hint">OFF = each player must choose a different game. ON = the same game can be used more than once.</p></div>
+ <div class="field"><label>Duplicate games</label><button id="allowDuplicateGames" class="dark" type="button" aria-pressed="false" disabled>DUP: OFF</button><p class="hint">Each game can only be used once, whether it is Regular or Super.</p></div>
 </div>
 <div class="entrant-list" id="tournamentEntryList"><span class="hint">No players added yet.</span></div>
 <div class="setup-grid" style="margin-top:14px">
@@ -654,7 +654,7 @@ function renderEntryPlayers(){
     }
     const limit=Number($("playerCount").value)||4;
     if(existing.length>=limit)throw new Error("The bracket is full ("+limit+" players).");
-    if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"&&existing.some(p=>String(p.game||"").trim().toLowerCase()===player.game.trim().toLowerCase()))throw new Error("Duplicate games are turned OFF. Turn DUP ON to allow this game.");
+    if(existing.some(p=>String(p.game||"").trim().replace(/\\s+/g," ").toLowerCase()===player.game.trim().replace(/\\s+/g," ").toLowerCase()))throw new Error("That game is already entered. Each game can only be used once, whether Regular or Super.");
     if(!rounds.length||!rounds[0]?.length)buildBracket(existing,limit);
     const slots=(rounds[0]||[]).flatMap((match,index)=>[{match,index,side:"a"},{match,index,side:"b"}]);
     const openSlot=slots.find(slot=>!slot.match[slot.side]);
@@ -726,8 +726,7 @@ function updateHint(){
  renderEntryPlayers();
  localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count:count,players:$("players").value}));
 }
-$("allowDuplicateGames").onclick=()=>{const on=$("allowDuplicateGames").getAttribute("aria-pressed")!=="true";$("allowDuplicateGames").setAttribute("aria-pressed",String(on));$("allowDuplicateGames").textContent="DUP: "+(on?"ON":"OFF");$("allowDuplicateGames").classList.toggle("pink",on);$("setupStatus").textContent=on?"Duplicate games are allowed.":"Duplicate games are blocked.";localStorage.setItem("chaosQueenTournamentDuplicateGames",String(on));};
-const savedDup=localStorage.getItem("chaosQueenTournamentDuplicateGames")==="true";$("allowDuplicateGames").setAttribute("aria-pressed",String(savedDup));$("allowDuplicateGames").textContent="DUP: "+(savedDup?"ON":"OFF");$("allowDuplicateGames").classList.toggle("pink",savedDup);
+$("allowDuplicateGames").setAttribute("aria-pressed","false");$("allowDuplicateGames").textContent="DUP: OFF";$("allowDuplicateGames").classList.remove("pink");$("allowDuplicateGames").disabled=true;localStorage.removeItem("chaosQueenTournamentDuplicateGames");
 $("playerCount").addEventListener("change",async()=>{
  localStorage.removeItem("slotbuddyTournamentFreshStart");
  const size=Number($("playerCount").value)||4;
@@ -1063,7 +1062,7 @@ $("build").onclick=()=>{
  if(list.length<2){$("setupStatus").textContent="Add at least 2 players to the bracket one at a time before starting.";return;}
  if(list.length>required){$("setupStatus").textContent="You added "+list.length+" players, but the bracket is set for "+required+".";return;}
  if(list.some(p=>!p.username.trim()||!p.game.trim())){$("setupStatus").textContent="Every added player needs a username and game.";return;}
- if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"){const gameNames=list.map(p=>p.game.trim().toLowerCase());if(new Set(gameNames).size!==gameNames.length){$("setupStatus").textContent="Duplicate games are turned OFF. Each player must have a different game, or turn DUP ON.";return;}}
+ const gameNames=list.map(p=>p.game.trim().replace(/\\s+/g," ").toLowerCase());if(new Set(gameNames).size!==gameNames.length){$("setupStatus").textContent="Duplicate games are not allowed. Each game can only be used once, whether Regular or Super.";return;}
  if(list.some(p=>p.username.length>40||p.game.length>100)){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
  buildBracket(list,required);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+"-player tournament • "+list.length+" entered. Single elimination.";
  getTournamentChatState();$("tournament").classList.remove("hidden");$("setupStatus").textContent="All added players are in the bracket. Press SHUFFLE PLAYERS whenever you are ready!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
