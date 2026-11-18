@@ -939,16 +939,487 @@ function playerButton(player,r,i,side,winner,payout){
  const isWinner=!!winner&&((winner===player)||(winner.username&&winner.username===(player.username||player.name)&&winner.game===player.game));
  const buyValue=player&&typeof player==="object"?player.buy:"";
  const hasBuy=buyValue!==""&&buyValue!=null&&Number.isFinite(Number(buyValue))&&Number(buyValue)>=0;
- const buyLabel=hasBuy?'<small class="bracket-buy" style="display:block;margin-top:4px;font-size:11px;opacity:.85">Buy-in: $'+Number(buyValue).toFixed(2)+'</small>':"";
- const playerPayout=player&&typeof player==="object"?player.payout:"";
+ const playerPayout=payout!==undefined&&payout!==null&&payout!==""?payout:(player&&typeof player==="object"?player.payout:"");
  const hasPlayerPayout=playerPayout!==""&&playerPayout!=null&&Number.isFinite(Number(playerPayout))&&Number(playerPayout)>=0;
- const payoutLabel=hasPlayerPayout?'<small class="bracket-payout" style="display:block;margin-top:3px;font-size:11px;opacity:.95">Payout: $'+Number(playerPayout).toFixed(2)+'</small>':"";
  const winnerTag=isWinner?(r===rounds.length-1?' <small>✓ WINNER</small>':' <small>✓ ADVANCES</small>'):"";
- const label=escapeHtml(tournamentSlotLabel(player))+buyLabel+payoutLabel+winnerTag;
+ const label=escapeHtml(tournamentSlotLabel(player))+winnerTag;
  const playerMarkup=canManageTournament?'<button class="player '+(isWinner?'winner':'')+'" data-round="'+r+'" data-match="'+i+'" data-side="'+side+'">'+label+'</button>':'<div class="player '+(isWinner?'winner':'')+'">'+label+'</div>';
- if(!canManageTournament)return playerMarkup;
+ const buyLabel=hasBuy?'<span class="bracket-buy">Buy-in: 
+async function saveBracketMatchPayout(r,i,button){
+ if(!canManageTournament)return;
+ const match=rounds[r]?.[i];if(!match)return;
+ const inputs=[...$("bracket").querySelectorAll('[data-bracket-payout][data-round="'+r+'"][data-match="'+i+'"]')];
+ const aValue=inputs.find(x=>x.dataset.bracketPayout==="a")?.value.trim()??"",bValue=inputs.find(x=>x.dataset.bracketPayout==="b")?.value.trim()??"";
+ if(aValue===""||bValue===""){ $("setupStatus").textContent="Enter both players’ payout amounts before saving.";return; }
+ if([aValue,bValue].some(v=>!Number.isFinite(Number(v))||Number(v)<0)){ $("setupStatus").textContent="Enter valid payout amounts for both players.";return; }
+ match.aPayout=Number(aValue).toFixed(2);match.bPayout=Number(bValue).toFixed(2);
+ const aAmount=Number(match.aPayout),bAmount=Number(match.bPayout);
+ if(aAmount>bAmount)match.winner=match.a;else if(bAmount>aAmount)match.winner=match.b;else match.winner=null;
+ match.payout=Math.max(aAmount,bAmount).toFixed(2);
+ propagate(r);renderBracket();queueBracketSave();
+ $("setupStatus").textContent=aAmount===bAmount?"Payouts saved. They are tied, so choose the winner by clicking their name.":"Payouts saved. The higher-paying player advances.";
+ if(match.winner){announceTournamentWinner(r,i);if(rounds[r+1])announceTournamentRound(r+1);}
+}
+function renderBracket(){
+ const openKey=activeBuyEditor;
+ $("bracket").querySelectorAll("[data-player-editor]").forEach(editor=>{const input=editor.querySelector("[data-player-buy]");if(input&&!editor.hidden){const key=editor.dataset.round+":"+editor.dataset.match+":"+editor.dataset.playerEditor;pendingBuyEditValues[key]=input.value;}});
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+''+'</div>'+playerButton(m.a,r,i,"a",m.winner,m.aPayout)+playerButton(m.b,r,i,"b",m.winner,m.bPayout)+(canManageTournament&&m.a&&m.b?'<div class="bracket-payout-editor"><label>'+escapeHtml(playerLabel(m.a))+' payout ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(m.aPayout==null?"":escapeHtml(m.aPayout))+'" data-bracket-payout="a" data-round="'+r+'" data-match="'+i+'"></label><label>'+escapeHtml(playerLabel(m.b))+' payout ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(m.bPayout==null?"":escapeHtml(m.bPayout))+'" data-bracket-payout="b" data-round="'+r+'" data-match="'+i+'"></label></div><button type="button" class="dark bracket-payout-save" data-save-bracket-payout data-round="'+r+'" data-match="'+i+'">SAVE PAYOUTS</button>':'')+'</div>').join("")+'</div>').join("");
+ $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
+ $("bracket").querySelectorAll("[data-edit-player]").forEach(btn=>btn.addEventListener("click",(event)=>{
+  event.preventDefault();event.stopPropagation();
+  const key=btn.dataset.round+":"+btn.dataset.match+":"+btn.dataset.editPlayer;
+  const selector='[data-player-editor="'+btn.dataset.editPlayer+'"][data-round="'+btn.dataset.round+'"][data-match="'+btn.dataset.match+'"]';
+  const editor=$("bracket").querySelector(selector);
+  if(editor){if(activeBuyEditor===key){activeBuyEditor=null;editor.hidden=true;}else{activeBuyEditor=key;editor.hidden=false;const input=editor.querySelector("[data-player-buy]");if(input){input.value=pendingBuyEditValues[key]??input.value;input.focus();}}}
+ }));
+ $("bracket").querySelectorAll("[data-player-editor]").forEach(editor=>{
+  const key=editor.dataset.round+":"+editor.dataset.match+":"+editor.dataset.playerEditor,input=editor.querySelector("[data-player-buy]");
+  if(key===openKey){editor.hidden=false;if(input&&pendingBuyEditValues[key]!==undefined)input.value=pendingBuyEditValues[key];}
+  if(input)input.addEventListener("input",()=>{pendingBuyEditValues[key]=input.value;});
+  editor.addEventListener("click",event=>event.stopPropagation());
+ });
+ $("bracket").querySelectorAll("[data-save-player-edit]").forEach(btn=>btn.addEventListener("click",()=>{
+  const r=Number(btn.dataset.round),i=Number(btn.dataset.match),side=btn.dataset.savePlayerEdit,player=rounds[r]?.[i]?.[side];
+  const selector='[data-player-editor="'+side+'"][data-round="'+r+'"][data-match="'+i+'"]';
+  const editor=$("bracket").querySelector(selector);if(!player||!editor)return;
+  const buy=editor.querySelector("[data-player-buy]").value.trim();
+  if(buy!==""&&(!Number.isFinite(Number(buy))||Number(buy)<0)){$("setupStatus").textContent="Enter a valid buy amount of $0 or more for this player.";return;}
+  player.buy=buy===""?"":Number(buy).toFixed(2);
+  activeBuyEditor=null;delete pendingBuyEditValues[r+":"+i+":"+side];
+  renderBracket();queueBracketSave();
+  $("setupStatus").textContent=playerLabel(player)+" buy amount updated and saved.";
+ }));
+
+ $("bracket").querySelectorAll("[data-save-bracket-payout]").forEach(btn=>btn.addEventListener("click",()=>saveBracketMatchPayout(Number(btn.dataset.round),Number(btn.dataset.match),btn)));
+ const champ=rounds[rounds.length-1][0]?.winner;
+ $("champion").classList.toggle("hidden",!champ);
+ const champName=champ?(typeof champ==="string"?champ:champ.username):"";
+ $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champName)+(typeof champ==="object"&&champ.game?' · '+escapeHtml(champ.game):""):"";
+ renderTournamentSections();
+}
+$("build").onclick=()=>{
+ const required=Number($("playerCount").value)||4;
+ const list=[...bracketAddedEntries];
+ if(list.length<2){$("setupStatus").textContent="Add at least 2 players to the bracket one at a time before starting.";return;}
+ if(list.length>required){$("setupStatus").textContent="You added "+list.length+" players, but the bracket is set for "+required+".";return;}
+ if(list.some(p=>!p.username.trim()||!p.game.trim())){$("setupStatus").textContent="Every added player needs a username and game.";return;}
+ if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"){const gameNames=list.map(p=>p.game.trim().toLowerCase());if(new Set(gameNames).size!==gameNames.length){$("setupStatus").textContent="Duplicate games are turned OFF. Each player must have a different game, or turn DUP ON.";return;}}
+ if(list.some(p=>p.username.length>40||p.game.length>100)){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
+ buildBracket(list,required);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+"-player tournament • "+list.length+" entered. Single elimination.";
+ getTournamentChatState();announceTournamentRound(0);$("tournament").classList.remove("hidden");$("setupStatus").textContent="All added players are in the bracket. Press SHUFFLE PLAYERS whenever you are ready!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+};
+function addQueuedCallsToNextBracket(calls){
+ const current=namesFromInput().filter(p=>!isEntryPlaceholder(p));
+ const added=[];
+ for(const call of calls||[]){
+  const username=String(call.username||call.caller_name||"").trim();
+  const game=String(call.game||call.game_name||"").trim();
+  if(!username||!game)continue;
+  const duplicate=current.some(p=>p.username.trim().toLowerCase()===username.toLowerCase()&&p.game.trim().toLowerCase()===game.toLowerCase())||added.some(p=>p.username.toLowerCase()===username.toLowerCase()&&p.game.toLowerCase()===game.toLowerCase());
+  if(duplicate)continue;
+  added.push({username,game,buy:"",casino:"Rainbet",bonusType:call.bonus_type||call.bonusType||"Regular"});
+ }
+ if(!added.length)return 0;
+ const combined=current.concat(added);
+ const supported=[4,8,12,16,32];
+ const currentLimit=Number($("playerCount").value)||4;
+ const capacity=supported.find(n=>n>=Math.max(currentLimit,combined.length))||32;
+ $("playerCount").value=String(capacity);
+ while(combined.length<capacity)combined.push({username:"Player "+(combined.length+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
+ writeEntryPlayers(combined);
+ updateHint();
+ return added.length;
+}
+$("shuffleBracket").onclick=()=>{
+ if(!rounds.length)return;
+ if(rounds.some(round=>round.some(match=>match.winner))){
+  $("setupStatus").textContent="A match winner has already been recorded. Start a new bracket before reshuffling so results stay safe.";return;
+ }
+ const entries=rounds[0].flatMap(match=>[match.a,match.b]).filter(Boolean);
+ if(entries.length!==playerTotal){$("setupStatus").textContent="Couldn't safely read every player. No changes were made.";return;}
+ buildBracket(entries);
+ $("setupStatus").textContent="Players shuffled! Each called game stayed with its player. 💗💙";
+ queueBracketSave();
+};
+$("clearAllBracket").onclick=async()=>{
+ const button=$("clearAllBracket"),status=$("setupStatus");
+ button.disabled=true;
+ status.textContent="Checking SlotBuddy manager access…";
+ try{
+  await applyStaffView();
+  if(!canManageTournament&&document.body.classList.contains("slotbuddy-manager"))canManageTournament=true;
+  if(!canManageTournament){
+   status.textContent="Manager access could not be verified. Please sign in to SlotBuddy again, then retry Clear Names & Games.";
+   return;
+  }
+  if(!confirm("Clear player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same.")){
+   status.textContent="Clear cancelled. Nothing was changed.";
+   return;
+  }
+  // Invalidate any snapshot already in flight so an older copy cannot repaint cleared names.
+  tournamentSnapshotVersion++;
+  bracketClearInProgress=true;
+  clearTimeout(bracketSaveTimer);
+  const count=Math.max(2,Number($("playerCount").value)||((rounds[0]?.length||0)*2)||playerTotal||4);
+  const emptyPlayers=Array.from({length:count},(_,i)=>({username:"",game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
+  writeEntryPlayers(emptyPlayers);
+  bracketAddedEntries=[];
+  localStorage.removeItem("slotbuddyBracketAddedEntries");
+  localStorage.removeItem("chaosQueenTournamentDraft");
+  playerTotal=count;
+  const bracketSize=2**Math.ceil(Math.log2(count));
+  rounds=Array.from({length:Math.log2(bracketSize)},(_,round)=>Array.from({length:bracketSize/Math.pow(2,round+1)},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
+  playerTotal=count;
+  $("matchPayoutA").value="";
+  $("matchPayoutB").value="";
+  $("matchPayoutStatus").textContent="";
+  $("champion").classList.add("hidden");
+  $("champion").textContent="";
+  status.textContent="Names and games cleared. Saving the empty bracket…";
+  updateHint();
+  renderBracket();
+  const saved=await saveBracketOnline();
+  bracketClearInProgress=false;
+  if(saved)await refreshLivePlayers(false,true);
+  status.textContent=saved?"Player names, games, buy-ins, and match payouts cleared. Bracket size and event settings were kept.":"Names and games cleared on this screen, but the online save needs attention: sign in again and press Save bracket.";
+ }catch(error){
+  status.textContent="Clear Names & Games hit an error: "+(error?.message||"Please refresh and try again.");
+ }finally{
+  bracketClearInProgress=false;
+  button.disabled=false;
+ }
+};
+$("newTournament").onclick=async()=>{
+ localStorage.removeItem("slotbuddyTournamentChatAnnouncements");tournamentChatState=null;tournamentIsActive=false;
+ bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");
+ localStorage.setItem("slotbuddyTournamentFreshStart","true");
+ clearTimeout(bracketSaveTimer);
+ $("playerCount").value="4";$("livePlayerCount").value="4";
+ writeEntryPlayers(Array.from({length:4},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"})));
+ playerTotal=0;buildBracket([],4);
+ localStorage.removeItem("slotbuddyTournamentBracketCache");
+ localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count:4,players:$("players").value}));
+ updateHint();await adminAction("size",{value:4});await saveBracketOnline();
+ renderEntryPlayers();$("tournament").classList.add("hidden");
+ $("setupStatus").textContent="Old tournament cleared. Ready for a fresh 4-player tournament. You can change the player count before adding players. 💗💙";
+ window.scrollTo({top:0,behavior:"smooth"});
+};
+$("print").onclick=()=>window.print();
+$("saveBracket").onclick=saveBracketOnline;
+updateHint();
+</script>
+
+
+
+
+<script>if("scrollRestoration" in history)history.scrollRestoration="manual";window.addEventListener("pageshow",()=>window.scrollTo(0,0));</script>
+<script id="slotbuddy-clear-capture-fix">
+document.addEventListener("click",async function(event){
+ const button=event.target.closest&&event.target.closest("#clearAllBracket");
+ if(!button)return;
+ event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+ const status=document.getElementById("setupStatus");
+ const show=message=>{if(status)status.textContent=message;};
+ button.disabled=true;show("Clear button received the click. Checking manager access…");
+ try{
+  if(!window.confirm("Clear player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same.")){show("Clear cancelled. Nothing was changed.");return;}
+  const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+  if(!session_key){show("Manager session is missing. Sign in with Kick again, then retry.");return;}
+  const base="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/";
+  const login=await fetch(base+"slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key})});
+  const auth=await login.json();
+  if(!login.ok||!auth.ok||!auth.user||!["owner","moderator"].includes(auth.user.role)){show("Manager access could not be verified. Sign in with Kick again, then retry.");return;}
+  const root=document.getElementById("bracket");
+  const visibleRounds=[...(root?root.querySelectorAll(":scope > .round"):[])];
+  const shape=visibleRounds.length?visibleRounds.map(round=>Math.max(1,round.querySelectorAll(".match").length)):[4,2,1];
+  const blankRounds=shape.map(matches=>Array.from({length:matches},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
+  const count=Math.max(1,Number(document.getElementById("playerCount")?.value)||1);
+  const name=document.getElementById("eventName")?.value?.trim()||document.getElementById("bracketTitle")?.textContent?.trim()||"Chaos Queen Tournament";
+  show("Clearing names and games and saving the empty bracket…");
+  const response=await fetch(base+"tournament-join?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:"",session_key,data:{name,count,rounds:blankRounds}})});
+  const result=await response.text();
+  if(!response.ok)throw new Error(result||"The online save was rejected.");
+  localStorage.removeItem("slotbuddyBracketAddedEntries");
+  localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name,count,players:""}));
+  const players=document.getElementById("players");if(players)players.value="";
+  show("Names, games, winners, and payouts cleared and saved. Reloading the empty bracket…");
+  setTimeout(()=>window.location.reload(),900);
+ }catch(error){show("Clear failed: "+(error&&error.message?error.message:"Please refresh and try again."));}
+ finally{button.disabled=false;}
+},true);
+</script>
+<style id="site-autumn-leaves-style">
+#siteAutumnLeaves{position:fixed;inset:0;z-index:99999;overflow:hidden;pointer-events:none;contain:strict}
+#siteAutumnLeaves .site-autumn-leaf{position:absolute;top:-14vh;left:var(--x);display:block;line-height:1;font-size:var(--size);opacity:0;filter:drop-shadow(0 3px 5px #160d08aa);animation:siteAutumnFall var(--duration) ease-in-out var(--delay) infinite;will-change:transform;transform-origin:center}
+#siteAutumnLeaves .site-autumn-leaf:nth-child(3n){color:#bd4c24}
+#siteAutumnLeaves .site-autumn-leaf:nth-child(3n+1){color:#e6b34b}
+#siteAutumnLeaves .site-autumn-leaf:nth-child(3n+2){color:#a84b25}
+@keyframes siteAutumnFall{0%{opacity:0;transform:translate3d(0,-12vh,0) rotate(0deg) scale(.75)}8%{opacity:.92}22%{transform:translate3d(var(--d1),18vh,0) rotate(155deg) scale(1)}43%{transform:translate3d(var(--d2),42vh,0) rotate(390deg) scale(.9)}65%{transform:translate3d(var(--d3),67vh,0) rotate(590deg) scale(1.08)}84%{opacity:.9;transform:translate3d(var(--d4),91vh,0) rotate(810deg) scale(.92)}100%{opacity:0;transform:translate3d(var(--d5),116vh,0) rotate(1080deg) scale(.72)}}
+@media(prefers-reduced-motion:reduce){#siteAutumnLeaves .site-autumn-leaf{animation-duration:45s}}
+
+/* Keep the original hot-pink-to-sky-blue bracket design; improve black text contrast only. */
+.bracket,.bracket *{color:#000!important;text-shadow:0 0 2px #fff,0 0 5px #fff!important}
+.bracket .player,.bracket .player.empty:not(:empty),.bracket .player.winner{ text-shadow:0 0 2px #fff,0 0 6px #fff!important}
+.bracket .bracket-payout-editor input{color:#000!important;text-shadow:none!important}
+
+/* Keep each player's game, buy-in/edit control, and payout grouped beneath that game. */
+.match>.bracket-player-wrap{display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:0}
+.match>.bracket-player-wrap>.player{width:100%;max-width:100%;min-height:58px;justify-content:center;text-align:center;overflow-wrap:anywhere}
+.bracket-player-details{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;text-align:center}
+.bracket-buy-row{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;width:100%}
+.bracket-buy-row .bracket-player-edit-toggle{width:auto;min-height:32px;padding:6px 9px;font-size:.68rem}
+.bracket-payout-line{display:block;text-align:center}
+.bracket-player-details .bracket-buy,.bracket-player-details .bracket-payout{display:inline-block;font-size:.72rem;line-height:1.35}
+.match>.bracket-player-wrap>.bracket-player-editor{width:100%;box-sizing:border-box}
+/* Bracket player names and labels: black text, preserving the existing pink-to-blue styling. */
+.bracket .player,
+.bracket .player.winner,
+.bracket .player.empty:not(:empty),
+.bracket .player small{color:#000!important;text-shadow:none!important;-webkit-text-stroke:0!important;font-weight:950!important}
+.bracket .player{filter:none!important}
+</style>
+<div id="siteAutumnLeaves" aria-hidden="true"></div>
+<script id="site-autumn-leaves-script">
+(()=>{const layer=document.getElementById("siteAutumnLeaves");if(!layer||layer.dataset.ready)return;layer.dataset.ready="1";const leaves=["🍂","🍁","🍃","🍂","🍁","🍂","🍃","🍁"];for(let i=0;i< 45;i++){const leaf=document.createElement("span");leaf.className="site-autumn-leaf";leaf.textContent=leaves[i%leaves.length];leaf.style.setProperty("--x",((i*37)%100)+"vw");leaf.style.setProperty("--size",(21+(i*13)%26)+"px");leaf.style.setProperty("--duration",(10+(i*7)%13)+"s");leaf.style.setProperty("--delay",(-((i*5)%22))+"s");for(let j=1;j<=5;j++)leaf.style.setProperty("--d"+j,(((i*(j*17+13))%(220+j*25))-(110+j*12))+"px");layer.appendChild(leaf)}})();
+</script>
+</body></html>
++Number(buyValue).toFixed(2)+'</span>':'<span class="bracket-buy">Buy-in: —</span>';
+ const payoutLabel=hasPlayerPayout?'<span class="bracket-payout">Payout: 
+async function saveBracketMatchPayout(r,i,button){
+ if(!canManageTournament)return;
+ const match=rounds[r]?.[i];if(!match)return;
+ const inputs=[...$("bracket").querySelectorAll('[data-bracket-payout][data-round="'+r+'"][data-match="'+i+'"]')];
+ const aValue=inputs.find(x=>x.dataset.bracketPayout==="a")?.value.trim()??"",bValue=inputs.find(x=>x.dataset.bracketPayout==="b")?.value.trim()??"";
+ if(aValue===""||bValue===""){ $("setupStatus").textContent="Enter both players’ payout amounts before saving.";return; }
+ if([aValue,bValue].some(v=>!Number.isFinite(Number(v))||Number(v)<0)){ $("setupStatus").textContent="Enter valid payout amounts for both players.";return; }
+ match.aPayout=Number(aValue).toFixed(2);match.bPayout=Number(bValue).toFixed(2);
+ const aAmount=Number(match.aPayout),bAmount=Number(match.bPayout);
+ if(aAmount>bAmount)match.winner=match.a;else if(bAmount>aAmount)match.winner=match.b;else match.winner=null;
+ match.payout=Math.max(aAmount,bAmount).toFixed(2);
+ propagate(r);renderBracket();queueBracketSave();
+ $("setupStatus").textContent=aAmount===bAmount?"Payouts saved. They are tied, so choose the winner by clicking their name.":"Payouts saved. The higher-paying player advances.";
+ if(match.winner){announceTournamentWinner(r,i);if(rounds[r+1])announceTournamentRound(r+1);}
+}
+function renderBracket(){
+ const openKey=activeBuyEditor;
+ $("bracket").querySelectorAll("[data-player-editor]").forEach(editor=>{const input=editor.querySelector("[data-player-buy]");if(input&&!editor.hidden){const key=editor.dataset.round+":"+editor.dataset.match+":"+editor.dataset.playerEditor;pendingBuyEditValues[key]=input.value;}});
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+''+'</div>'+playerButton(m.a,r,i,"a",m.winner,m.aPayout)+playerButton(m.b,r,i,"b",m.winner,m.bPayout)+(canManageTournament&&m.a&&m.b?'<div class="bracket-payout-editor"><label>'+escapeHtml(playerLabel(m.a))+' payout ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(m.aPayout==null?"":escapeHtml(m.aPayout))+'" data-bracket-payout="a" data-round="'+r+'" data-match="'+i+'"></label><label>'+escapeHtml(playerLabel(m.b))+' payout ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(m.bPayout==null?"":escapeHtml(m.bPayout))+'" data-bracket-payout="b" data-round="'+r+'" data-match="'+i+'"></label></div><button type="button" class="dark bracket-payout-save" data-save-bracket-payout data-round="'+r+'" data-match="'+i+'">SAVE PAYOUTS</button>':'')+'</div>').join("")+'</div>').join("");
+ $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
+ $("bracket").querySelectorAll("[data-edit-player]").forEach(btn=>btn.addEventListener("click",(event)=>{
+  event.preventDefault();event.stopPropagation();
+  const key=btn.dataset.round+":"+btn.dataset.match+":"+btn.dataset.editPlayer;
+  const selector='[data-player-editor="'+btn.dataset.editPlayer+'"][data-round="'+btn.dataset.round+'"][data-match="'+btn.dataset.match+'"]';
+  const editor=$("bracket").querySelector(selector);
+  if(editor){if(activeBuyEditor===key){activeBuyEditor=null;editor.hidden=true;}else{activeBuyEditor=key;editor.hidden=false;const input=editor.querySelector("[data-player-buy]");if(input){input.value=pendingBuyEditValues[key]??input.value;input.focus();}}}
+ }));
+ $("bracket").querySelectorAll("[data-player-editor]").forEach(editor=>{
+  const key=editor.dataset.round+":"+editor.dataset.match+":"+editor.dataset.playerEditor,input=editor.querySelector("[data-player-buy]");
+  if(key===openKey){editor.hidden=false;if(input&&pendingBuyEditValues[key]!==undefined)input.value=pendingBuyEditValues[key];}
+  if(input)input.addEventListener("input",()=>{pendingBuyEditValues[key]=input.value;});
+  editor.addEventListener("click",event=>event.stopPropagation());
+ });
+ $("bracket").querySelectorAll("[data-save-player-edit]").forEach(btn=>btn.addEventListener("click",()=>{
+  const r=Number(btn.dataset.round),i=Number(btn.dataset.match),side=btn.dataset.savePlayerEdit,player=rounds[r]?.[i]?.[side];
+  const selector='[data-player-editor="'+side+'"][data-round="'+r+'"][data-match="'+i+'"]';
+  const editor=$("bracket").querySelector(selector);if(!player||!editor)return;
+  const buy=editor.querySelector("[data-player-buy]").value.trim();
+  if(buy!==""&&(!Number.isFinite(Number(buy))||Number(buy)<0)){$("setupStatus").textContent="Enter a valid buy amount of $0 or more for this player.";return;}
+  player.buy=buy===""?"":Number(buy).toFixed(2);
+  activeBuyEditor=null;delete pendingBuyEditValues[r+":"+i+":"+side];
+  renderBracket();queueBracketSave();
+  $("setupStatus").textContent=playerLabel(player)+" buy amount updated and saved.";
+ }));
+
+ $("bracket").querySelectorAll("[data-save-bracket-payout]").forEach(btn=>btn.addEventListener("click",()=>saveBracketMatchPayout(Number(btn.dataset.round),Number(btn.dataset.match),btn)));
+ const champ=rounds[rounds.length-1][0]?.winner;
+ $("champion").classList.toggle("hidden",!champ);
+ const champName=champ?(typeof champ==="string"?champ:champ.username):"";
+ $("champion").innerHTML=champ?'<strong>🏆 TOURNAMENT CHAMPION 🏆</strong>'+escapeHtml(champName)+(typeof champ==="object"&&champ.game?' · '+escapeHtml(champ.game):""):"";
+ renderTournamentSections();
+}
+$("build").onclick=()=>{
+ const required=Number($("playerCount").value)||4;
+ const list=[...bracketAddedEntries];
+ if(list.length<2){$("setupStatus").textContent="Add at least 2 players to the bracket one at a time before starting.";return;}
+ if(list.length>required){$("setupStatus").textContent="You added "+list.length+" players, but the bracket is set for "+required+".";return;}
+ if(list.some(p=>!p.username.trim()||!p.game.trim())){$("setupStatus").textContent="Every added player needs a username and game.";return;}
+ if($("allowDuplicateGames").getAttribute("aria-pressed")!=="true"){const gameNames=list.map(p=>p.game.trim().toLowerCase());if(new Set(gameNames).size!==gameNames.length){$("setupStatus").textContent="Duplicate games are turned OFF. Each player must have a different game, or turn DUP ON.";return;}}
+ if(list.some(p=>p.username.length>40||p.game.length>100)){$("setupStatus").textContent="Keep player names to 40 characters and game names to 100 characters or less.";return;}
+ buildBracket(list,required);$("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";$("bracketInfo").textContent=required+"-player tournament • "+list.length+" entered. Single elimination.";
+ getTournamentChatState();announceTournamentRound(0);$("tournament").classList.remove("hidden");$("setupStatus").textContent="All added players are in the bracket. Press SHUFFLE PLAYERS whenever you are ready!";queueBracketSave();$("tournament").scrollIntoView({behavior:"smooth",block:"start"});
+};
+function addQueuedCallsToNextBracket(calls){
+ const current=namesFromInput().filter(p=>!isEntryPlaceholder(p));
+ const added=[];
+ for(const call of calls||[]){
+  const username=String(call.username||call.caller_name||"").trim();
+  const game=String(call.game||call.game_name||"").trim();
+  if(!username||!game)continue;
+  const duplicate=current.some(p=>p.username.trim().toLowerCase()===username.toLowerCase()&&p.game.trim().toLowerCase()===game.toLowerCase())||added.some(p=>p.username.toLowerCase()===username.toLowerCase()&&p.game.toLowerCase()===game.toLowerCase());
+  if(duplicate)continue;
+  added.push({username,game,buy:"",casino:"Rainbet",bonusType:call.bonus_type||call.bonusType||"Regular"});
+ }
+ if(!added.length)return 0;
+ const combined=current.concat(added);
+ const supported=[4,8,12,16,32];
+ const currentLimit=Number($("playerCount").value)||4;
+ const capacity=supported.find(n=>n>=Math.max(currentLimit,combined.length))||32;
+ $("playerCount").value=String(capacity);
+ while(combined.length<capacity)combined.push({username:"Player "+(combined.length+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"});
+ writeEntryPlayers(combined);
+ updateHint();
+ return added.length;
+}
+$("shuffleBracket").onclick=()=>{
+ if(!rounds.length)return;
+ if(rounds.some(round=>round.some(match=>match.winner))){
+  $("setupStatus").textContent="A match winner has already been recorded. Start a new bracket before reshuffling so results stay safe.";return;
+ }
+ const entries=rounds[0].flatMap(match=>[match.a,match.b]).filter(Boolean);
+ if(entries.length!==playerTotal){$("setupStatus").textContent="Couldn't safely read every player. No changes were made.";return;}
+ buildBracket(entries);
+ $("setupStatus").textContent="Players shuffled! Each called game stayed with its player. 💗💙";
+ queueBracketSave();
+};
+$("clearAllBracket").onclick=async()=>{
+ const button=$("clearAllBracket"),status=$("setupStatus");
+ button.disabled=true;
+ status.textContent="Checking SlotBuddy manager access…";
+ try{
+  await applyStaffView();
+  if(!canManageTournament&&document.body.classList.contains("slotbuddy-manager"))canManageTournament=true;
+  if(!canManageTournament){
+   status.textContent="Manager access could not be verified. Please sign in to SlotBuddy again, then retry Clear Names & Games.";
+   return;
+  }
+  if(!confirm("Clear player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same.")){
+   status.textContent="Clear cancelled. Nothing was changed.";
+   return;
+  }
+  // Invalidate any snapshot already in flight so an older copy cannot repaint cleared names.
+  tournamentSnapshotVersion++;
+  bracketClearInProgress=true;
+  clearTimeout(bracketSaveTimer);
+  const count=Math.max(2,Number($("playerCount").value)||((rounds[0]?.length||0)*2)||playerTotal||4);
+  const emptyPlayers=Array.from({length:count},(_,i)=>({username:"",game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
+  writeEntryPlayers(emptyPlayers);
+  bracketAddedEntries=[];
+  localStorage.removeItem("slotbuddyBracketAddedEntries");
+  localStorage.removeItem("chaosQueenTournamentDraft");
+  playerTotal=count;
+  const bracketSize=2**Math.ceil(Math.log2(count));
+  rounds=Array.from({length:Math.log2(bracketSize)},(_,round)=>Array.from({length:bracketSize/Math.pow(2,round+1)},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
+  playerTotal=count;
+  $("matchPayoutA").value="";
+  $("matchPayoutB").value="";
+  $("matchPayoutStatus").textContent="";
+  $("champion").classList.add("hidden");
+  $("champion").textContent="";
+  status.textContent="Names and games cleared. Saving the empty bracket…";
+  updateHint();
+  renderBracket();
+  const saved=await saveBracketOnline();
+  bracketClearInProgress=false;
+  if(saved)await refreshLivePlayers(false,true);
+  status.textContent=saved?"Player names, games, buy-ins, and match payouts cleared. Bracket size and event settings were kept.":"Names and games cleared on this screen, but the online save needs attention: sign in again and press Save bracket.";
+ }catch(error){
+  status.textContent="Clear Names & Games hit an error: "+(error?.message||"Please refresh and try again.");
+ }finally{
+  bracketClearInProgress=false;
+  button.disabled=false;
+ }
+};
+$("newTournament").onclick=async()=>{
+ localStorage.removeItem("slotbuddyTournamentChatAnnouncements");tournamentChatState=null;tournamentIsActive=false;
+ bracketAddedEntries=[];localStorage.removeItem("slotbuddyBracketAddedEntries");
+ localStorage.setItem("slotbuddyTournamentFreshStart","true");
+ clearTimeout(bracketSaveTimer);
+ $("playerCount").value="4";$("livePlayerCount").value="4";
+ writeEntryPlayers(Array.from({length:4},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"})));
+ playerTotal=0;buildBracket([],4);
+ localStorage.removeItem("slotbuddyTournamentBracketCache");
+ localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count:4,players:$("players").value}));
+ updateHint();await adminAction("size",{value:4});await saveBracketOnline();
+ renderEntryPlayers();$("tournament").classList.add("hidden");
+ $("setupStatus").textContent="Old tournament cleared. Ready for a fresh 4-player tournament. You can change the player count before adding players. 💗💙";
+ window.scrollTo({top:0,behavior:"smooth"});
+};
+$("print").onclick=()=>window.print();
+$("saveBracket").onclick=saveBracketOnline;
+updateHint();
+</script>
+
+
+
+
+<script>if("scrollRestoration" in history)history.scrollRestoration="manual";window.addEventListener("pageshow",()=>window.scrollTo(0,0));</script>
+<script id="slotbuddy-clear-capture-fix">
+document.addEventListener("click",async function(event){
+ const button=event.target.closest&&event.target.closest("#clearAllBracket");
+ if(!button)return;
+ event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+ const status=document.getElementById("setupStatus");
+ const show=message=>{if(status)status.textContent=message;};
+ button.disabled=true;show("Clear button received the click. Checking manager access…");
+ try{
+  if(!window.confirm("Clear player names, games, and buy-in amounts from the bracket? The bracket size and event settings will stay the same.")){show("Clear cancelled. Nothing was changed.");return;}
+  const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+  if(!session_key){show("Manager session is missing. Sign in with Kick again, then retry.");return;}
+  const base="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/";
+  const login=await fetch(base+"slotbuddy-kick-login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key})});
+  const auth=await login.json();
+  if(!login.ok||!auth.ok||!auth.user||!["owner","moderator"].includes(auth.user.role)){show("Manager access could not be verified. Sign in with Kick again, then retry.");return;}
+  const root=document.getElementById("bracket");
+  const visibleRounds=[...(root?root.querySelectorAll(":scope > .round"):[])];
+  const shape=visibleRounds.length?visibleRounds.map(round=>Math.max(1,round.querySelectorAll(".match").length)):[4,2,1];
+  const blankRounds=shape.map(matches=>Array.from({length:matches},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
+  const count=Math.max(1,Number(document.getElementById("playerCount")?.value)||1);
+  const name=document.getElementById("eventName")?.value?.trim()||document.getElementById("bracketTitle")?.textContent?.trim()||"Chaos Queen Tournament";
+  show("Clearing names and games and saving the empty bracket…");
+  const response=await fetch(base+"tournament-join?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:"",session_key,data:{name,count,rounds:blankRounds}})});
+  const result=await response.text();
+  if(!response.ok)throw new Error(result||"The online save was rejected.");
+  localStorage.removeItem("slotbuddyBracketAddedEntries");
+  localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name,count,players:""}));
+  const players=document.getElementById("players");if(players)players.value="";
+  show("Names, games, winners, and payouts cleared and saved. Reloading the empty bracket…");
+  setTimeout(()=>window.location.reload(),900);
+ }catch(error){show("Clear failed: "+(error&&error.message?error.message:"Please refresh and try again."));}
+ finally{button.disabled=false;}
+},true);
+</script>
+<style id="site-autumn-leaves-style">
+#siteAutumnLeaves{position:fixed;inset:0;z-index:99999;overflow:hidden;pointer-events:none;contain:strict}
+#siteAutumnLeaves .site-autumn-leaf{position:absolute;top:-14vh;left:var(--x);display:block;line-height:1;font-size:var(--size);opacity:0;filter:drop-shadow(0 3px 5px #160d08aa);animation:siteAutumnFall var(--duration) ease-in-out var(--delay) infinite;will-change:transform;transform-origin:center}
+#siteAutumnLeaves .site-autumn-leaf:nth-child(3n){color:#bd4c24}
+#siteAutumnLeaves .site-autumn-leaf:nth-child(3n+1){color:#e6b34b}
+#siteAutumnLeaves .site-autumn-leaf:nth-child(3n+2){color:#a84b25}
+@keyframes siteAutumnFall{0%{opacity:0;transform:translate3d(0,-12vh,0) rotate(0deg) scale(.75)}8%{opacity:.92}22%{transform:translate3d(var(--d1),18vh,0) rotate(155deg) scale(1)}43%{transform:translate3d(var(--d2),42vh,0) rotate(390deg) scale(.9)}65%{transform:translate3d(var(--d3),67vh,0) rotate(590deg) scale(1.08)}84%{opacity:.9;transform:translate3d(var(--d4),91vh,0) rotate(810deg) scale(.92)}100%{opacity:0;transform:translate3d(var(--d5),116vh,0) rotate(1080deg) scale(.72)}}
+@media(prefers-reduced-motion:reduce){#siteAutumnLeaves .site-autumn-leaf{animation-duration:45s}}
+
+/* Keep the original hot-pink-to-sky-blue bracket design; improve black text contrast only. */
+.bracket,.bracket *{color:#000!important;text-shadow:0 0 2px #fff,0 0 5px #fff!important}
+.bracket .player,.bracket .player.empty:not(:empty),.bracket .player.winner{ text-shadow:0 0 2px #fff,0 0 6px #fff!important}
+.bracket .bracket-payout-editor input{color:#000!important;text-shadow:none!important}
+
+/* Bracket player names and labels: black text, preserving the existing pink-to-blue styling. */
+.bracket .player,
+.bracket .player.winner,
+.bracket .player.empty:not(:empty),
+.bracket .player small{color:#000!important;text-shadow:none!important;-webkit-text-stroke:0!important;font-weight:950!important}
+.bracket .player{filter:none!important}
+</style>
+<div id="siteAutumnLeaves" aria-hidden="true"></div>
+<script id="site-autumn-leaves-script">
+(()=>{const layer=document.getElementById("siteAutumnLeaves");if(!layer||layer.dataset.ready)return;layer.dataset.ready="1";const leaves=["🍂","🍁","🍃","🍂","🍁","🍂","🍃","🍁"];for(let i=0;i< 45;i++){const leaf=document.createElement("span");leaf.className="site-autumn-leaf";leaf.textContent=leaves[i%leaves.length];leaf.style.setProperty("--x",((i*37)%100)+"vw");leaf.style.setProperty("--size",(21+(i*13)%26)+"px");leaf.style.setProperty("--duration",(10+(i*7)%13)+"s");leaf.style.setProperty("--delay",(-((i*5)%22))+"s");for(let j=1;j<=5;j++)leaf.style.setProperty("--d"+j,(((i*(j*17+13))%(220+j*25))-(110+j*12))+"px");layer.appendChild(leaf)}})();
+</script>
+</body></html>
++Number(playerPayout).toFixed(2)+'</span>':'';
+ const editButton=canManageTournament?'<button type="button" class="dark bracket-player-edit-toggle" data-edit-player="'+side+'" data-round="'+r+'" data-match="'+i+'" title="Edit this player’s buy amount">✏️ EDIT</button>':"";
+ const details='<div class="bracket-player-details"><div class="bracket-buy-row">'+buyLabel+editButton+'</div>'+(payoutLabel?'<div class="bracket-payout-line">'+payoutLabel+'</div>':"")+'</div>';
+ if(!canManageTournament)return '<div class="bracket-player-wrap">'+playerMarkup+details+'</div>';
  const buyInput=buyValue!==""&&buyValue!=null?escapeHtml(String(buyValue)):"";
- return '<div class="bracket-player-wrap">'+playerMarkup+'<button type="button" class="dark bracket-player-edit-toggle" data-edit-player="'+side+'" data-round="'+r+'" data-match="'+i+'" title="Edit this player’s buy amount">✏️ EDIT</button><div class="bracket-player-editor" data-player-editor="'+side+'" data-round="'+r+'" data-match="'+i+'" hidden><label>Buy amount ($)<input type="number" min="0" step="0.01" value="'+buyInput+'" data-player-buy></label><button type="button" data-save-player-edit="'+side+'" data-round="'+r+'" data-match="'+i+'">SAVE BUY</button></div></div>';
+ return '<div class="bracket-player-wrap">'+playerMarkup+details+'<div class="bracket-player-editor" data-player-editor="'+side+'" data-round="'+r+'" data-match="'+i+'" hidden><label>Buy amount ($)<input type="number" min="0" step="0.01" value="'+buyInput+'" data-player-buy></label><button type="button" data-save-player-edit="'+side+'" data-round="'+r+'" data-match="'+i+'">SAVE BUY</button></div></div>';
 }
 async function saveBracketMatchPayout(r,i,button){
  if(!canManageTournament)return;
