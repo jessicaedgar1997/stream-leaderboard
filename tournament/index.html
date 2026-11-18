@@ -1076,11 +1076,37 @@ $("shuffleBracket").onclick=()=>{
  if(rounds.some(round=>round.some(match=>match.winner))){
   $("setupStatus").textContent="A match winner has already been recorded. Start a new bracket before reshuffling so results stay safe.";return;
  }
- const entries=rounds[0].flatMap(match=>[match.a,match.b]).filter(Boolean);
- if(entries.length!==playerTotal){$("setupStatus").textContent="Couldn't safely read every player. No changes were made.";return;}
- const shuffledEntries=shuffle(entries);
- buildBracket(shuffledEntries);
- $("setupStatus").textContent="Players shuffled! Each called game stayed with its player. 💗💙";
+ const firstRound=rounds[0]||[];
+ const slots=firstRound.flatMap(match=>[match.a,match.b]);
+ const entries=slots.filter(Boolean);
+ if(entries.length<2||entries.length!==playerTotal){
+  $("setupStatus").textContent="At least two players are needed, and every player must be present. No changes were made.";return;
+ }
+ const originalOrder=entries.map(tournamentPlayerIdentity).join("::");
+ let shuffledEntries=shuffle(entries);
+ // Guarantee a visibly different order even if the random shuffle returns the original order.
+ if(shuffledEntries.map(tournamentPlayerIdentity).join("::")===originalOrder){
+  shuffledEntries=shuffledEntries.slice(1).concat(shuffledEntries[0]);
+ }
+ let cursor=0;
+ firstRound.forEach(match=>{
+  match.a=cursor<shuffledEntries.length?shuffledEntries[cursor++]:null;
+  match.b=cursor<shuffledEntries.length?shuffledEntries[cursor++]:null;
+  match.winner=null;
+  match.payout="";
+  match.aPayout="";
+  match.bPayout="";
+ });
+ // Clear downstream match slots/results and rebuild the bracket progression without changing its size.
+ for(let r=1;r<rounds.length;r++){
+  rounds[r].forEach(match=>{
+   match.a=null;match.b=null;match.winner=null;
+   match.payout="";match.aPayout="";match.bPayout="";
+  });
+ }
+ propagate(0);
+ renderBracket();
+ $("setupStatus").textContent="Players shuffled into new matchups! Their games and buy-ins moved with them. 💗💙";
  queueBracketSave();
 };
 $("clearAllBracket").onclick=async()=>{
