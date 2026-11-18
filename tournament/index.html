@@ -950,7 +950,7 @@ function playerButton(player,r,i,side,winner,payout){
  const buyLabel=hasBuy?'<span class="bracket-buy">Buy-in: $'+Number(buyValue).toFixed(2)+'</span>':'<span class="bracket-buy">Buy-in: —</span>';
  const payoutLabel=hasPlayerPayout?'<span class="bracket-payout">Payout: $'+Number(playerPayout).toFixed(2)+'</span>':'';
  const editButton=canManageTournament?'<button type="button" class="dark bracket-player-edit-toggle" data-edit-player="'+side+'" data-round="'+r+'" data-match="'+i+'">✏️ EDIT</button>':"";
- const details='<div class="bracket-player-details">'+buyLabel+editButton+(payoutLabel?'<div class="bracket-payout-line">'+payoutLabel+'</div>':"")+'</div>';
+ const details='<div class="bracket-player-details">'+(payoutLabel?'<div class="bracket-payout-line">'+payoutLabel+'</div>':"")+'<div class="bracket-buy-row">'+buyLabel+editButton+'</div></div>';
  if(!canManageTournament)return '<div class="bracket-player-wrap">'+playerMarkup+details+'</div>';
  const buyInput=buyValue!==""&&buyValue!=null?escapeHtml(String(buyValue)):"";
  const editor='<div class="bracket-player-editor" data-player-editor="'+side+'" data-round="'+r+'" data-match="'+i+'" hidden><label>Buy-in amount ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+buyInput+'" data-player-buy></label><button type="button" class="pink" data-save-player-edit="'+side+'" data-round="'+r+'" data-match="'+i+'">SAVE</button></div>';
