@@ -348,7 +348,7 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   const queueStatus=$("slotQueueStatus");if(queueStatus){queueStatus.textContent=queueSnapshot.active_queue==="cozies"?"COZIES CALLS OPEN":queueSnapshot.active_queue==="bonus_hunt"?"BONUS HUNT CALLS OPEN":"CALLS CLOSED";queueStatus.style.color=queueSnapshot.active_queue?"var(--blue)":"var(--pink)";}
   const remoteBracketUpdatedAt=snapshot.bracket_updated_at||null;
   const remoteBracketChanged=remoteBracketUpdatedAt!==lastRemoteBracketUpdatedAt;
-  if(!activeBuyEditor&&!bracketClearInProgress&&!bracketSaveInProgress&&snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
+  if(!activeBuyEditor&&!bracketClearInProgress&&!bracketSaveInProgress&&!bracketSavePending&&snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
    let localBracketCache=null;try{localBracketCache=JSON.parse(localStorage.getItem("slotbuddyTournamentBracketCache")||"null");}catch(e){}
    const localSavedAt=Number(localBracketCache?._localSavedAt)||0;
    const remoteSavedAt=Date.parse(remoteBracketUpdatedAt||"")||0;
@@ -545,6 +545,7 @@ let lastRemoteBracketUpdatedAt = null;
 let tournamentSyncPollBusy = false;
 let tournamentSnapshotVersion = 0;
 let bracketSaveInProgress = false;
+let bracketSavePending = false;
 let bracketClearInProgress = false;
 let bracketSaveTimer = null;
 let selectedMatchKey = "";
@@ -570,7 +571,7 @@ function cacheTournamentBracket(payload,localEdit=true){
  try{localStorage.setItem("slotbuddyTournamentBracketCache",JSON.stringify({...payload,_localSavedAt:localEdit?Date.now():0}));}catch(e){}
 }
 async function saveBracketOnline(){
- if(bracketSaveInProgress){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,400);return false;}
+ if(bracketSaveInProgress){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(()=>{bracketSaveTimer=null;saveBracketOnline();},400);bracketSavePending=true;return false;}
  bracketSaveInProgress=true;
  // Invalidate snapshots already in flight so an older bracket cannot repaint this edit.
  tournamentSnapshotVersion++;
@@ -592,6 +593,8 @@ async function saveBracketOnline(){
   }
  }finally{
   bracketSaveInProgress=false;
+  // Keep refreshes out until any queued follow-up save has also completed.
+  if(!bracketSaveTimer)bracketSavePending=false;
   // Invalidate snapshots that may have started before the save finished.
   tournamentSnapshotVersion++;
  }
@@ -599,7 +602,10 @@ async function saveBracketOnline(){
 function queueBracketSave(){
  const payload={name:$("eventName").value.trim()||"Tournament",count:Number($("playerCount").value)||4,player_count:playerTotal,rounds};
  cacheTournamentBracket(payload,true);
- clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,250);
+ // Protect the edited in-memory bracket immediately, including the debounce window.
+ bracketSavePending=true;
+ clearTimeout(bracketSaveTimer);
+ bracketSaveTimer=setTimeout(()=>{bracketSaveTimer=null;saveBracketOnline();},250);
 }
 function restoreSavedBracket(data){
  if(!data)return;
