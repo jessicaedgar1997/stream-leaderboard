@@ -348,7 +348,7 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   const queueStatus=$("slotQueueStatus");if(queueStatus){queueStatus.textContent=queueSnapshot.active_queue==="cozies"?"COZIES CALLS OPEN":queueSnapshot.active_queue==="bonus_hunt"?"BONUS HUNT CALLS OPEN":"CALLS CLOSED";queueStatus.style.color=queueSnapshot.active_queue?"var(--blue)":"var(--pink)";}
   const remoteBracketUpdatedAt=snapshot.bracket_updated_at||null;
   const remoteBracketChanged=remoteBracketUpdatedAt!==lastRemoteBracketUpdatedAt;
-  if(!activeBuyEditor&&!bracketClearInProgress&&snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
+  if(!activeBuyEditor&&!bracketClearInProgress&&!bracketSaveInProgress&&snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
    let localBracketCache=null;try{localBracketCache=JSON.parse(localStorage.getItem("slotbuddyTournamentBracketCache")||"null");}catch(e){}
    const localSavedAt=Number(localBracketCache?._localSavedAt)||0;
    const remoteSavedAt=Date.parse(remoteBracketUpdatedAt||"")||0;
@@ -544,6 +544,7 @@ let hasLoadedSavedBracket = false;
 let lastRemoteBracketUpdatedAt = null;
 let tournamentSyncPollBusy = false;
 let tournamentSnapshotVersion = 0;
+let bracketSaveInProgress = false;
 let bracketClearInProgress = false;
 let bracketSaveTimer = null;
 let selectedMatchKey = "";
@@ -569,20 +570,30 @@ function cacheTournamentBracket(payload,localEdit=true){
  try{localStorage.setItem("slotbuddyTournamentBracketCache",JSON.stringify({...payload,_localSavedAt:localEdit?Date.now():0}));}catch(e){}
 }
 async function saveBracketOnline(){
- const payload={name:$("eventName").value.trim()||"Tournament",count:Number($("playerCount").value)||4,player_count:playerTotal,rounds};
- // Save locally before checking login so a refresh never wipes the bracket on this device.
- cacheTournamentBracket(payload,true);
- const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
- if(!key&&!session_key){$("setupStatus").textContent="Bracket saved on this device. Sign in with Kick to sync it online.";return false;}
+ if(bracketSaveInProgress){clearTimeout(bracketSaveTimer);bracketSaveTimer=setTimeout(saveBracketOnline,400);return false;}
+ bracketSaveInProgress=true;
+ // Invalidate snapshots already in flight so an older bracket cannot repaint this edit.
+ tournamentSnapshotVersion++;
  try{
-  const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});
-  const msg=await res.text();
-  if(!res.ok)throw new Error(msg||"The online bracket save was rejected.");
-  $("setupStatus").textContent=msg;
-  return true;
- }catch(e){
-  $("setupStatus").textContent="The game is on this screen, but it did NOT save online: "+(e.message||"Please sign in again and retry.");
-  return false;
+  const payload={name:$("eventName").value.trim()||"Tournament",count:Number($("playerCount").value)||4,player_count:playerTotal,rounds};
+  // Save locally before checking login so a refresh never wipes the bracket on this device.
+  cacheTournamentBracket(payload,true);
+  const key=$("adminKey").value.trim(),session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+  if(!key&&!session_key){$("setupStatus").textContent="Bracket saved on this device. Sign in with Kick to sync it online.";return false;}
+  try{
+   const res=await fetch(CONTROL_URL+"?action=bracket-save",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,session_key,data:payload})});
+   const msg=await res.text();
+   if(!res.ok)throw new Error(msg||"The online bracket save was rejected.");
+   $("setupStatus").textContent=msg;
+   return true;
+  }catch(e){
+   $("setupStatus").textContent="The game is on this screen, but it did NOT save online: "+(e.message||"Please sign in again and retry.");
+   return false;
+  }
+ }finally{
+  bracketSaveInProgress=false;
+  // Invalidate snapshots that may have started before the save finished.
+  tournamentSnapshotVersion++;
  }
 }
 function queueBracketSave(){
