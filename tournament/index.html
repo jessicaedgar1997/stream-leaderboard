@@ -1213,6 +1213,11 @@ document.addEventListener("click",async function(event){
 .bracket .match .bracket-edit-line{box-sizing:border-box;min-width:0;width:100%;max-width:100%}
 .bracket .match .bracket-edit-line{display:block!important;position:relative;z-index:1;clear:both;margin-top:6px}
 .bracket .match .bracket-edit-line .bracket-player-edit-toggle{box-sizing:border-box!important;display:block!important;position:relative!important;inset:auto!important;float:none!important;flex:none!important;width:100%!important;max-width:100%!important;margin:0!important;white-space:normal;touch-action:manipulation}
+
+/* Bring the selected player's editor above the neighboring bracket column. */
+.bracket .match>.bracket-player-wrap:focus-within{z-index:50!important}
+.bracket .match>.bracket-player-wrap:focus-within .bracket-player-editor{position:relative!important;z-index:60!important;width:100%!important;max-width:100%!important}
+.bracket .match>.bracket-player-wrap .bracket-player-editor:not([hidden]){position:relative;z-index:60}
 </style>
 <div id="siteAutumnLeaves" aria-hidden="true"></div>
 <script id="site-autumn-leaves-script">
