@@ -1078,7 +1078,8 @@ $("shuffleBracket").onclick=()=>{
  }
  const entries=rounds[0].flatMap(match=>[match.a,match.b]).filter(Boolean);
  if(entries.length!==playerTotal){$("setupStatus").textContent="Couldn't safely read every player. No changes were made.";return;}
- buildBracket(entries);
+ const shuffledEntries=shuffle(entries);
+ buildBracket(shuffledEntries);
  $("setupStatus").textContent="Players shuffled! Each called game stayed with its player. 💗💙";
  queueBracketSave();
 };
