@@ -1299,10 +1299,11 @@ document.addEventListener("click",function(event){
   bracketAddedEntries=[];
   localStorage.removeItem("slotbuddyBracketAddedEntries");
   localStorage.removeItem("chaosQueenTournamentDraft");
-  playerTotal=count;
+  // Preserve bracket capacity while recording zero active players.
+  playerTotal=0;
   const bracketSize=2**Math.ceil(Math.log2(count));
   rounds=Array.from({length:Math.log2(bracketSize)},(_,round)=>Array.from({length:bracketSize/Math.pow(2,round+1)},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
-  playerTotal=count;
+  playerTotal=0;
   $("matchPayoutA").value="";
   $("matchPayoutB").value="";
   $("matchPayoutStatus").textContent="";
