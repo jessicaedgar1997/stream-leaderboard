@@ -1079,10 +1079,8 @@ function shuffleTournamentPlayers(){
    status.textContent="Build or load a tournament bracket first, then shuffle the players. 💗💙";
    return;
   }
-  if(rounds.some(round=>round.some(match=>match.winner))){
-   status.textContent="A match winner has already been recorded. Start a new bracket before reshuffling so results stay safe.";
-   return;
-  }
+  // Shuffle is allowed even after a winner was selected; old results are cleared below
+  // because they no longer apply to the newly arranged matchups.
   // Read the actual occupied player positions from Round 1, keeping each full record intact.
   const slots=firstRound.flatMap(match=>[match.a,match.b]);
   const entries=slots.filter(player=>player&&String(player.username||player.name||"").trim());
