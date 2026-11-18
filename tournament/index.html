@@ -276,36 +276,29 @@ async function clearSavedTournamentEntries(skipConfirm=false){
  const button=$("clearSavedEntries");if(button)button.disabled=true;
  status.textContent="Clearing saved Tournament player names…";
  try{
-  let removed=0,remoteRemaining=0,remoteChecked=false;
-  if(session_key){
-   const response=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});
-   if(!response.ok)throw new Error("Could not load saved players.");
-   const snapshot=await response.json();if(snapshot.error)throw new Error(snapshot.error);
-   const saved=Array.isArray(snapshot.slot_entries)?snapshot.slot_entries:[];
-   remoteChecked=true;
-   for(const entry of saved){
-    const caller_name=String(entry.caller_name||entry.username||"").trim();
-    const game_name=String(entry.game_name||entry.game||"").trim();
-    const bonus_type=String(entry.bonus_type||entry.bonusType||"Regular");
-    if(!caller_name||!game_name){remoteRemaining++;continue;}
-    const result=await fetch(CONTROL_URL+"?action=slot-entry-delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_key,caller_name,game_name,bonus_type})});
-    let data={};try{data=await result.json();}catch(e){}
-    if(!result.ok||data.ok!==true)remoteRemaining++;else removed+=Number(data.removed||0);
-   }
+  const response=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});
+  if(!response.ok)throw new Error("Could not load saved players.");
+  const snapshot=await response.json();if(snapshot.error)throw new Error(snapshot.error);
+  const saved=Array.isArray(snapshot.slot_entries)?snapshot.slot_entries:[];
+  let removed=0;
+  if(saved.length){
+   if(!session_key)throw new Error("Sign in to SlotBuddy again so the saved Tournament player names can be cleared online.");
+   const clearResponse=await fetch(CONTROL_URL+"?action=slot-entries-clear",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({session_key})});
+   let clearData={};try{clearData=await clearResponse.json();}catch(e){}
+   if(!clearResponse.ok||clearData.ok!==true)throw new Error(clearData.error||"The online saved player list could not be cleared.");
+   removed=Number(clearData.removed)||0;
    const verifyResponse=await fetch(CONTROL_URL+"?action=snapshot",{cache:"no-store"});
-   if(!verifyResponse.ok)throw new Error("The local player list was cleared, but the saved list could not be verified.");
+   if(!verifyResponse.ok)throw new Error("The saved list was cleared, but the online result could not be verified.");
    const verify=await verifyResponse.json();if(verify.error)throw new Error(verify.error);
    const remaining=Array.isArray(verify.slot_entries)?verify.slot_entries.length:0;
-   remoteRemaining=Math.max(remoteRemaining,remaining);
-   if(remaining)throw new Error("The player draft was cleared on this device, but "+remaining+" saved player entr"+(remaining===1?"y remains":"ies remain")+" online. Please retry.");
+   if(remaining)throw new Error(remaining+" saved player entr"+(remaining===1?"y remains":"ies remain")+" online. Please retry.");
   }
   const slotCount=Math.max(1,Number($("playerCount").value)||4);
   const emptySlots=Array.from({length:slotCount},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"}));
   writeEntryPlayers(emptySlots);
   renderEntryPlayers();
   localStorage.setItem("chaosQueenTournamentDraft",JSON.stringify({name:$("eventName").value,count:slotCount,players:$("players").value}));
-  if(!session_key)status.textContent="This device's saved Tournament player names were cleared. Sign in to clear any names saved online.";
-  else status.textContent="Saved Tournament player names cleared"+(remoteChecked?" and verified online":"")+"! "+(removed?"Removed "+removed+" online entr"+(removed===1?"y":"ies")+". ":"")+"You can start fresh! 💗💙";
+  status.textContent="Saved Tournament player names cleared"+(saved.length?" and verified online":"")+"! "+(removed?"Removed "+removed+" saved entr"+(removed===1?"y":"ies")+". ":"")+"Bonus-buy history and tournament settings were kept. 💗💙";
   await refreshLivePlayers(true,false);
   return true;
  }catch(error){status.textContent="Could not fully clear saved players: "+error.message;return false;}
