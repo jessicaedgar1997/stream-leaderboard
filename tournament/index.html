@@ -350,34 +350,13 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   const remoteBracketUpdatedAt=snapshot.bracket_updated_at||null;
   const remoteBracketChanged=remoteBracketUpdatedAt!==lastRemoteBracketUpdatedAt;
   if(!activeBuyEditor&&!bracketClearInProgress&&!bracketSaveInProgress&&!bracketSavePending&&snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
-   let localBracketCache=null;try{localBracketCache=JSON.parse(localStorage.getItem("slotbuddyTournamentBracketCache")||"null");}catch(e){}
-   const localSavedAt=Number(localBracketCache?._localSavedAt)||0;
-   const remoteSavedAt=Date.parse(remoteBracketUpdatedAt||"")||0;
-   if(localBracketCache&&Array.isArray(localBracketCache.rounds)&&localBracketCache.rounds.length&&localSavedAt>remoteSavedAt){
-    restoreSavedBracket(localBracketCache);
-    if(canManageTournament)queueBracketSave();
-    $("setupStatus").textContent="Your newest bracket changes were restored from this device and are syncing online. 💗💙";
-   }else{
-    restoreSavedBracket(snapshot.bracket);
-    cacheTournamentBracket(snapshot.bracket,false);
-   }
+   // The shared server bracket is authoritative across moderators/devices.
+   // Never let an older browser-local draft overwrite another moderator's newer bracket.
+   const sharedSize=Number(snapshot.bracket.count)||((snapshot.bracket.rounds?.[0]?.length||0)*2)||4;
+   $("playerCount").value=String(sharedSize);
+   restoreSavedBracket({...snapshot.bracket,count:sharedSize});
+   cacheTournamentBracket({...snapshot.bracket,count:sharedSize},false);
    hasLoadedSavedBracket=true;lastRemoteBracketUpdatedAt=remoteBracketUpdatedAt;
-   const targetSize=Number($("playerCount").value)||Number(snapshot.bracket.count)||Number(snapshot.state?.max_players)||4;
-   const savedSize=Number(snapshot.bracket.count)||((snapshot.bracket.rounds?.[0]?.length||0)*2);
-   if(savedSize&&savedSize!==targetSize){
-    const bracketPlayers=(snapshot.bracket.rounds?.[0]||[]).flatMap(match=>[match.a,match.b]).filter(Boolean).map(p=>typeof p==="string"?{username:p,game:""}:{...p,username:String(p.username||p.name||""),game:String(p.game||"")});
-    if(bracketPlayers.length<=targetSize){
-     $("playerCount").value=String(targetSize);
-     buildBracket(bracketPlayers,targetSize);
-     playerTotal=bracketPlayers.length;
-     $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
-     $("bracketInfo").textContent=targetSize+"-player tournament • "+playerTotal+" entered.";
-     $("setupStatus").textContent="Saved bracket resized from "+savedSize+" to "+targetSize+" player spots. Existing players were kept.";
-     if(canManageTournament)queueBracketSave();
-    }else{
-     $("setupStatus").textContent="The saved bracket has "+bracketPlayers.length+" players, more than the "+targetSize+"-player Tournament limit. No bracket players were removed.";
-    }
-   }
   }
   // Keep a freshly cleared tournament at four players after refresh, instead of reviving an older bracket size.
   if(localStorage.getItem("slotbuddyTournamentFreshStart")==="true"){
