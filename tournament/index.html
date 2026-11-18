@@ -1200,6 +1200,26 @@ updateHint();
 
 
 <script>if("scrollRestoration" in history)history.scrollRestoration="manual";window.addEventListener("pageshow",()=>window.scrollTo(0,0));</script>
+<script id="slotbuddy-shuffle-capture-fix">
+/* Catch the shuffle control at document level so it works even if another
+   page script replaces or blocks the button's own click handler. */
+document.addEventListener("click",function(event){
+ const button=event.target.closest&&event.target.closest("#shuffleBracket");
+ if(!button)return;
+ event.preventDefault();
+ event.stopPropagation();
+ event.stopImmediatePropagation();
+ const status=document.getElementById("setupStatus");
+ if(status)status.textContent="Shuffle button clicked — rearranging Round 1 players…";
+ if(typeof window.shuffleTournamentPlayers==="function"){
+  window.shuffleTournamentPlayers();
+ }else if(typeof shuffleTournamentPlayers==="function"){
+  shuffleTournamentPlayers();
+ }else if(status){
+  status.textContent="Shuffle could not start because the bracket script did not load. Refresh the page and try again.";
+ }
+},true);
+</script>
 <script id="slotbuddy-clear-capture-fix">
 document.addEventListener("click",async function(event){
  const button=event.target.closest&&event.target.closest("#clearAllBracket");
