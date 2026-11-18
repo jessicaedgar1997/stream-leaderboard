@@ -1242,25 +1242,36 @@ document.addEventListener("click",function(event){
 },true);
 </script>
 
+<style id="slotbuddy-bracket-remove-button-style">
+#clearAllBracket{position:relative!important;z-index:100001!important;display:inline-flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;touch-action:manipulation!important;cursor:pointer!important}
+#clearAllBracket:disabled{opacity:.65!important;cursor:wait!important}
+</style>
 <script id="slotbuddy-bracket-remove-click-fix">
-/* Make the bracket Remove Players control reliably invoke its existing removal workflow,
-   even if another page script interferes with the button's normal click dispatch. */
-document.addEventListener("click",function(event){
- const button=event.target.closest&&event.target.closest("#clearAllBracket");
+/* Bind directly to the actual button after the bracket script has defined its action. */
+(function(){
+ const button=document.getElementById("clearAllBracket");
  if(!button)return;
- event.preventDefault();
- event.stopPropagation();
- event.stopImmediatePropagation();
- const status=document.getElementById("setupStatus");
- if(button.disabled){if(status)status.textContent="Remove Players is already running. Please wait for it to finish.";return;}
- if(status)status.textContent="Remove Players clicked — checking manager access…";
- const action=button.onclick;
- if(typeof action==="function"){
-  try{action.call(button);}catch(error){if(status)status.textContent="Remove Players could not start: "+(error&&error.message||"Please refresh and try again.");}
- }else if(status){
-  status.textContent="Remove Players could not start because its bracket handler is missing. Refresh the page and try again.";
- }
-},true);
+ const existingAction=button.onclick;
+ button.onclick=null;
+ button.addEventListener("click",function(event){
+  event.preventDefault();
+  event.stopPropagation();
+  const status=document.getElementById("setupStatus");
+  if(typeof existingAction!=="function"){
+   if(status)status.textContent="Remove Players could not start: the removal action did not load. Refresh and try again.";
+   return;
+  }
+  try{existingAction.call(button);}catch(error){
+   if(status)status.textContent="Remove Players could not start: "+(error&&error.message||"Please refresh and try again.");
+  }
+ });
+ button.addEventListener("pointerdown",function(){
+  if(!button.disabled){
+   const status=document.getElementById("setupStatus");
+   if(status)status.textContent="Remove Players selected — starting…";
+  }
+ });
+})();
 </script>
 
 <style id="site-autumn-leaves-style">
