@@ -166,7 +166,7 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 
 <section class="panel" id="tournament">
 <p id="managerAccessStatus" role="status" aria-live="polite" style="padding:10px 13px;margin:0 0 14px;border:1px solid #53658e;border-radius:10px;background:#0c1329;color:#cbd5f5;font-size:.9rem">Checking your saved SlotBuddy manager sign-in…</p>
-<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="pink" id="startTournamentMatch" data-manager-only hidden type="button">▶️ START NEXT MATCH</button><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" type="button">🗑️ REMOVE PLAYERS</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
+<div class="bracket-head"><div><h2 id="bracketTitle">Tournament Bracket</h2><p class="hint" id="bracketInfo">Tap a player's name to choose the winner of each match.</p></div><div class="actions no-print"><button class="dark" id="predictionToggle" data-manager-only hidden type="button">🧠 GUESSES: LOADING…</button><button class="pink" id="startTournamentMatch" data-manager-only hidden type="button">▶️ START NEXT MATCH</button><button class="dark" id="shuffleBracket" data-manager-only hidden>🔀 Shuffle players</button><button class="dark" id="print">Print bracket</button><button class="dark" id="clearAllBracket" type="button">🗑️ REMOVE PLAYERS</button><button class="dark" id="saveBracket" data-manager-only hidden>Save bracket</button><a href="overlay.html" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;border-radius:11px;background:#263657;color:white;text-decoration:none;font-weight:900">OBS overlay</a><button class="pink" id="newTournament" data-manager-only hidden>New tournament</button></div></div>
 <div class="bracket" id="bracket"><div class="empty-state">No bracket is active yet. SlotBuddy should recognize your existing manager sign-in automatically. Your saved Tournament entries have not been deleted. 💗💙</div></div>
 <p class="status" id="bracketActionStatus" role="status" aria-live="polite"></p>
 <div id="champion" class="champion hidden"></div>
@@ -1320,6 +1320,52 @@ document.addEventListener("click",function(event){
   }
  };
  button.addEventListener("pointerdown",function(){status.textContent="Remove Players pressed…";},{passive:true});
+})();
+</script>
+<script id="slotbuddy-prediction-toggle">
+(function(){
+ const button=document.getElementById("predictionToggle");
+ if(!button)return;
+ const api="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-predictions";
+ let enabled=true;
+ async function refresh(){
+  try{
+   const response=await fetch(api+"?action=snapshot",{cache:"no-store"});
+   const data=await response.json();
+   if(!response.ok)throw new Error(data.error||"Could not load prediction settings.");
+   enabled=data.enabled!==false;
+   button.textContent=enabled?"🧠 GUESSES: ON":"🧠 GUESSES: OFF";
+   button.classList.toggle("pink",enabled);
+   button.classList.toggle("dark",!enabled);
+   button.title=enabled?"Click to close bracket predictions":"Click to open bracket predictions";
+  }catch(error){button.textContent="🧠 GUESSES: STATUS ERROR";button.title=error.message||"Could not load settings";}
+ }
+ button.addEventListener("click",async()=>{
+  if(button.disabled)return;
+  await applyStaffView();
+  if(!canManageTournament){button.textContent="Organizer access required";return;}
+  button.disabled=true;
+  const next=!enabled;
+  button.textContent="Saving…";
+  try{
+   const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
+   const response=await fetch(api,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"set-enabled",session_key,enabled:next})});
+   const data=await response.json();
+   if(!response.ok||!data.ok)throw new Error(data.error||"Could not update prediction settings.");
+   enabled=data.enabled!==false;
+   button.textContent=enabled?"🧠 GUESSES: ON":"🧠 GUESSES: OFF";
+   button.classList.toggle("pink",enabled);
+   button.classList.toggle("dark",!enabled);
+   const status=document.getElementById("bracketActionStatus");
+   if(status)status.textContent=data.message||"Prediction settings updated.";
+  }catch(error){
+   const status=document.getElementById("bracketActionStatus");
+   if(status)status.textContent=error.message||"Could not update prediction settings.";
+   await refresh();
+  }finally{button.disabled=false;}
+ });
+ refresh();
+ setInterval(refresh,20000);
 })();
 </script>
 </body></html>
