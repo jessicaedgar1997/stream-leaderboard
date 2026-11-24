@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bracket Predictions | JessicaEdgar1997</title>
+<style>
+:root{--blue:#65dfff;--pink:#ff39b9;--bg:#090d1d;--panel:#171e38;--line:#3b4b73;--white:#f8f9ff}
+*{box-sizing:border-box}body{margin:0;padding:14px;background:radial-gradient(circle at 12% 5%,#173f70 0,transparent 34%),radial-gradient(circle at 90% 15%,#64205b 0,transparent 32%),var(--bg);color:var(--white);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:1180px;margin:auto}.hub-nav{position:sticky;top:0;z-index:10;max-width:1180px;margin:0 auto 18px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#0b0a19ed;border:1px solid #49345f;border-radius:16px;box-shadow:0 8px 24px #0004}.hub-brand{font-weight:1000;text-decoration:none;color:#fffaff}.hub-brand span{background:linear-gradient(90deg,var(--blue),var(--pink));background-clip:text;color:transparent}.hub-links{display:flex;gap:6px;flex-wrap:wrap}.hub-links a{padding:7px 10px;border:1px solid #49345f;border-radius:999px;color:#e8ddf7;text-decoration:none;font-size:.82rem;font-weight:850}
+.hero{text-align:center;padding:18px 8px 22px}.eyebrow{color:var(--blue);font-weight:900;letter-spacing:.2em;text-transform:uppercase;font-size:.78rem}.hero h1{font-size:clamp(2rem,6vw,4rem);line-height:1;margin:10px 0;text-shadow:0 0 14px #35d5ff88,0 0 26px #ff39b966}.hero h1 span{color:var(--pink)}.hero p{color:#cbd5f5;margin:8px 0}
+.panel{background:linear-gradient(145deg,#1b2544,#14182d);border:1px solid var(--line);border-radius:20px;padding:clamp(14px,3vw,24px);box-shadow:0 0 25px #26cfff1c,0 0 25px #ff39b91c;margin-bottom:16px}
+h2{margin:0 0 12px;color:var(--blue);font-size:1.2rem}.muted{color:#bac8e8}.status{min-height:1.4em;color:#cbd5f5;margin:10px 0 0}.status.error{color:#ff9bcb}.status.good{color:#8fffd4}
+button{border:0;border-radius:11px;padding:10px 13px;font-weight:900;cursor:pointer;color:#07101e;background:linear-gradient(100deg,var(--pink),var(--blue));box-shadow:0 5px 18px #ff39b922}button:disabled{opacity:.42;cursor:not-allowed}.pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0d142b;border:1px solid #405477;color:#dce6ff;font-size:.82rem;font-weight:850}.pill.locked{border-color:#ff8bba;color:#ffc4df}.pill.open{border-color:#65dfff;color:#bcefff}
+.bracket{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px}.round{background:#0d142b;border:1px solid #3b4d76;border-radius:15px;padding:12px;min-width:0}.round h3{margin:0 0 10px;color:var(--pink);text-transform:uppercase;font-size:.9rem;letter-spacing:.1em}.match{border:1px solid #34466d;border-radius:12px;padding:10px;margin:9px 0;background:#101a34}.match-title{font-size:.72rem;color:#9eaccd;font-weight:850;text-transform:uppercase;margin-bottom:7px}.teams{display:grid;gap:7px}.team{width:100%;text-align:left;background:#202b4b;color:#eaf2ff;border:1px solid #465a85;box-shadow:none;display:flex;justify-content:space-between;align-items:center;gap:8px;overflow-wrap:anywhere}.team.selected{background:linear-gradient(100deg,#51204e,#17445b);border-color:var(--pink);color:white;box-shadow:0 0 13px #ff39b933}.team small{color:var(--blue)}.team.actual{opacity:.72}.team:disabled{opacity:.8}.team:disabled:not(.selected){background:#202b4b}.placeholder{padding:10px;border:1px dashed #53658e;border-radius:9px;color:#8090b3;font-size:.82rem}
+.leaderboard{width:100%;border-collapse:collapse}.leaderboard th,.leaderboard td{text-align:left;padding:10px 8px;border-bottom:1px solid #34466d}.leaderboard th{color:var(--blue);font-size:.78rem;text-transform:uppercase}.leaderboard td:last-child,.leaderboard th:last-child{text-align:right}.rank{color:var(--pink);font-weight:950}.score{font-weight:950;color:#fff}.empty{text-align:center;padding:16px;color:#bac8e8;border:1px dashed #53658e;border-radius:12px}
+@media(max-width:600px){body{padding:9px}.hub-nav{padding:10px}.hub-links{width:100%}.hub-links a{font-size:.75rem;padding:6px 8px}.bracket{grid-template-columns:1fr}.leaderboard th,.leaderboard td{padding:8px 5px;font-size:.85rem}}
+</style>
+</head>
+<body>
+<nav class="hub-nav"><a class="hub-brand" href="../../">👑 <span>JESSICAEDGAR1997</span></a><div class="hub-links"><a href="../../">Home</a><a href="../">Tournament</a><a href="../../leaderboard/">Leaderboard</a></div></nav>
+<main class="wrap">
+<header class="hero"><div class="eyebrow">👑 THE CHAOS QUEEN PRESENTS 👑</div><h1>BRACKET <span>PREDICTIONS!</span></h1><p>Pick every winner. Earn 1 point for every game you get right. 💗💙</p></header>
+<section class="panel">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><h2 style="margin:0">🎯 YOUR PREDICTIONS</h2><span id="lockStatus" class="pill open">PICKS OPEN</span></div>
+<p id="accountStatus" class="muted">Checking your saved Kick sign-in…</p>
+<div id="loginNotice" class="empty" hidden>You can browse the bracket, but you need to sign in with Kick on the <a href="../../" style="color:var(--blue)">main website</a> before submitting. If you're already signed in there, come back here without signing in again.</div>
+<p id="instructions" class="muted">Choose who you think will win each matchup. Your picks can be changed until the tournament starts.</p>
+<div id="bracket" class="bracket"><div class="empty">Loading the tournament bracket…</div></div>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px"><button id="submitPicks" disabled>💾 SAVE MY BRACKET</button><span id="pickProgress" class="muted"></span></div>
+<p id="message" class="status" role="status"></p>
+</section>
+<section class="panel"><h2>🏆 PREDICTION LEADERBOARD</h2><p class="muted">1 point for every correct winner. Scores update automatically as tournament results are saved.</p><div id="leaderboard"><div class="empty">Loading prediction scores…</div></div></section>
+</main>
+<script>
+const API="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-predictions";
+const LOGIN="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login";
+const $=id=>document.getElementById(id);
+let viewer=null,bracketData=null,rounds=[],picks={},locked=false,loading=false;
+function nameOf(v){if(typeof v==="string")return v.trim();if(!v||typeof v!=="object")return "";return String(v.username??v.name??v.display_name??v.displayName??"").trim();}
+function matchKey(r,m){return r+"-"+m;}
+function participants(r,m){const match=rounds[r]?.[m]||{};const actualA=nameOf(match.a),actualB=nameOf(match.b);return [actualA||(r>0?picks[matchKey(r-1,m*2)]||"":""),actualB||(r>0?picks[matchKey(r-1,m*2+1)]||"":"")];}
+function allPickCount(){let total=0,done=0;rounds.forEach((round,r)=>round.forEach((match,m)=>{const [a,b]=participants(r,m);if(a&&b){total++;if(picks[matchKey(r,m)])done++;}}));return {total,done};}
+function renderBracket(){
+ const root=$("bracket");
+ if(!rounds.length){root.innerHTML='<div class="empty">The tournament organizer has not saved a bracket yet.</div>';$("pickProgress").textContent="";return;}
+ root.innerHTML="";
+ rounds.forEach((round,r)=>{
+  const section=document.createElement("section");section.className="round";
+  const heading=document.createElement("h3");heading.textContent=["Round 1","Round 2","Round 3","Final"][r]||("Round "+(r+1));section.appendChild(heading);
+  round.forEach((match,m)=>{
+   const [a,b]=participants(r,m),key=matchKey(r,m),box=document.createElement("div");box.className="match";
+   const title=document.createElement("div");title.className="match-title";title.textContent="Match "+(m+1);box.appendChild(title);
+   const teams=document.createElement("div");teams.className="teams";
+   [a,b].forEach((team,index)=>{
+    if(!team){const ph=document.createElement("div");ph.className="placeholder";ph.textContent="Waiting for "+(r===0?"player entry":"previous match pick");teams.appendChild(ph);return;}
+    const btn=document.createElement("button");btn.className="team"+(picks[key]===team?" selected":"");btn.textContent=team;btn.disabled=!viewer||locked||loading;
+    btn.addEventListener("click",()=>{picks[key]=team;for(let rr=r+1;rr<rounds.length;rr++)rounds[rr].forEach((_,mm)=>delete picks[matchKey(rr,mm)]);renderBracket();});
+    teams.appendChild(btn);
+   });
+   box.appendChild(teams);
+   const actual=nameOf(match.winner);if(actual){const result=document.createElement("div");result.className="muted";result.style.marginTop="8px";result.textContent="Official winner: "+actual;box.appendChild(result);}
+   section.appendChild(box);
+  });
+  root.appendChild(section);
+ });
+ const progress=allPickCount();$("pickProgress").textContent=progress.done+" / "+progress.total+" matchups picked";
+ $("submitPicks").disabled=!viewer||locked||loading||progress.total===0||progress.done!==progress.total;
+}
+function renderLeaderboard(rows){
+ const root=$("leaderboard");
+ if(!rows?.length){root.innerHTML='<div class="empty">No predictions submitted yet. Be the first to make your picks!</div>';return;}
+ const table=document.createElement("table");table.className="leaderboard";
+ table.innerHTML="<thead><tr><th>#</th><th>Kick viewer</th><th>Points</th><th>Correct</th></tr></thead>";
+ const body=document.createElement("tbody");
+ rows.forEach((row,i)=>{const tr=document.createElement("tr");tr.innerHTML='<td class="rank">'+(i+1)+'</td><td></td><td class="score">'+Number(row.points||0)+'</td><td>'+(Number(row.correct||0))+' / '+Number(row.decided||0)+'</td>';tr.children[1].textContent=row.username||"Viewer";body.appendChild(tr);});
+ table.appendChild(body);root.replaceChildren(table);
+}
+async function load(){
+ $("message").textContent="";$("message").className="status";
+ const key=localStorage.getItem("slotbuddy_kick_session")||"";
+ viewer=null;
+ if(key){
+  try{const auth=await fetch(LOGIN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:key}),cache:"no-store"});const data=await auth.json();if(auth.ok&&data.ok&&data.user){viewer=data.user;$("accountStatus").textContent="Signed in as "+(viewer.username||"Kick viewer")+" — using your existing SlotBuddy sign-in."; }else{$("accountStatus").textContent="Your saved sign-in needs attention. Sign in on the main site and return here.";$("loginNotice").hidden=false;}}
+  catch{$("accountStatus").textContent="Could not verify your saved sign-in. You can still browse the bracket.";$("loginNotice").hidden=false;}
+ }else{$("accountStatus").textContent="You're not signed in on this browser yet.";$("loginNotice").hidden=false;}
+ try{
+  const response=await fetch(API+"?action=snapshot"+(key?"&session_key="+encodeURIComponent(key):""),{cache:"no-store"});
+  const data=await response.json();if(!response.ok)throw new Error(data.error||"Could not load predictions.");
+  bracketData=data.bracket;rounds=Array.isArray(data.bracket?.rounds)?data.bracket.rounds:[];
+  picks=data.viewer?.picks&&typeof data.viewer.picks==="object"?{...data.viewer.picks}:{};
+  locked=!!data.locked;
+  $("lockStatus").textContent=locked?"PREDICTIONS LOCKED":"PICKS OPEN";$("lockStatus").className="pill "+(locked?"locked":"open");
+  $("instructions").textContent=locked?"The tournament has started. Picks are locked, and points update as official winners are selected.":"Choose the winner of every available matchup. You can update your picks until the first official game result is entered.";
+  renderBracket();renderLeaderboard(data.leaderboard||[]);
+  if(locked){$("submitPicks").textContent="PREDICTIONS LOCKED";}
+ }catch(e){$("bracket").innerHTML='<div class="empty"></div>';$("bracket").firstChild.textContent=e.message||"Could not load the bracket.";}
+}
+$("submitPicks").addEventListener("click",async()=>{
+ if(!viewer||locked||loading)return;
+ loading=true;renderBracket();$("message").textContent="Saving your bracket…";
+ try{
+  const key=localStorage.getItem("slotbuddy_kick_session")||"";
+  const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"submit",session_key:key,picks})});
+  const data=await response.json();if(!response.ok)throw new Error(data.error||"Could not save your bracket.");
+  $("message").textContent=data.message||"Your predictions are saved!";$("message").className="status good";
+  await load();
+ }catch(e){$("message").textContent=e.message||"Could not save your bracket.";$("message").className="status error";}
+ finally{loading=false;renderBracket();}
+});
+load();
+setInterval(load,20000);
+</script>
+</body>
+</html>
