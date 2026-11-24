@@ -21,6 +21,7 @@ button{border:0;border-radius:11px;padding:10px 13px;font-weight:900;cursor:poin
 <body>
 <nav class="hub-nav"><a class="hub-brand" href="../../">👑 <span>JESSICAEDGAR1997</span></a><div class="hub-links"><a href="../../">Home</a><a href="../">Tournament</a><a href="../../leaderboard/">Leaderboard</a></div><a href="./">Bracket Guesses</a></nav>
 <main class="wrap">
+<div style="display:flex;justify-content:flex-end;align-items:center;padding:8px 0 0"><button id="clearAllGuesses" type="button" hidden style="background:linear-gradient(100deg,#ff6b91,#ffb0c8)">🗑️ CLEAR ALL GUESSES</button></div>
 <header class="hero"><div class="eyebrow">👑 THE CHAOS QUEEN PRESENTS 👑</div><h1>BRACKET <span>PREDICTIONS!</span></h1><p>Pick every winner. Earn 1 point for every game you get right. 💗💙</p></header>
 <section class="panel">
 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><h2 style="margin:0">🎯 YOUR PREDICTIONS</h2><span id="lockStatus" class="pill open">PICKS OPEN</span></div>
@@ -31,7 +32,7 @@ button{border:0;border-radius:11px;padding:10px 13px;font-weight:900;cursor:poin
 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px"><button id="submitPicks" disabled>💾 SAVE MY BRACKET</button><span id="pickProgress" class="muted"></span></div>
 <p id="message" class="status" role="status"></p>
 </section>
-<section class="panel"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><h2 style="margin:0">🏆 PREDICTION LEADERBOARD</h2><button id="clearAllGuesses" type="button" hidden style="background:linear-gradient(100deg,#ff6b91,#ffb0c8)">🗑️ CLEAR ALL GUESSES</button></div><p class="muted">1 point for every correct winner. Scores update automatically as tournament results are saved.</p><div id="leaderboard"><div class="empty">Loading prediction scores…</div></div></section>
+<section class="panel"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><h2 style="margin:0">🏆 PREDICTION LEADERBOARD</h2></div><p class="muted">1 point for every correct winner. Scores update automatically as tournament results are saved.</p><div id="leaderboard"><div class="empty">Loading prediction scores…</div></div></section>
 </main>
 <script>
 const API="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-predictions";
