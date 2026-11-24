@@ -89,9 +89,10 @@ async function load(){
   const data=await response.json();if(!response.ok)throw new Error(data.error||"Could not load predictions.");
   bracketData=data.bracket;rounds=Array.isArray(data.bracket?.rounds)?data.bracket.rounds:[];
   if(!dirty||data.locked)picks=data.viewer?.picks&&typeof data.viewer.picks==="object"?{...data.viewer.picks}:{};
-  locked=!!data.locked;
-  $("lockStatus").textContent=locked?"PREDICTIONS LOCKED":"PICKS OPEN";$("lockStatus").className="pill "+(locked?"locked":"open");
-  $("instructions").textContent=locked?"The tournament has started. Picks are locked, and points update as official winners are selected.":"Choose the winner of every available matchup. You can update your picks until the first official game result is entered.";
+  locked=!!data.locked;enabled=data.enabled!==false;
+  $("lockStatus").textContent=locked?"PREDICTIONS LOCKED":(!enabled?"GUESSES CLOSED":"PICKS OPEN");$("lockStatus").className="pill "+(locked||!enabled?"locked":"open");
+  $("instructions").textContent=locked?"The tournament has started. Picks are locked, and points update as official winners are selected.":(!enabled?"The organizer has turned guesses OFF. Check back when predictions reopen.":"Choose the winner of every available matchup. You can update your picks until the organizer turns guesses off or the tournament starts.");
+  $("submitPicks").textContent=locked?"PREDICTIONS LOCKED":(!enabled?"GUESSES CLOSED":"💾 SAVE MY BRACKET");
   renderBracket();renderLeaderboard(data.leaderboard||[]);
   if(locked){$("submitPicks").textContent="PREDICTIONS LOCKED";}
  }catch(e){$("bracket").innerHTML='<div class="empty"></div>';$("bracket").firstChild.textContent=e.message||"Could not load the bracket.";}
@@ -103,7 +104,7 @@ $("submitPicks").addEventListener("click",async()=>{
   const key=localStorage.getItem("slotbuddy_kick_session")||"";
   const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"submit",session_key:key,picks})});
   const data=await response.json();if(!response.ok)throw new Error(data.error||"Could not save your bracket.");
-  $("message").textContent=data.message||"Your predictions are saved!";$("message").className="status good";
+  dirty=false;$("message").textContent=data.message||"Your predictions are saved!";$("message").className="status good";
   await load();
  }catch(e){$("message").textContent=e.message||"Could not save your bracket.";$("message").className="status error";}
  finally{loading=false;renderBracket();}
