@@ -130,7 +130,8 @@ body:not(.slotbuddy-manager) a[href*="giveaway"]{display:none!important;visibili
 <div class="setup-grid">
  <div class="field"><label>Duplicate games</label><button id="allowDuplicateGames" class="dark" type="button" aria-pressed="false" disabled>DUP: OFF</button><p class="hint">Each game can only be used once, whether it is Regular or Super.</p></div>
 </div>
-<div class="entrant-list" id="tournamentEntryList"><span class="hint">No players added yet.</span></div>
+<div class="actions" style="margin:10px 0"><button id="addAllEntryPlayers" class="pink" type="button">＋ ADD ALL TO BRACKET</button></div>
+ <div class="entrant-list" id="tournamentEntryList"><span class="hint">No players added yet.</span></div>
 <div class="setup-grid" style="margin-top:14px">
  <div><div class="hint">Players</div><div class="live-count" id="entryCount">0 / 8 players</div></div>
  <div><div class="hint">Open spots</div><div class="live-status" id="entrySpots">8 open spots</div></div>
@@ -644,51 +645,9 @@ function renderEntryPlayers(){
  const isInCurrentBracket=p=>currentBracketPlayers().some(candidate=>entryKey(candidate)===entryKey(p));
  list.innerHTML=players.length?players.map((p,i)=>{const placeholder=isEntryPlaceholder(p),inBracket=isInCurrentBracket(p);const meta=placeholder?"Waiting for player details":(escapeHtml(p.game||"Game not set")+' · '+escapeHtml(p.casino||"Rainbet")+' · '+escapeHtml(p.bonusType||"Regular"));const buyControl=placeholder?"":'<label class="entry-buy-edit">Buy-in (C$) <input type="number" min="0" step="0.01" value="'+(p.buy!==""&&p.buy!=null&&Number.isFinite(Number(p.buy))&&Number(p.buy)>0?Number(p.buy).toFixed(2):'')+'" data-buy-entry="'+i+'" aria-label="Buy-in for '+escapeHtml(p.username)+'" style="width:105px;padding:6px;border-radius:8px;border:1px solid #526080;background:#10182a;color:white"></label>';const addButton=placeholder?"":(inBracket?'<button class="entry-duplicate" type="button" disabled>✓ ADDED</button>':'<button class="entry-duplicate" type="button" data-add-bracket-entry="'+i+'">＋ ADD TO BRACKET</button>');return '<div class="entry-player"><div><strong>'+escapeHtml(p.username)+'</strong><div class="entry-meta">'+meta+'</div>'+buyControl+'</div><div class="entry-actions">'+addButton+'<button class="entry-remove" type="button" data-remove-entry="'+i+'">REMOVE</button></div></div>';}).join(""):'<span class="hint">No player spots yet.</span>';
  list.querySelectorAll("[data-add-bracket-entry]").forEach(btn=>btn.onclick=async()=>{
-   btn.disabled=true;
-   const index=Number(btn.dataset.addBracketEntry),player=namesFromInput()[index];
-   try{
-    $("setupStatus").textContent="Adding player and game to the bracket…";
-    if(!player||isEntryPlaceholder(player))throw new Error("Enter both a player name and game before adding them.");
-    if(!player.username.trim()||!player.game.trim())throw new Error("Enter both a player name and game before adding them.");
-    // Buy-in is optional; a player and game are enough to enter the bracket.
-    if(player.username.length>40||player.game.length>100)throw new Error("Keep player names to 40 characters and game names to 100 characters or less.");
-    const existing=currentBracketPlayers();
-    if(existing.some(p=>entryKey(p)===entryKey(player))){
-      $("setupStatus").textContent=player.username+" is already in the bracket.";
-      renderEntryPlayers();return;
-    }
-    const limit=Number($("playerCount").value)||4;
-    if(existing.length>=limit)throw new Error("The bracket is full ("+limit+" players).");
-    if(existing.some(p=>String(p.game||"").trim().replace(/\\s+/g," ").toLowerCase()===player.game.trim().replace(/\\s+/g," ").toLowerCase()))throw new Error("That game is already entered. Each game can only be used once, whether Regular or Super.");
-    if(!rounds.length||!rounds[0]?.length)buildBracket(existing,limit);
-    const slots=(rounds[0]||[]).flatMap((match,index)=>[{match,index,side:"a"},{match,index,side:"b"}]);
-    const openSlot=slots.find(slot=>!slot.match[slot.side]);
-    if(!openSlot){
-      const capacity=2**Math.ceil(Math.log2(Math.max(2,existing.length+1)));
-      if(capacity>limit)throw new Error("The bracket layout has no open player spot. Increase the player limit or clear the bracket layout first.");
-      buildBracket([...existing,{...player}]);
-    }else{
-      openSlot.match[openSlot.side]={...player};
-      openSlot.match.winner=null;
-      propagate(0);
-      renderBracket();
-    }
-    const updatedPlayers=currentBracketPlayers();
-    bracketAddedEntries=updatedPlayers.map(p=>({...p}));
-    localStorage.setItem("slotbuddyBracketAddedEntries",JSON.stringify(bracketAddedEntries));
-    playerTotal=updatedPlayers.length;
-    $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
-    $("bracketInfo").textContent=playerTotal+" of "+limit+" player spots • Add players directly to this bracket as you go.";
-    $("tournament").classList.remove("hidden");
-    tournamentIsActive=true;
-    renderEntryPlayers();
-    const saved=await saveBracketOnline();
-    if(saved)$("setupStatus").textContent=player.username+" added and saved to the shared bracket ("+playerTotal+"/"+limit+").";
-    else $("setupStatus").textContent+=" Refresh/sign in before adding more so the other devices stay in sync.";
-   }catch(error){
-    $("setupStatus").textContent=error.message||"Couldn't add this player to the bracket.";
-    btn.disabled=false;
-   }
+   const index=Number(btn.dataset.addBracketEntry);btn.disabled=true;
+   const result=await addEntryToBracket(index);$("setupStatus").textContent=result.message;
+   if(!result.added)btn.disabled=false;
   });
   list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=async()=>{
   const a=namesFromInput(),index=Number(btn.dataset.removeEntry),player=a[index];if(!player)return;
@@ -709,6 +668,37 @@ function renderEntryPlayers(){
  list.querySelectorAll("[data-buy-entry]").forEach(input=>input.onchange=()=>{const a=namesFromInput(),index=Number(input.dataset.buyEntry),value=input.value.trim();if(value===""){if(a[index])a[index].buy="";writeEntryPlayers(a);updateHint();return;}if(!Number.isFinite(Number(value))||Number(value)<0){input.value=a[index]?.buy?Number(a[index].buy).toFixed(2):"";return;}if(a[index])a[index].buy=Number(value).toFixed(2);writeEntryPlayers(a);updateHint();});
  
 }
+async function addEntryToBracket(index){
+ const player=namesFromInput()[index],currentBracketPlayers=()=>((rounds[0]||[]).flatMap(match=>[match.a,match.b]).filter(Boolean));
+ const entryKey=p=>String(p?.username||p?.name||"").trim().toLowerCase()+"|"+String(p?.game||"").trim().toLowerCase();
+ try{
+  if(!player||isEntryPlaceholder(player)||!player.username.trim()||!player.game.trim())throw new Error("Enter both a player name and game before adding them.");
+  if(player.username.length>40||player.game.length>100)throw new Error("Keep player names to 40 characters and game names to 100 characters or less.");
+  const existing=currentBracketPlayers(),limit=Number($("playerCount").value)||4;
+  if(existing.some(p=>entryKey(p)===entryKey(player)))return {added:false,message:player.username+" is already in the bracket."};
+  if(existing.length>=limit)throw new Error("The bracket is full ("+limit+" players).");
+  if(existing.some(p=>String(p.game||"").trim().replace(/\\s+/g," ").toLowerCase()===player.game.trim().replace(/\\s+/g," ").toLowerCase()))throw new Error("That game is already entered. Each game can only be used once, whether Regular or Super.");
+  if(!rounds.length||!rounds[0]?.length)buildBracket(existing,limit);
+  const slots=(rounds[0]||[]).flatMap((match,index)=>[{match,index,side:"a"},{match,index,side:"b"}]),openSlot=slots.find(slot=>!slot.match[slot.side]);
+  if(!openSlot){const capacity=2**Math.ceil(Math.log2(Math.max(2,existing.length+1)));if(capacity>limit)throw new Error("The bracket layout has no open player spot. Increase the player limit or clear the bracket layout first.");buildBracket([...existing,{...player}]);}
+  else{openSlot.match[openSlot.side]={...player};openSlot.match.winner=null;propagate(0);renderBracket();}
+  const updatedPlayers=currentBracketPlayers();bracketAddedEntries=updatedPlayers.map(p=>({...p}));
+  localStorage.setItem("slotbuddyBracketAddedEntries",JSON.stringify(bracketAddedEntries));playerTotal=updatedPlayers.length;
+  $("bracketTitle").textContent=$("eventName").value.trim()||"Tournament Bracket";
+  $("bracketInfo").textContent=playerTotal+" of "+limit+" player spots • Add players directly to this bracket as you go.";
+  $("tournament").classList.remove("hidden");tournamentIsActive=true;renderEntryPlayers();
+  const saved=await saveBracketOnline();
+  return {added:true,message:saved?player.username+" added and saved to the shared bracket.":player.username+" added, but the shared bracket could not be saved."};
+ }catch(error){return {added:false,message:error.message||"Couldn't add this player to the bracket."};}
+}
+$("addAllEntryPlayers")?.addEventListener("click",async()=>{
+ const button=$("addAllEntryPlayers"),entries=namesFromInput().map((p,index)=>({p,index})).filter(x=>!isEntryPlaceholder(x.p));
+ if(!entries.length){$("setupStatus").textContent="Add player names and games first.";return;}
+ button.disabled=true;let added=0;const skipped=[];
+ for(const entry of entries){const result=await addEntryToBracket(entry.index);if(result.added)added++;else skipped.push(result.message);}
+ button.disabled=false;
+ $("setupStatus").textContent=added+" player"+(added===1?"":"s")+" added to the bracket."+(skipped.length?" Skipped: "+skipped.join(" • "):" All eligible entries were added! 💗💙");
+});
 function writeEntryPlayers(players){$("players").value=players.map(p=>[p.username,p.game||"",p.buy||"",p.casino||"Rainbet",p.bonusType||"Regular"].join(" | ")).join("\n");}
 function updateHint(){
  const count=Number($("playerCount").value),players=namesFromInput(),got=players.filter(p=>!isEntryPlaceholder(p)).length,open=Math.max(0,count-got);
