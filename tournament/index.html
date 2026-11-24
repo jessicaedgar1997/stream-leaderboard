@@ -980,13 +980,14 @@ function playerButton(player,r,i,side,winner,payout){
  const payoutLabel=hasPlayerPayout?'<span class="bracket-payout">Payout: $'+Number(playerPayout).toFixed(2)+'</span>':'';
  const canEditBuyIn=canManageTournament&&r===0;
   const editButton=canEditBuyIn?'<button type="button" class="dark bracket-player-edit-toggle" data-edit-player="'+side+'" data-round="'+r+'" data-match="'+i+'">✏️ EDIT</button>':"";
- const details='<div class="bracket-player-details"><div class="bracket-buy-row"><div class="bracket-buy-line">'+buyLabel+'</div></div>'+(payoutLabel?'<div class="bracket-payout-line">'+payoutLabel+'</div>':"")+(editButton?'<div class="bracket-edit-line">'+editButton+'</div>':"")+'</div>';
  const matchHasTwoPlayers=!!(rounds[r]?.[i]?.a&&rounds[r]?.[i]?.b);
- const individualPayoutInput=canManageTournament&&matchHasTwoPlayers?'<label class="bracket-individual-payout">PAYOUT ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(payout==null?"":escapeHtml(payout))+'" data-bracket-payout="'+side+'" data-round="'+r+'" data-match="'+i+'"></label><button type="button" class="dark bracket-payout-save" data-save-bracket-player-payout="'+side+'" data-round="'+r+'" data-match="'+i+'">SAVE PAYOUT</button>':"";
- if(!canEditBuyIn)return '<div class="bracket-player-wrap">'+playerMarkup+details+individualPayoutInput+'</div>';
+ const individualPayoutInput=canManageTournament&&matchHasTwoPlayers?'<label class="bracket-individual-payout">PAYOUT ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(payout==null?"":escapeHtml(payout))+'" data-bracket-payout="'+side+'" data-round="'+r+'" data-match="'+i+'"></label>':"";
+ const individualPayoutSave=canManageTournament&&matchHasTwoPlayers?'<button type="button" class="dark bracket-payout-save" data-save-bracket-player-payout="'+side+'" data-round="'+r+'" data-match="'+i+'">SAVE PAYOUT</button>':"";
+ const details='<div class="bracket-player-details"><div class="bracket-buy-row"><div class="bracket-buy-line">'+buyLabel+'</div></div>'+individualPayoutInput+(editButton?'<div class="bracket-edit-line">'+editButton+'</div>':"")+'</div>';
+ if(!canEditBuyIn)return '<div class="bracket-player-wrap">'+playerMarkup+details+individualPayoutSave+'</div>';
  const buyInput=""; // Always open the edit field blank, even when a buy-in is already saved.
  const editor='<div class="bracket-player-editor" data-player-editor="'+side+'" data-round="'+r+'" data-match="'+i+'" hidden><label>Buy-in amount ($)<input type="number" min="0" step="0.01" placeholder="" value="'+buyInput+'" data-player-buy></label><button type="button" class="pink" data-save-player-edit="'+side+'" data-round="'+r+'" data-match="'+i+'">SAVE</button></div>';
- return '<div class="bracket-player-wrap">'+playerMarkup+details+individualPayoutInput+editor+'</div>';
+ return '<div class="bracket-player-wrap">'+playerMarkup+details+individualPayoutSave+editor+'</div>';
 }
 async function saveBracketPlayerPayout(r,i,side,button){
  if(!canManageTournament)return;
