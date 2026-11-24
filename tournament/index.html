@@ -1033,7 +1033,7 @@ function renderBracket(){
   const key=editor.dataset.round+":"+editor.dataset.match+":"+editor.dataset.playerEditor,input=editor.querySelector("[data-player-buy]");
   if(key===openKey){editor.hidden=false;if(input&&pendingBuyEditValues[key]!==undefined)input.value=pendingBuyEditValues[key];}
   if(input)input.addEventListener("input",()=>{pendingBuyEditValues[key]=input.value;});
-  editor.addEventListener("click",event=>event.stopPropagation());
+  // Let SAVE clicks bubble to the persistent bracket-level save handler.
  });
  $("bracket").querySelectorAll("[data-save-bracket-player-payout]").forEach(btn=>btn.addEventListener("click",()=>saveBracketPlayerPayout(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.saveBracketPlayerPayout,btn)));
  const champ=rounds[rounds.length-1][0]?.winner;
