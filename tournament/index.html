@@ -1048,28 +1048,28 @@ function renderBracket(){
   const editor=$("bracket").querySelector(selector);if(!player||!editor)return;
   const buy=editor.querySelector("[data-player-buy]").value.trim();
   if(buy!==""&&(!Number.isFinite(Number(buy))||Number(buy)<0)){$("setupStatus").textContent="Enter a valid buy amount of $0 or more for this player.";return;}
-  // Preserve every match's payout inputs before the buy-in save redraws the bracket.
-  // This includes amounts typed into another match but not yet saved with its own button.
+  // Each game's two payouts belong only to that match. Capture all visible
+  // inputs into a per-match snapshot before changing the buy-in or re-rendering.
   const payoutState=rounds.map(round=>round.map(match=>({
-   payout:match.payout,
-   aPayout:match.aPayout,
-   bPayout:match.bPayout,
-   winner:match.winner
+   payout:match.payout??"",
+   aPayout:match.aPayout??"",
+   bPayout:match.bPayout??"",
+   winner:match.winner??null
   })));
   $("bracket").querySelectorAll("[data-bracket-payout]").forEach(input=>{
    const rr=Number(input.dataset.round),ii=Number(input.dataset.match),side=input.dataset.bracketPayout;
-   const match=rounds[rr]?.[ii];if(!match)return;
+   const saved=payoutState[rr]?.[ii];if(!saved)return;
    const value=input.value.trim();
-   if(side==="a")match.aPayout=value;
-   if(side==="b")match.bPayout=value;
+   if(side==="a")saved.aPayout=value;
+   if(side==="b")saved.bPayout=value;
   });
   player.buy=buy===""?"":Number(buy).toFixed(2);
+  // Restore every match independently; no payout is copied to another game.
   rounds.forEach((round,rr)=>round.forEach((match,ii)=>{
    const saved=payoutState[rr]?.[ii];if(!saved)return;
-   // Keep previously saved result metadata; use current visible payout inputs when present.
    match.payout=saved.payout;
-   match.aPayout=match.aPayout??saved.aPayout;
-   match.bPayout=match.bPayout??saved.bPayout;
+   match.aPayout=saved.aPayout;
+   match.bPayout=saved.bPayout;
    match.winner=saved.winner;
   }));
   activeBuyEditor=null;delete pendingBuyEditValues[r+":"+i+":"+side];
