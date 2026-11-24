@@ -16,6 +16,7 @@ button{border:0;border-radius:11px;padding:10px 13px;font-weight:900;cursor:poin
 .leaderboard{width:100%;border-collapse:collapse}.leaderboard th,.leaderboard td{text-align:left;padding:10px 8px;border-bottom:1px solid #34466d}.leaderboard th{color:var(--blue);font-size:.78rem;text-transform:uppercase}.leaderboard td:last-child,.leaderboard th:last-child{text-align:right}.rank{color:var(--pink);font-weight:950}.score{font-weight:950;color:#fff}.empty{text-align:center;padding:16px;color:#bac8e8;border:1px dashed #53658e;border-radius:12px}
 @media(max-width:600px){body{padding:9px}.hub-nav{padding:10px}.hub-links{width:100%}.hub-links a{font-size:.75rem;padding:6px 8px}.bracket{grid-template-columns:1fr}.leaderboard th,.leaderboard td{padding:8px 5px;font-size:.85rem}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <nav class="hub-nav"><a class="hub-brand" href="../../">👑 <span>JESSICAEDGAR1997</span></a><div class="hub-links"><a href="../../">Home</a><a href="../">Tournament</a><a href="../../leaderboard/">Leaderboard</a></div><a href="./">Bracket Guesses</a></nav>
@@ -34,6 +35,9 @@ button{border:0;border-radius:11px;padding:10px 13px;font-weight:900;cursor:poin
 </main>
 <script>
 const API="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-predictions";
+const SUPABASE_URL="https://xbogfbyysrjttyfvzluh.supabase.co";
+const SUPABASE_KEY="sb_publishable_rU0twvbtzrYlKqqbuNPD6g_B38iNXt5";
+const sbClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const LOGIN="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login";
 const $=id=>document.getElementById(id);
 let viewer=null,bracketData=null,rounds=[],picks={},locked=false,enabled=true,loading=false,dirty=false;
@@ -109,7 +113,19 @@ $("submitPicks").addEventListener("click",async()=>{
  }catch(e){$("message").textContent=e.message||"Could not save your bracket.";$("message").className="status error";}
  finally{loading=false;renderBracket();}
 });
+// Live-update scores as soon as the official tournament bracket and payouts are saved.
+let bracketUpdateTimer=null;
+sbClient.channel("bracket-predictions-live")
+ .on("postgres_changes",{event:"*",schema:"public",table:"tournament_bracket_state"},()=>{
+  clearTimeout(bracketUpdateTimer);
+  bracketUpdateTimer=setTimeout(()=>load(),250);
+ })
+ .subscribe(status=>{
+  if(status==="SUBSCRIBED")console.info("Bracket prediction live scoring connected");
+  else if(status==="CHANNEL_ERROR"||status==="TIMED_OUT"||status==="CLOSED")console.warn("Bracket prediction live scoring status:",status);
+ });
 load();
+// Backup refresh in case a viewer briefly loses the live connection.
 setInterval(load,20000);
 </script>
 </body>
