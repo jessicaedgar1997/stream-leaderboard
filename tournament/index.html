@@ -610,8 +610,8 @@ function restoreSavedBracket(data){
  }
  $("eventName").value=data.name||"Chaos Queen Tournament";
  $("playerCount").value=String(savedCapacity);
- const savedEntries=(rounds[0]||[]).flatMap(match=>[match.a,match.b]).filter(Boolean).map(p=>({username:typeof p==="string"?p:(p.username||p.name||p.display_name||""),game:p.game||"",buy:p.buy==null?"":String(p.buy),casino:p.casino||"Rainbet",bonusType:p.bonusType||"Regular"}));
- if(savedEntries.length)writeEntryPlayers(savedEntries);
+ // Keep the Tournament player-entry list independent from the bracket.
+ // Restoring a bracket must never repopulate or remove names in the entry section.
  $("bracketTitle").textContent=data.name||"Tournament Bracket";
  const displaySize=Number($("playerCount").value)||savedCapacity;
  $("bracketInfo").textContent=displaySize+"-player tournament • "+playerTotal+" entered. Click a name to advance them.";
@@ -692,6 +692,7 @@ function renderEntryPlayers(){
   });
   list.querySelectorAll("[data-remove-entry]").forEach(btn=>btn.onclick=async()=>{
   const a=namesFromInput(),index=Number(btn.dataset.removeEntry),player=a[index];if(!player)return;
+  // This button belongs only to Tournament player entry. It never edits the bracket.
   if(!isEntryPlaceholder(player)&&player.game&&canManageTournament){
    btn.disabled=true;
    try{
@@ -701,23 +702,9 @@ function renderEntryPlayers(){
     if(!response.ok||!result.ok)throw new Error(result.error||"Could not remove the saved tournament entry.");
    }catch(error){btn.disabled=false;$("setupStatus").textContent=error.message||"Could not remove the saved tournament entry.";return;}
   }
-  const stagedKey=String(player.username||"").trim().toLowerCase()+"|"+String(player.game||"").trim().toLowerCase();bracketAddedEntries=bracketAddedEntries.filter(p=>String(p.username||"").trim().toLowerCase()+"|"+String(p.game||"").trim().toLowerCase()!==stagedKey);localStorage.setItem("slotbuddyBracketAddedEntries",JSON.stringify(bracketAddedEntries));
-  const removedName=String(player.username||"").trim().toLowerCase(),removedGame=String(player.game||"").trim().toLowerCase();
-  let removedFromBracket=false,removedWinnerRound=-1;
-  if(Array.isArray(rounds)&&rounds.length){
-   rounds.forEach((round,r)=>round.forEach(match=>{
-    for(const side of ["a","b"]){
-     const candidate=match[side],candidateName=String(candidate?.username||candidate?.name||candidate||"").trim().toLowerCase(),candidateGame=String(candidate?.game||"").trim().toLowerCase();
-     if(candidateName===removedName&&candidateGame===removedGame){match[side]=null;removedFromBracket=true;}
-    }
-    const winner=match.winner,winnerName=String(winner?.username||winner?.name||winner||"").trim().toLowerCase(),winnerGame=String(winner?.game||"").trim().toLowerCase();
-    if(winnerName===removedName&&winnerGame===removedGame){match.winner=null;match.payout="";match.aPayout="";match.bPayout="";removedFromBracket=true;}
-   }));
-   if(removedFromBracket)renderBracket();
-  }
-  a[index]={...a[index],username:"Player "+(index+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"};writeEntryPlayers(a);resizeEntryPlayers();updateHint();
-  if(removedFromBracket)await saveBracketOnline();
-  $("setupStatus").textContent="Player "+(index+1)+" removed. The saved bracket is being updated on both pages.";
+  a[index]={...a[index],username:"Player "+(index+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"};
+  writeEntryPlayers(a);resizeEntryPlayers();updateHint();
+  $("setupStatus").textContent="Player "+(index+1)+" removed from Tournament player entry. The bracket was left unchanged. 💗💙";
  });
  list.querySelectorAll("[data-buy-entry]").forEach(input=>input.onchange=()=>{const a=namesFromInput(),index=Number(input.dataset.buyEntry),value=input.value.trim();if(value===""){if(a[index])a[index].buy="";writeEntryPlayers(a);updateHint();return;}if(!Number.isFinite(Number(value))||Number(value)<0){input.value=a[index]?.buy?Number(a[index].buy).toFixed(2):"";return;}if(a[index])a[index].buy=Number(value).toFixed(2);writeEntryPlayers(a);updateHint();});
  
@@ -1288,37 +1275,27 @@ document.addEventListener("click",function(event){
     status.textContent="Removal cancelled. Nothing was changed.";
     return;
    }
-   // Cancel local saves and use one server-side operation so old names cannot be re-saved between steps.
+   // Clear only the bracket. Keep the separate Tournament player-entry list and its saved entries intact.
    clearTimeout(bracketSaveTimer);
    bracketSaveTimer=null;
    bracketSavePending=false;
    tournamentSnapshotVersion++;
-   status.textContent="Removing saved players and clearing the shared bracket…";
-   const session_key=localStorage.getItem("slotbuddy_kick_session")||"";
-   const response=await fetch(CONTROL_URL+"?action=bracket-remove-players",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({session_key})
-   });
-   let result={};
-   try{result=await response.json();}catch(e){}
-   if(!response.ok||result.ok!==true)throw new Error(result.error||"The shared bracket could not be cleared.");
-   const count=Math.max(2,Number($("playerCount").value)||Number(result.bracket?.count)||4);
-   const bracketSize=2**Math.ceil(Math.log2(count));
-   writeEntryPlayers(Array.from({length:count},(_,i)=>({username:"Player "+(i+1),game:"",buy:"",casino:"Rainbet",bonusType:"Regular"})));
+   status.textContent="Clearing bracket names only…";
+   const count=Math.max(2,Number($("playerCount").value)||4);
    bracketAddedEntries=[];
    localStorage.removeItem("slotbuddyBracketAddedEntries");
-   localStorage.removeItem("chaosQueenTournamentDraft");
    playerTotal=0;
-   rounds=Array.from({length:Math.log2(bracketSize)},(_,round)=>Array.from({length:bracketSize/Math.pow(2,round+1)},()=>({a:null,b:null,winner:null,payout:"",aPayout:"",bPayout:""})));
-   $("matchPayoutA").value="";
-   $("matchPayoutB").value="";
-   $("matchPayoutStatus").textContent="";
+   buildBracket([],count);
+   rounds.forEach(round=>round.forEach(match=>{match.a=null;match.b=null;match.winner=null;match.payout="";match.aPayout="";match.bPayout="";}));
    $("champion").classList.add("hidden");
    $("champion").textContent="";
-   updateHint();
+   $("bracketTitle").textContent=$("eventName").value.trim()||"Chaos Queen Tournament";
+   $("bracketInfo").textContent=count+"-player tournament • No players in the bracket.";
    renderBracket();
-   status.textContent="Players removed from the saved bracket and player list. Bracket size and event settings were kept. 💗💙";
+   renderTournamentSections();
+   const saved=await saveBracketOnline();
+   if(!saved)throw new Error("The bracket was cleared on this screen, but the shared bracket save did not confirm. Please retry.");
+   status.textContent="Bracket names removed. Tournament player entry and its saved names were left untouched. 💗💙";
    bracketClearInProgress=false;
    await refreshLivePlayers(false,true);
    status.textContent="Players removed from the saved bracket and player list. Bracket size and event settings were kept. 💗💙";
