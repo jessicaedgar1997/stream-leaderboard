@@ -31,7 +31,7 @@ button{border:0;border-radius:11px;padding:10px 13px;font-weight:900;cursor:poin
 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px"><button id="submitPicks" disabled>💾 SAVE MY BRACKET</button><span id="pickProgress" class="muted"></span></div>
 <p id="message" class="status" role="status"></p>
 </section>
-<section class="panel"><h2>🏆 PREDICTION LEADERBOARD</h2><p class="muted">1 point for every correct winner. Scores update automatically as tournament results are saved.</p><div id="leaderboard"><div class="empty">Loading prediction scores…</div></div></section>
+<section class="panel"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><h2 style="margin:0">🏆 PREDICTION LEADERBOARD</h2><button id="clearAllGuesses" type="button" hidden style="background:linear-gradient(100deg,#ff6b91,#ffb0c8)">🗑️ CLEAR ALL GUESSES</button></div><p class="muted">1 point for every correct winner. Scores update automatically as tournament results are saved.</p><div id="leaderboard"><div class="empty">Loading prediction scores…</div></div></section>
 </main>
 <script>
 const API="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-predictions";
@@ -88,7 +88,8 @@ async function load(){
   try{const auth=await fetch(LOGIN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"resume",session_key:key}),cache:"no-store"});const data=await auth.json();if(auth.ok&&data.ok&&data.user){viewer=data.user;$("accountStatus").textContent="Signed in as "+(viewer.username||"Kick viewer")+" — using your existing SlotBuddy sign-in."; }else{$("accountStatus").textContent="Your saved sign-in needs attention. Sign in on the main site and return here.";$("loginNotice").hidden=false;}}
   catch{$("accountStatus").textContent="Could not verify your saved sign-in. You can still browse the bracket.";$("loginNotice").hidden=false;}
  }else{$("accountStatus").textContent="You're not signed in on this browser yet.";$("loginNotice").hidden=false;}
- try{
+  $("clearAllGuesses").hidden=!(viewer&&(viewer.role==="owner"||viewer.role==="moderator"));
+try{
   const response=await fetch(API+"?action=snapshot"+(key?"&session_key="+encodeURIComponent(key):""),{cache:"no-store"});
   const data=await response.json();if(!response.ok)throw new Error(data.error||"Could not load predictions.");
   bracketData=data.bracket;rounds=Array.isArray(data.bracket?.rounds)?data.bracket.rounds:[];
@@ -113,10 +114,27 @@ $("submitPicks").addEventListener("click",async()=>{
  }catch(e){$("message").textContent=e.message||"Could not save your bracket.";$("message").className="status error";}
  finally{loading=false;renderBracket();}
 });
+$("clearAllGuesses").addEventListener("click",async()=>{
+ if(!viewer||!(viewer.role==="owner"||viewer.role==="moderator"))return;
+ if(!confirm("Clear EVERY viewer submitted bracket guesses and reset the points leaderboard? The actual tournament bracket and saved payouts will NOT be changed."))return;
+ const button=$("clearAllGuesses");button.disabled=true;button.textContent="CLEARING…";
+ try{
+  const key=localStorage.getItem("slotbuddy_kick_session")||"";
+  const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"clear-all",session_key:key})});
+  const data=await response.json();if(!response.ok)throw new Error(data.error||"Could not clear bracket guesses.");
+  dirty=false;picks={};$("message").textContent=data.message||"All guesses cleared.";$("message").className="status good";
+  await load();
+ }catch(e){$("message").textContent=e.message||"Could not clear bracket guesses.";$("message").className="status error";}
+ finally{button.disabled=false;button.textContent="🗑️ CLEAR ALL GUESSES";}
+});
 // Live-update scores as soon as the official tournament bracket and payouts are saved.
 let bracketUpdateTimer=null;
 sbClient.channel("bracket-predictions-live")
  .on("postgres_changes",{event:"*",schema:"public",table:"tournament_bracket_state"},()=>{
+  clearTimeout(bracketUpdateTimer);
+  bracketUpdateTimer=setTimeout(()=>load(),250);
+ })
+ .on("postgres_changes",{event:"*",schema:"public",table:"tournament_predictions"},()=>{
   clearTimeout(bracketUpdateTimer);
   bracketUpdateTimer=setTimeout(()=>load(),250);
  })
