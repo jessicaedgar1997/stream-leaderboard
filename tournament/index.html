@@ -1040,7 +1040,7 @@ function renderBracket(){
    activeBuyEditor=null;delete pendingBuyEditValues[r+":"+i+":"+side];
    renderBracket();queueBracketSave();
    $("setupStatus").textContent=playerLabel(player)+" buy amount updated and saved.";
-  });
+  },true);
  }
 
  $("bracket").querySelectorAll("[data-save-bracket-player-payout]").forEach(btn=>btn.addEventListener("click",()=>saveBracketPlayerPayout(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.saveBracketPlayerPayout,btn)));
