@@ -1331,7 +1331,12 @@ document.addEventListener("click",function(event){
    button.classList.toggle("pink",enabled);
    button.classList.toggle("dark",!enabled);
    const status=document.getElementById("bracketActionStatus");
-   if(status)status.textContent=data.message||"Prediction settings updated.";
+   const predictionLink="https://jessicaedgar1997.github.io/stream-leaderboard/tournament/predictions/";
+   const chatAnnouncement=enabled
+    ?"💗💙 BRACKET GUESSES ARE OPEN! Pick your winners and earn 1 point for every correct game! Make your picks here: "+predictionLink+" 💗💙"
+    :"🔒 BRACKET GUESS ENTRIES ARE NOW CLOSED! No more picks can be submitted. You can still check the bracket and leaderboard here: "+predictionLink+" 💗💙";
+   const announced=await sendTournamentChatMessage(chatAnnouncement);
+   if(status)status.textContent=(data.message||"Prediction settings updated.")+(announced?" Chat announcement sent!":" Predictions updated, but the Kick chat announcement could not be sent.");
   }catch(error){
    const status=document.getElementById("bracketActionStatus");
    if(status)status.textContent=error.message||"Could not update prediction settings.";
