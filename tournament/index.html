@@ -980,28 +980,32 @@ function playerButton(player,r,i,side,winner,payout){
  const payoutLabel=hasPlayerPayout?'<span class="bracket-payout">Payout: $'+Number(playerPayout).toFixed(2)+'</span>':'';
  const canEditBuyIn=canManageTournament&&r===0;
   const editButton=canEditBuyIn?'<button type="button" class="dark bracket-player-edit-toggle" data-edit-player="'+side+'" data-round="'+r+'" data-match="'+i+'">✏️ EDIT</button>':"";
- const details='<div class="bracket-player-details">'+(payoutLabel?'<div class="bracket-payout-line">'+payoutLabel+'</div>':"")+'<div class="bracket-buy-row"><div class="bracket-buy-line">'+buyLabel+'</div>'+(editButton?'<div class="bracket-edit-line">'+editButton+'</div>':"")+'</div></div>';
+ const details='<div class="bracket-player-details"><div class="bracket-buy-row"><div class="bracket-buy-line">'+buyLabel+'</div></div>'+(payoutLabel?'<div class="bracket-payout-line">'+payoutLabel+'</div>':"")+(editButton?'<div class="bracket-edit-line">'+editButton+'</div>':"")+'</div>';
  const matchHasTwoPlayers=!!(rounds[r]?.[i]?.a&&rounds[r]?.[i]?.b);
- const individualPayoutInput=canManageTournament&&matchHasTwoPlayers?'<label class="bracket-individual-payout">PAYOUT ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(payout==null?"":escapeHtml(payout))+'" data-bracket-payout="'+side+'" data-round="'+r+'" data-match="'+i+'"></label>':"";
+ const individualPayoutInput=canManageTournament&&matchHasTwoPlayers?'<label class="bracket-individual-payout">PAYOUT ($)<input type="number" min="0" step="0.01" placeholder="0.00" value="'+(payout==null?"":escapeHtml(payout))+'" data-bracket-payout="'+side+'" data-round="'+r+'" data-match="'+i+'"></label><button type="button" class="dark bracket-payout-save" data-save-bracket-player-payout="'+side+'" data-round="'+r+'" data-match="'+i+'">SAVE PAYOUT</button>':"";
  if(!canEditBuyIn)return '<div class="bracket-player-wrap">'+playerMarkup+details+individualPayoutInput+'</div>';
  const buyInput=""; // Always open the edit field blank, even when a buy-in is already saved.
  const editor='<div class="bracket-player-editor" data-player-editor="'+side+'" data-round="'+r+'" data-match="'+i+'" hidden><label>Buy-in amount ($)<input type="number" min="0" step="0.01" placeholder="" value="'+buyInput+'" data-player-buy></label><button type="button" class="pink" data-save-player-edit="'+side+'" data-round="'+r+'" data-match="'+i+'">SAVE</button></div>';
  return '<div class="bracket-player-wrap">'+playerMarkup+details+individualPayoutInput+editor+'</div>';
 }
-async function saveBracketMatchPayout(r,i,button){
+async function saveBracketPlayerPayout(r,i,side,button){
  if(!canManageTournament)return;
- const match=rounds[r]?.[i];if(!match)return;
- const inputs=[...$("bracket").querySelectorAll('[data-bracket-payout][data-round="'+r+'"][data-match="'+i+'"]')];
- const aValue=inputs.find(x=>x.dataset.bracketPayout==="a")?.value.trim()??"",bValue=inputs.find(x=>x.dataset.bracketPayout==="b")?.value.trim()??"";
- if(aValue===""||bValue===""){ $("setupStatus").textContent="Enter both players’ payout amounts before saving.";return; }
- if([aValue,bValue].some(v=>!Number.isFinite(Number(v))||Number(v)<0)){ $("setupStatus").textContent="Enter valid payout amounts for both players.";return; }
- match.aPayout=Number(aValue).toFixed(2);match.bPayout=Number(bValue).toFixed(2);
- const aAmount=Number(match.aPayout),bAmount=Number(match.bPayout);
- if(aAmount>bAmount)match.winner=match.a;else if(bAmount>aAmount)match.winner=match.b;else match.winner=null;
- match.payout=Math.max(aAmount,bAmount).toFixed(2);
- propagate(r);renderBracket();queueBracketSave();
- $("setupStatus").textContent=aAmount===bAmount?"Payouts saved. They are tied, so choose the winner by clicking their name.":"Payouts saved. The higher-paying player advances.";
- if(match.winner)announceTournamentWinner(r,i);
+ const match=rounds[r]?.[i];if(!match||!match.a||!match.b)return;
+ const input=$("bracket").querySelector('[data-bracket-payout="'+side+'"][data-round="'+r+'"][data-match="'+i+'"]');
+ const value=input?.value.trim()??"";
+ if(value===""||!Number.isFinite(Number(value))||Number(value)<0){$("setupStatus").textContent="Enter a valid payout amount of $0 or more for this player.";return;}
+ if(side==="a")match.aPayout=Number(value).toFixed(2);else if(side==="b")match.bPayout=Number(value).toFixed(2);else return;
+ const aValue=String(match.aPayout??"").trim(),bValue=String(match.bPayout??"").trim();
+ const bothSaved=aValue!==""&&bValue!==""&&[aValue,bValue].every(v=>Number.isFinite(Number(v))&&Number(v)>=0);
+ if(bothSaved){
+  const aAmount=Number(aValue),bAmount=Number(bValue);
+  if(aAmount>bAmount)match.winner=match.a;else if(bAmount>aAmount)match.winner=match.b;else match.winner=null;
+  match.payout=Math.max(aAmount,bAmount).toFixed(2);
+  propagate(r);
+ }
+ renderBracket();queueBracketSave();
+ $("setupStatus").textContent=bothSaved?(Number(aValue)===Number(bValue)?"Both payouts saved. They are tied, so choose the winner by clicking their name.":"Both payouts are saved. The higher-paying player advances."):(side==="a"?"Player 1":"Player 2")+" payout saved. Save the other player’s payout to complete the match.";
+ if(bothSaved&&match.winner)announceTournamentWinner(r,i);
 }
 // Delegate buy-editor clicks from the stable bracket container so live refreshes
 // cannot remove the click handler when individual match cards are redrawn.
@@ -1024,7 +1028,7 @@ if(bracketClickRoot&&!bracketClickRoot.dataset.buyEditorClickBound){
 function renderBracket(){
  const openKey=activeBuyEditor;
  $("bracket").querySelectorAll("[data-player-editor]").forEach(editor=>{const input=editor.querySelector("[data-player-buy]");if(input&&!editor.hidden){const key=editor.dataset.round+":"+editor.dataset.match+":"+editor.dataset.playerEditor;pendingBuyEditValues[key]=input.value;}});
- $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+''+'</div>'+playerButton(m.a,r,i,"a",m.winner,m.aPayout)+playerButton(m.b,r,i,"b",m.winner,m.bPayout)+(canManageTournament&&m.a&&m.b?'<button type="button" class="dark bracket-payout-save" data-save-bracket-payout data-round="'+r+'" data-match="'+i+'">SAVE BOTH PAYOUTS</button>':'')+'</div>').join("")+'</div>').join("");
+ $("bracket").innerHTML=rounds.map((matches,r)=>'<div class="round"><h3>'+roundName(r)+'</h3>'+matches.map((m,i)=>'<div class="match"><div class="match-label">Match '+(i+1)+''+'</div>'+playerButton(m.a,r,i,"a",m.winner,m.aPayout)+playerButton(m.b,r,i,"b",m.winner,m.bPayout)+'</div>').join("")+'</div>').join("");
  $("bracket").querySelectorAll("button.player").forEach(btn=>btn.addEventListener("click",()=>chooseWinner(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.side)));
 
  $("bracket").querySelectorAll("[data-player-editor]").forEach(editor=>{
@@ -1039,21 +1043,7 @@ function renderBracket(){
   const editor=$("bracket").querySelector(selector);if(!player||!editor)return;
   const buy=editor.querySelector("[data-player-buy]").value.trim();
   if(buy!==""&&(!Number.isFinite(Number(buy))||Number(buy)<0)){$("setupStatus").textContent="Enter a valid buy amount of $0 or more for this player.";return;}
-  // Each game's two payouts belong only to that match. Capture all visible
-  // inputs into a per-match snapshot before changing the buy-in or re-rendering.
-  const payoutState=rounds.map(round=>round.map(match=>({
-   payout:match.payout??"",
-   aPayout:match.aPayout??"",
-   bPayout:match.bPayout??"",
-   winner:match.winner??null
-  })));
-  $("bracket").querySelectorAll("[data-bracket-payout]").forEach(input=>{
-   const rr=Number(input.dataset.round),ii=Number(input.dataset.match),side=input.dataset.bracketPayout;
-   const saved=payoutState[rr]?.[ii];if(!saved)return;
-   const value=input.value.trim();
-   if(side==="a")saved.aPayout=value;
-   if(side==="b")saved.bPayout=value;
-  });
+  // A buy-in edit changes only this player's buy-in. Saved payouts remain untouched.
   player.buy=buy===""?"":Number(buy).toFixed(2);
   // Restore every match independently; no payout is copied to another game.
   rounds.forEach((round,rr)=>round.forEach((match,ii)=>{
@@ -1068,7 +1058,7 @@ function renderBracket(){
   $("setupStatus").textContent=playerLabel(player)+" buy amount updated and saved.";
  }));
 
- $("bracket").querySelectorAll("[data-save-bracket-payout]").forEach(btn=>btn.addEventListener("click",()=>saveBracketMatchPayout(Number(btn.dataset.round),Number(btn.dataset.match),btn)));
+ $("bracket").querySelectorAll("[data-save-bracket-player-payout]").forEach(btn=>btn.addEventListener("click",()=>saveBracketPlayerPayout(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.saveBracketPlayerPayout,btn)));
  const champ=rounds[rounds.length-1][0]?.winner;
  $("champion").classList.toggle("hidden",!champ);
  const champName=champ?(typeof champ==="string"?champ:champ.username):"";
