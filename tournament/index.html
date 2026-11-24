@@ -201,6 +201,11 @@ let lastRemoteTournamentEntryKeys = new Set();
 let canManageTournament = false;
 let activeBuyEditor = null;
 let pendingBuyEditValues = {};
+// Do not refresh/rebuild tournament controls while an organizer is entering an amount.
+function isEditingTournamentAmount(){
+ const el=document.activeElement;
+ return !!(el&&el.matches&&el.matches('input[type="number"]')&&el.closest&&el.closest("main"));
+}
 async function applyStaffView(){
  const session=localStorage.getItem("slotbuddy_kick_session")||"";
  const status=$("setupStatus");
@@ -352,7 +357,7 @@ async function refreshLivePlayers(syncEntries=false,syncBracket=false){
   const queueStatus=$("slotQueueStatus");if(queueStatus){queueStatus.textContent=queueSnapshot.active_queue==="cozies"?"COZIES CALLS OPEN":queueSnapshot.active_queue==="bonus_hunt"?"BONUS HUNT CALLS OPEN":"CALLS CLOSED";queueStatus.style.color=queueSnapshot.active_queue?"var(--blue)":"var(--pink)";}
   const remoteBracketUpdatedAt=snapshot.bracket_updated_at||null;
   const remoteBracketChanged=remoteBracketUpdatedAt!==lastRemoteBracketUpdatedAt;
-  if(!activeBuyEditor&&!bracketClearInProgress&&!bracketSaveInProgress&&!bracketSavePending&&snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
+  if(!activeBuyEditor&&!isEditingTournamentAmount()&&!bracketClearInProgress&&!bracketSaveInProgress&&!bracketSavePending&&snapshot.bracket&&(!hasLoadedSavedBracket||syncBracket||remoteBracketChanged)&&(snapshot.bracket.rounds?.length||Number(snapshot.bracket.count)>0)){
    // The shared server bracket is authoritative across moderators/devices.
    // Never let an older browser-local draft overwrite another moderator's newer bracket.
    const sharedSize=Number(snapshot.bracket.count)||((snapshot.bracket.rounds?.[0]?.length||0)*2)||4;
@@ -497,7 +502,7 @@ sbClient.channel("tournament-live-list")
  });
 // Backstop for tables that are not enabled for Supabase Realtime: keep both moderators in sync.
 // This refreshes shared state only; it does not reload the page or disturb an active buy-in edit.
-setInterval(()=>{if(!document.hidden&&!activeBuyEditor&&!bracketSaveInProgress&&!bracketSavePending&&!bracketClearInProgress)refreshLivePlayers(false,false);},5000);
+setInterval(()=>{if(!document.hidden&&!activeBuyEditor&&!isEditingTournamentAmount()&&!bracketSaveInProgress&&!bracketSavePending&&!bracketClearInProgress)refreshLivePlayers(false,false);},5000);
 function renderTournamentBonuses(items){
  const list=$("tournamentBonusList");if(!list)return;
  list.innerHTML=items.length?items.map(x=>"<div class='entrant' style='border-radius:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap'><strong>"+safeText(x.caller_name)+"</strong> · "+safeText(x.bonus_type||"Regular")+" · "+safeText(x.bonus_name)+" · Spin "+Number(x.spin_amount||0).toFixed(2)+" · Paid "+Number(x.payout_amount||0).toFixed(2)+" <button class='dark' style='padding:4px 8px' onclick='deleteTournamentBonus("+Number(x.id)+")'>DELETE</button></div>").join(""):"<span class='hint'>No tournament bonus buys recorded yet.</span>";
