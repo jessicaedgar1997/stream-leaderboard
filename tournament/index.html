@@ -1048,7 +1048,21 @@ function renderBracket(){
   const editor=$("bracket").querySelector(selector);if(!player||!editor)return;
   const buy=editor.querySelector("[data-player-buy]").value.trim();
   if(buy!==""&&(!Number.isFinite(Number(buy))||Number(buy)<0)){$("setupStatus").textContent="Enter a valid buy amount of $0 or more for this player.";return;}
+  // Changing a player's buy-in must never alter any match result or payout.
+  const payoutState=rounds.map(round=>round.map(match=>({
+   payout:match.payout,
+   aPayout:match.aPayout,
+   bPayout:match.bPayout,
+   winner:match.winner
+  })));
   player.buy=buy===""?"":Number(buy).toFixed(2);
+  rounds.forEach((round,rr)=>round.forEach((match,ii)=>{
+   const saved=payoutState[rr]?.[ii];if(!saved)return;
+   match.payout=saved.payout;
+   match.aPayout=saved.aPayout;
+   match.bPayout=saved.bPayout;
+   match.winner=saved.winner;
+  }));
   activeBuyEditor=null;delete pendingBuyEditValues[r+":"+i+":"+side];
   renderBracket();queueBracketSave();
   $("setupStatus").textContent=playerLabel(player)+" buy amount updated and saved.";
