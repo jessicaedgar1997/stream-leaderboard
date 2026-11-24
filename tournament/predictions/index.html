@@ -36,7 +36,7 @@ button{border:0;border-radius:11px;padding:10px 13px;font-weight:900;cursor:poin
 const API="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/tournament-predictions";
 const LOGIN="https://xbogfbyysrjttyfvzluh.supabase.co/functions/v1/slotbuddy-kick-login";
 const $=id=>document.getElementById(id);
-let viewer=null,bracketData=null,rounds=[],picks={},locked=false,loading=false,dirty=false;
+let viewer=null,bracketData=null,rounds=[],picks={},locked=false,enabled=true,loading=false,dirty=false;
 function nameOf(v){if(typeof v==="string")return v.trim();if(!v||typeof v!=="object")return "";return String(v.username??v.name??v.display_name??v.displayName??"").trim();}
 function matchKey(r,m){return r+"-"+m;}
 function participants(r,m){const match=rounds[r]?.[m]||{};const actualA=nameOf(match.a),actualB=nameOf(match.b);return [actualA||(r>0?picks[matchKey(r-1,m*2)]||"":""),actualB||(r>0?picks[matchKey(r-1,m*2+1)]||"":"")];}
@@ -54,7 +54,7 @@ function renderBracket(){
    const teams=document.createElement("div");teams.className="teams";
    [a,b].forEach((team,index)=>{
     if(!team){const ph=document.createElement("div");ph.className="placeholder";ph.textContent="Waiting for "+(r===0?"player entry":"previous match pick");teams.appendChild(ph);return;}
-    const btn=document.createElement("button");btn.className="team"+(picks[key]===team?" selected":"");btn.textContent=team;btn.disabled=!viewer||locked||loading;
+    const btn=document.createElement("button");btn.className="team"+(picks[key]===team?" selected":"");btn.textContent=team;btn.disabled=!viewer||locked||!enabled||loading;
     btn.addEventListener("click",()=>{picks[key]=team;dirty=true;for(let rr=r+1;rr<rounds.length;rr++)rounds[rr].forEach((_,mm)=>delete picks[matchKey(rr,mm)]);renderBracket();});
     teams.appendChild(btn);
    });
@@ -65,7 +65,7 @@ function renderBracket(){
   root.appendChild(section);
  });
  const progress=allPickCount();$("pickProgress").textContent=progress.done+" / "+progress.total+" matchups picked";
- $("submitPicks").disabled=!viewer||locked||loading||progress.total===0||progress.done!==progress.total;
+ $("submitPicks").disabled=!viewer||locked||!enabled||loading||progress.total===0||progress.done!==progress.total;
 }
 function renderLeaderboard(rows){
  const root=$("leaderboard");
@@ -97,7 +97,7 @@ async function load(){
  }catch(e){$("bracket").innerHTML='<div class="empty"></div>';$("bracket").firstChild.textContent=e.message||"Could not load the bracket.";}
 }
 $("submitPicks").addEventListener("click",async()=>{
- if(!viewer||locked||loading)return;
+ if(!viewer||locked||!enabled||loading)return;
  loading=true;renderBracket();$("message").textContent="Saving your bracket…";
  try{
   const key=localStorage.getItem("slotbuddy_kick_session")||"";
