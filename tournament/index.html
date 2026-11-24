@@ -1015,26 +1015,33 @@ function renderBracket(){
   if(input)input.addEventListener("input",()=>{pendingBuyEditValues[key]=input.value;});
   editor.addEventListener("click",event=>event.stopPropagation());
  });
- $("bracket").querySelectorAll("[data-save-player-edit]").forEach(btn=>btn.addEventListener("click",()=>{
-  const r=Number(btn.dataset.round),i=Number(btn.dataset.match),side=btn.dataset.savePlayerEdit,player=rounds[r]?.[i]?.[side];
-  const selector='[data-player-editor="'+side+'"][data-round="'+r+'"][data-match="'+i+'"]';
-  const editor=$("bracket").querySelector(selector);if(!player||!editor)return;
-  const buy=editor.querySelector("[data-player-buy]").value.trim();
-  if(buy!==""&&(!Number.isFinite(Number(buy))||Number(buy)<0)){$("setupStatus").textContent="Enter a valid buy amount of $0 or more for this player.";return;}
-  // A buy-in edit changes only this player's buy-in. Saved payouts remain untouched.
-  player.buy=buy===""?"":Number(buy).toFixed(2);
-  // Restore every match independently; no payout is copied to another game.
-  rounds.forEach((round,rr)=>round.forEach((match,ii)=>{
-   const saved=payoutState[rr]?.[ii];if(!saved)return;
-   match.payout=saved.payout;
-   match.aPayout=saved.aPayout;
-   match.bPayout=saved.bPayout;
-   match.winner=saved.winner;
-  }));
-  activeBuyEditor=null;delete pendingBuyEditValues[r+":"+i+":"+side];
-  renderBracket();queueBracketSave();
-  $("setupStatus").textContent=playerLabel(player)+" buy amount updated and saved.";
- }));
+ // Save handler is delegated from the stable bracket container so a redraw or
+ // mobile touch target cannot leave a newly rendered SAVE button without a handler.
+ if(!bracketClickRoot.dataset.buySaveClickBound){
+  bracketClickRoot.dataset.buySaveClickBound="1";
+  bracketClickRoot.addEventListener("click",event=>{
+   const btn=event.target.closest&&event.target.closest("[data-save-player-edit]");
+   if(!btn||!bracketClickRoot.contains(btn))return;
+   event.preventDefault();event.stopPropagation();
+   const r=Number(btn.dataset.round),i=Number(btn.dataset.match),side=btn.dataset.savePlayerEdit,player=rounds[r]?.[i]?.[side];
+   const selector='[data-player-editor="'+side+'"][data-round="'+r+'"][data-match="'+i+'"]';
+   const editor=bracketClickRoot.querySelector(selector);if(!player||!editor)return;
+   const input=editor.querySelector("[data-player-buy]");
+   const buy=input?input.value.trim():"";
+   if(buy!==""&&(!Number.isFinite(Number(buy))||Number(buy)<0)){$("setupStatus").textContent="Enter a valid buy amount of $0 or more for this player.";return;}
+   player.buy=buy===""?"":Number(buy).toFixed(2);
+   rounds.forEach((round,rr)=>round.forEach((match,ii)=>{
+    const saved=payoutState[rr]?.[ii];if(!saved)return;
+    match.payout=saved.payout;
+    match.aPayout=saved.aPayout;
+    match.bPayout=saved.bPayout;
+    match.winner=saved.winner;
+   }));
+   activeBuyEditor=null;delete pendingBuyEditValues[r+":"+i+":"+side];
+   renderBracket();queueBracketSave();
+   $("setupStatus").textContent=playerLabel(player)+" buy amount updated and saved.";
+  });
+ }
 
  $("bracket").querySelectorAll("[data-save-bracket-player-payout]").forEach(btn=>btn.addEventListener("click",()=>saveBracketPlayerPayout(Number(btn.dataset.round),Number(btn.dataset.match),btn.dataset.saveBracketPlayerPayout,btn)));
  const champ=rounds[rounds.length-1][0]?.winner;
