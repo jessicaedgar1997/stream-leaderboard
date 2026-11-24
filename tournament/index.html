@@ -1296,9 +1296,6 @@ document.addEventListener("click",function(event){
    const saved=await saveBracketOnline();
    if(!saved)throw new Error("The bracket was cleared on this screen, but the shared bracket save did not confirm. Please retry.");
    status.textContent="Bracket names removed. Tournament player entry and its saved names were left untouched. 💗💙";
-   bracketClearInProgress=false;
-   await refreshLivePlayers(false,true);
-   status.textContent="Players removed from the saved bracket and player list. Bracket size and event settings were kept. 💗💙";
   }catch(error){
    status.textContent="Remove Players hit an error: "+(error?.message||"Please refresh and try again.");
   }finally{
