@@ -891,8 +891,16 @@ function propagate(fromRound){
  }
 }
 function chooseWinner(r,i,side){
- const match=rounds[r][i],chosen=match[side];
- if(!chosen)return;
+ const match=rounds[r]?.[i],chosen=match?.[side];
+ if(!match||!chosen)return;
+ // A player cannot advance until BOTH slot payouts for this exact match are saved.
+ const payoutA=match.aPayout==null?"":String(match.aPayout).trim();
+ const payoutB=match.bPayout==null?"":String(match.bPayout).trim();
+ if(payoutA===""||payoutB===""){
+  $("setupStatus").textContent="Save BOTH players’ payouts for this game before advancing anyone.";
+  $("matchPayoutStatus").textContent="This game is not complete yet. Enter and save both payouts first.";
+  return;
+ }
  match.winner=chosen;
  for(let later=r+1;later<rounds.length;later++)rounds[later].forEach(m=>{m.winner=null;m.payout="";});
  propagate(r);renderBracket();queueBracketSave();
