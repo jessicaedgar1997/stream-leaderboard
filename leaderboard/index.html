@@ -66,6 +66,15 @@ button.is-off,.btn.is-off{background:#65dfff!important;color:#081526!important;b
 </div>
 <div id="adminBox" hidden>
 <p id="adminStatus" class="foot">Organizer signed in.</p>
+<div class="panel" style="padding:14px;margin:12px 0;background:#10162b">
+<h3 style="margin:0 0 10px;color:var(--pink)">⏳ Change leaderboard timer</h3>
+<label for="countdownStartInput" class="foot" style="display:block;text-align:left">Countdown start date &amp; time</label>
+<input id="countdownStartInput" type="datetime-local" style="width:100%;margin:5px 0 10px;background:#0d1328;border:1px solid #43577f;color:white;border-radius:10px;padding:11px">
+<label for="countdownEndInput" class="foot" style="display:block;text-align:left">Countdown end date &amp; time</label>
+<input id="countdownEndInput" type="datetime-local" style="width:100%;margin:5px 0 10px;background:#0d1328;border:1px solid #43577f;color:white;border-radius:10px;padding:11px">
+<div class="actions"><button type="button" id="saveCountdown" class="pink">Save timer</button></div>
+<p class="foot" style="text-align:left;margin-bottom:0">Changes update the public leaderboard timer for everyone.</p>
+</div>
 <div id="editRows"></div>
 <form id="addForm" class="editrow">
 <input id="newName" required maxlength="60" placeholder="New supporter name">
@@ -95,32 +104,47 @@ const SUPABASE_URL = "https://xbogfbyysrjttyfvzluh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_rU0twvbtzrYlKqqbuNPD6g_B38iNXt5";
 const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const money = n => "$" + Number(n || 0).toFixed(2);
-// Each leaderboard event runs for 15 calendar days (Nov 9–23, then Nov 24–Dec 8, etc.).
-// The cycle advances automatically at local midnight, so the countdown never needs manual date edits.
+// The organizer can change the shared countdown dates from the secure controls below.
 const firstCountdownStart = new Date(2026, 10, 9, 0, 0, 0);
 const eventLengthDays = 15;
+let activeCountdownSettings = null;
 function getCurrentEvent(){
  const now = new Date();
  const dayNumber = d => Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
  const daysSinceFirst = dayNumber(now) - dayNumber(firstCountdownStart);
  const cycle = Math.max(0, Math.floor(daysSinceFirst / eventLengthDays));
  const start = new Date(firstCountdownStart.getFullYear(), firstCountdownStart.getMonth(), firstCountdownStart.getDate() + cycle * eventLengthDays, 0, 0, 0);
- const end = cycle === 0
-  ? new Date("2026-11-23T23:33:53-05:00")
-  : new Date(start.getFullYear(), start.getMonth(), start.getDate() + eventLengthDays, 0, 0, 0);
- const lastDay = cycle === 0 ? end : new Date(end.getFullYear(), end.getMonth(), end.getDate() - 1);
- return {start, end, lastDay};
+ const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + eventLengthDays, 0, 0, 0);
+ return {start, end};
+}
+function toLocalDateTimeValue(value){
+ const d = new Date(value);
+ const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+ return local.toISOString().slice(0,16);
+}
+async function loadCountdownSettings(){
+ const {data,error}=await client.from("leaderboard_countdown_settings").select("start_at,end_at").eq("id",true).maybeSingle();
+ if(!error && data){
+  activeCountdownSettings={start:new Date(data.start_at),end:new Date(data.end_at)};
+  if(document.getElementById("countdownStartInput")){
+   document.getElementById("countdownStartInput").value=toLocalDateTimeValue(data.start_at);
+   document.getElementById("countdownEndInput").value=toLocalDateTimeValue(data.end_at);
+  }
+ }
+ updateCountdown();
 }
 function updateCountdown(){
  const now=Date.now();
- const event = getCurrentEvent();
- const countdownStart = event.start.getTime();
- const countdownEnd = event.end.getTime();
- const dateOptions = {month:"long", day:"numeric"};
- const startLabel = event.start.toLocaleDateString("en-US", dateOptions);
- const lastDay = event.lastDay;
- const endLabel = lastDay.toLocaleDateString("en-US", dateOptions);
- document.querySelector(".date-range").textContent = startLabel.toUpperCase() + " – " + endLabel.toUpperCase() + ", " + event.start.getFullYear();
+ const fallback=getCurrentEvent();
+ const event=activeCountdownSettings||fallback;
+ const countdownStart=event.start.getTime();
+ const countdownEnd=event.end.getTime();
+ const dateOptions={month:"long",day:"numeric"};
+ const startLabel=event.start.toLocaleDateString("en-US",dateOptions);
+ const lastIncludedDay=new Date(countdownEnd-1);
+ const endLabel=lastIncludedDay.toLocaleDateString("en-US",dateOptions);
+ const yearLabel=lastIncludedDay.getFullYear()===event.start.getFullYear()?event.start.getFullYear():event.start.getFullYear()+" – "+lastIncludedDay.getFullYear();
+ document.querySelector(".date-range").textContent=startLabel.toUpperCase()+" – "+endLabel.toUpperCase()+", "+yearLabel;
  const remaining=Math.max(0,countdownEnd-now);
  const days=Math.floor(remaining/86400000);
  const hours=Math.floor((remaining%86400000)/3600000);
@@ -134,11 +158,12 @@ function updateCountdown(){
  document.getElementById("countdownProgressFill").style.width=progress+"%";
  document.getElementById("countdownProgress").setAttribute("aria-valuenow",String(Math.round(progress)));
  document.getElementById("countdownProgressText").textContent="Event progress: "+Math.floor(progress)+"%";
- // The next cycle begins automatically at this event's end, so the timer stays active.
- document.getElementById("countdownTimer").hidden=false;
- document.getElementById("countdownEnded").hidden=true;
+ const ended=countdownEnd<=now;
+ document.getElementById("countdownTimer").hidden=ended;
+ document.getElementById("countdownEnded").hidden=!ended;
 }
 updateCountdown();
+loadCountdownSettings();
 setInterval(updateCountdown,1000);
 
 let entriesCache = [];
@@ -170,6 +195,20 @@ document.getElementById("loginForm").addEventListener("submit",async e=>{
  const msg=document.getElementById("editorMessage");
  const {error}=await client.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
  msg.textContent=error?"Could not send sign-in email: "+error.message:"Sign-in link sent. Check your email and click the link on this device.";
+});
+document.getElementById("saveCountdown").addEventListener("click",async()=>{
+ const startValue=document.getElementById("countdownStartInput").value;
+ const endValue=document.getElementById("countdownEndInput").value;
+ const msg=document.getElementById("editorMessage");
+ const start=new Date(startValue), end=new Date(endValue);
+ if(!startValue||!endValue||!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start){
+  msg.textContent="Please choose a valid start and end time. The end must be after the start.";return;
+ }
+ const {data,error}=await client.from("leaderboard_countdown_settings").update({start_at:start.toISOString(),end_at:end.toISOString(),updated_at:new Date().toISOString()}).eq("id",true).select("start_at,end_at").single();
+ if(error){msg.textContent="Timer save failed: "+error.message;return;}
+ activeCountdownSettings={start:new Date(data.start_at),end:new Date(data.end_at)};
+ updateCountdown();
+ msg.textContent="Countdown saved! Everyone will see the new timer when they refresh the leaderboard.";
 });
 document.getElementById("editRows").addEventListener("click",async e=>{
  const row=e.target.closest(".editrow"); if(!row)return;
